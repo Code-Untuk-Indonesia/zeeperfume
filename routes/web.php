@@ -1,71 +1,53 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Support\RoleDashboard;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/', function (Request $request) {
+    if ($request->user() === null) {
+        return redirect()->route('login');
+    }
+
+    $dashboardRoute = RoleDashboard::routeName($request->user());
+    abort_if($dashboardRoute === null, 403, 'Role akun belum memiliki akses ke aplikasi.');
+
+    return redirect()->route($dashboardRoute);
+})->name('home');
+
+Route::middleware('guest')->group(function () {
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 });
 
-Route::get('admin/dashboard', function () {
-    return view('admin.dashboard');
-});
-Route::get('admin/stock', function () {
-    return view('admin.stock.index');
+Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::view('dashboard', 'admin.dashboard')->name('dashboard');
+    Route::view('stock', 'admin.stock.index')->name('stock.index');
+    Route::view('stock/create', 'admin.stock.create')->name('stock.create');
+    Route::view('transaction', 'admin.transaction.index')->name('transaction.index');
+    Route::view('transaction/detail', 'admin.transaction.detail')->name('transaction.detail');
+    Route::view('transaction/show', 'admin.transaction.show')->name('transaction.show');
+    Route::view('member', 'admin.member.index')->name('member.index');
 });
 
-Route::get('admin/stock/create', function () {
-    return view('admin.stock.create');
+Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->group(function () {
+    Route::view('pos', 'kasir.pos.index')->name('pos');
 });
 
-Route::get('admin/transaction', function () {
-    return view('admin.transaction.index');
-});
-
-Route::get('admin/transaction/detail', function () {
-    return view('admin.transaction.detail');
-});
-
-Route::get('admin/transaction/show', function () {
-    return view('admin.transaction.show');
-});
-
-Route::get('admin/member', function () {
-    return view('admin.member.index');
-});
-Route::get('kasir/pos', function () {
-    return view('kasir.pos.index');
-});
-
-Route::get('owner/dashboard', function () {
-    return view('owner.dashboard');
-});
-
-Route::get('owner/employee', function () {
-    return view('owner.employee.index');
-});
-Route::get('owner/employee/create', function () {
-    return view('owner.employee.create');
-});
-Route::get('owner/employee/edit', function () {
-    return view('owner.employee.edit');
-});
-
-Route::get('owner/outlet', function () {
-    return view('owner.outlet.index');
-});
-Route::get('owner/outlet/create', function () {
-    return view('owner.outlet.create');
-});
-Route::get('owner/outlet/edit', function () {
-    return view('owner.outlet.edit');
-});
-Route::get('owner/transaction', function () {
-    return view('owner.transaction.index');
-});
-Route::get('owner/transaction/detail', function () {
-    return view('owner.transaction.detail');
-});
-
-route::get('owner/finance', function () {
-    return view('owner.finance.index');
+Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->group(function () {
+    Route::view('dashboard', 'owner.dashboard')->name('dashboard');
+    Route::view('employee', 'owner.employee.index')->name('employee.index');
+    Route::view('employee/create', 'owner.employee.create')->name('employee.create');
+    Route::view('employee/edit', 'owner.employee.edit')->name('employee.edit');
+    Route::view('outlet', 'owner.outlet.index')->name('outlet.index');
+    Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
+    Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
+    Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
+    Route::view('transaction/detail', 'owner.transaction.detail')->name('transaction.detail');
+    Route::view('finance', 'owner.finance.index')->name('finance.index');
 });
