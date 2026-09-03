@@ -10,13 +10,14 @@ class BranchStock extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cabang_id', 'varian_id', 'stok', 'stok_minimum'];
+    protected $table = 'stok_cabang';
+
+    protected $fillable = ['cabang_id', 'varian_id', 'stok'];
 
     protected function casts(): array
     {
         return [
             'stok' => 'integer',
-            'stok_minimum' => 'integer',
         ];
     }
 

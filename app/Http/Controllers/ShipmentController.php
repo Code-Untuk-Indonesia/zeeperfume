@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Shipment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ShipmentController extends Controller
@@ -13,20 +14,30 @@ class ShipmentController extends Controller
     {
         $validated = $request->validate($this->rules());
 
-        return response()->json(Shipment::create($validated)->load('transaction'), 201);
+        $now = now();
+        $id = DB::table('shipments')->insertGetId([
+            ...$validated,
+            'biaya_kirim' => $validated['biaya_kirim'] ?? 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return response()->json($this->findShipment($id), 201);
     }
 
     public function show(Shipment $shipment): JsonResponse
     {
-        return response()->json($shipment->load('transaction'));
+        return response()->json($this->findShipment($shipment->getKey()));
     }
 
     public function update(Request $request, Shipment $shipment): JsonResponse
     {
         $validated = $request->validate($this->rules($shipment));
-        $shipment->update($validated);
+        DB::table('shipments')
+            ->where('id', $shipment->getKey())
+            ->update([...$validated, 'updated_at' => now()]);
 
-        return response()->json($shipment->fresh()->load('transaction'));
+        return response()->json($this->findShipment($shipment->getKey()));
     }
 
     private function rules(?Shipment $shipment = null): array
@@ -46,5 +57,15 @@ class ShipmentController extends Controller
             'alamat_tujuan' => ['required', 'string'],
             'catatan_kurir' => ['nullable', 'string'],
         ];
+    }
+
+    private function findShipment(int $id): object
+    {
+        $shipment = DB::table('shipments')->where('id', $id)->firstOrFail();
+        $shipment->transaction = DB::table('transactions')
+            ->where('id', $shipment->transaksi_id)
+            ->first();
+
+        return $shipment;
     }
 }

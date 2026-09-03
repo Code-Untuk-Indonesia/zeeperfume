@@ -12,7 +12,17 @@ class ProductVariant extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['produk_id', 'sku', 'nama_varian', 'harga_beli', 'harga_jual'];
+    protected $table = 'produk_varian';
+
+    protected $fillable = [
+        'produk_id',
+        'sku',
+        'nama_varian',
+        'harga_beli',
+        'harga_jual',
+        'image',
+        'satuan',
+    ];
 
     protected function casts(): array
     {

@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Member;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class MemberController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $members = Member::query()
+        $members = DB::table('members')
+            ->whereNull('deleted_at')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = '%'.$request->string('search').'%';
                 $query->where(function ($query) use ($search) {
@@ -30,25 +32,54 @@ class MemberController extends Controller
     {
         $validated = $request->validate($this->rules());
 
-        return response()->json(Member::create($validated), 201);
+        $now = now();
+        $id = DB::table('members')->insertGetId([
+            ...$validated,
+            'poin' => $validated['poin'] ?? 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return response()->json($this->findMember($id), 201);
     }
 
     public function show(Member $member): JsonResponse
     {
-        return response()->json($member->loadCount('transactions'));
+        $memberData = DB::table('members')
+            ->select('members.*')
+            ->selectSub(
+                DB::table('transactions')
+                    ->selectRaw('count(*)')
+                    ->whereColumn('transactions.member_id', 'members.id'),
+                'transactions_count'
+            )
+            ->where('members.id', $member->getKey())
+            ->whereNull('members.deleted_at')
+            ->firstOrFail();
+
+        return response()->json($memberData);
     }
 
     public function update(Request $request, Member $member): JsonResponse
     {
         $validated = $request->validate($this->rules($member));
-        $member->update($validated);
+        DB::table('members')
+            ->where('id', $member->getKey())
+            ->whereNull('deleted_at')
+            ->update([...$validated, 'updated_at' => now()]);
 
-        return response()->json($member->fresh());
+        return response()->json($this->findMember($member->getKey()));
     }
 
     public function destroy(Member $member): JsonResponse
     {
-        $member->delete();
+        DB::table('members')
+            ->where('id', $member->getKey())
+            ->whereNull('deleted_at')
+            ->update([
+                'deleted_at' => now(),
+                'updated_at' => now(),
+            ]);
 
         return response()->json(status: 204);
     }
@@ -68,5 +99,13 @@ class MemberController extends Controller
             'poin' => ['sometimes', 'integer', 'min:0'],
             'tanggal_bergabung' => ['required', 'date'],
         ];
+    }
+
+    private function findMember(int $id): object
+    {
+        return DB::table('members')
+            ->where('id', $id)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
     }
 }
