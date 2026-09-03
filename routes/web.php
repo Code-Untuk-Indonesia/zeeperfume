@@ -36,6 +36,10 @@ Route::get('kasir/pos', function () {
     return view('kasir.pos.index');
 });
 
+Route::get('kasir/transaction', function () {
+    return view('kasir.pos.history');
+});
+
 Route::get('owner/dashboard', function () {
     return view('owner.dashboard');
 });
