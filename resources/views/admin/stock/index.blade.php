@@ -11,13 +11,13 @@
                 <p class="text-gray-500 text-sm mt-1">Pantau dan kelola persediaan produk parfum di semua cabang outlet Anda.
                 </p>
             </div>
-            <button
-                class="bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-[#b58555] transition flex items-center gap-2 text-sm shrink-0">
+            <a href="{{ url('admin/stock/create') }}"
+                class="bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-[#b58555] transition flex items-center justify-center gap-2 text-sm shrink-0 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 Tambah Produk
-            </button>
+            </a>
         </div>
 
         <!-- Quick Stats -->
@@ -135,13 +135,15 @@
                             <td class="px-6 py-4 text-gray-500">Outlet Pusat</td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex justify-center gap-2">
-                                    <button class="text-gray-400 hover:text-blue-500 transition p-1" title="Edit">
+                                    <a href="{{ url('admin/stock/edit') }}"
+                                        class="inline-block text-gray-400 hover:text-blue-500 transition p-1"
+                                        title="Edit Data">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                             </path>
                                         </svg>
-                                    </button>
+                                    </a>
                                     <button class="text-gray-400 hover:text-red-500 transition p-1" title="Hapus">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -215,7 +217,9 @@
                             <td class="px-6 py-4 text-gray-500">Cabang 1</td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex justify-center gap-2">
-                                    <button class="text-gray-400 hover:text-blue-500 transition p-1" title="Edit">
+                                    <a href="{{ url('admin/stock/edit') }}"
+                                        class="inline-block text-gray-400 hover:text-blue-500 transition p-1"
+                                        title="Edit Data">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">

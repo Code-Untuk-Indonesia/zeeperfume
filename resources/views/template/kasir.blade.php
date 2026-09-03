@@ -57,7 +57,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                POS<span class="text-[#CC9863]">Biz</span>
+                ZeePerfume<span class="text-[#CC9863]">KASIR </span>
             </div>
             <!-- Jam Realtime -->
             <div
@@ -73,8 +73,9 @@
         <!-- Menu Tengah (Desktop) -->
         <nav class="hidden md:flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
             <!-- Tombol Transaksi / POS -->
+            <!-- Logika diperbarui: akan menyala jika url adalah kasir/pos, kasir/pos/*, atau kasir/member/* -->
             <a href="{{ url('kasir/pos') }}"
-                class="{{ request()->is('kasir/pos') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }} px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition">
+                class="{{ request()->is('kasir/pos*') || request()->is('kasir/member*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }} px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
@@ -84,8 +85,9 @@
             </a>
 
             <!-- Tombol Riwayat Shift Kasir -->
+            <!-- Logika diperbarui: akan menyala jika url adalah kasir/transaction atau child-nya -->
             <a href="{{ url('kasir/transaction') }}"
-                class="{{ request()->is('kasir/transaction') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }} px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+                class="{{ request()->is('kasir/transaction*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }} px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
@@ -117,8 +119,9 @@
 
     <!-- ================= MOBILE MENU BOTTOM ================= -->
     <div class="md:hidden bg-white border-t border-gray-200 flex justify-around p-3 pb-safe fixed bottom-0 w-full z-50">
+        <!-- Tab POS Mobile -->
         <a href="{{ url('kasir/pos') }}"
-            class="flex flex-col items-center gap-1 {{ request()->is('kasir/pos') ? 'text-[#CC9863]' : 'text-gray-400 hover:text-gray-700' }}">
+            class="flex flex-col items-center gap-1 {{ request()->is('kasir/pos*') || request()->is('kasir/member*') ? 'text-[#CC9863]' : 'text-gray-400 hover:text-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
@@ -127,8 +130,9 @@
             <span class="text-[10px] font-bold">POS</span>
         </a>
 
+        <!-- Tab Riwayat Mobile -->
         <a href="{{ url('kasir/transaction') }}"
-            class="flex flex-col items-center gap-1 {{ request()->is('kasir/transaction') ? 'text-[#CC9863]' : 'text-gray-400 hover:text-gray-700' }}">
+            class="flex flex-col items-center gap-1 {{ request()->is('kasir/transaction*') ? 'text-[#CC9863]' : 'text-gray-400 hover:text-gray-700' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">

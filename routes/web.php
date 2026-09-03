@@ -17,6 +17,10 @@ Route::get('admin/stock/create', function () {
     return view('admin.stock.create');
 });
 
+Route::get('admin/stock/edit', function () {
+    return view('admin.stock.edit');
+});
+
 Route::get('admin/transaction', function () {
     return view('admin.transaction.index');
 });
@@ -38,6 +42,18 @@ Route::get('kasir/pos', function () {
 
 Route::get('kasir/transaction', function () {
     return view('kasir.pos.history');
+});
+
+Route::get('kasir/pos/custom', function () {
+    return view('kasir.pos.custom');
+});
+
+Route::get('kasir/member/create', function () {
+    return view('kasir.member.create');
+});
+
+Route::get('kasir/pos/success', function () {
+    return view('kasir.pos.success');
 });
 
 Route::get('owner/dashboard', function () {
