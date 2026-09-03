@@ -20,6 +20,15 @@ Route::get('admin/stock/create', function () {
 Route::get('admin/transaction', function () {
     return view('admin.transaction.index');
 });
+
+Route::get('admin/transaction/detail', function () {
+    return view('admin.transaction.detail');
+});
+
+Route::get('admin/transaction/show', function () {
+    return view('admin.transaction.show');
+});
+
 Route::get('admin/member', function () {
     return view('admin.member.index');
 });
@@ -49,4 +58,14 @@ Route::get('owner/outlet/create', function () {
 });
 Route::get('owner/outlet/edit', function () {
     return view('owner.outlet.edit');
+});
+Route::get('owner/transaction', function () {
+    return view('owner.transaction.index');
+});
+Route::get('owner/transaction/detail', function () {
+    return view('owner.transaction.detail');
+});
+
+route::get('owner/finance', function () {
+    return view('owner.finance.index');
 });
