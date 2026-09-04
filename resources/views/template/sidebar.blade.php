@@ -34,6 +34,8 @@
 
 <body class="bg-gray-50 min-h-screen flex text-gray-800 antialiased overflow-hidden">
 
+    @php($currentRole = strtolower(auth()->user()->role?->nama_role ?? ''))
+
     <!-- Sidebar (Hidden on Mobile, Visible on LG screens) -->
     <aside
         class="hidden lg:flex w-[260px] bg-[#1C1D21] text-gray-400 flex-col justify-between py-8 px-6 shrink-0 h-screen overflow-y-auto">
@@ -51,6 +53,7 @@
             <nav class="space-y-6">
 
                 <!-- ================= MENU OWNER ================= -->
+                @if ($currentRole === 'owner')
                 <div>
                     <p class="px-4 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">Role: Owner</p>
                     <div class="space-y-1 text-sm">
@@ -106,8 +109,10 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
                 <!-- ================= MENU ADMIN ================= -->
+                @if ($currentRole === 'admin')
                 <div>
                     <p class="px-4 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">Role: Admin</p>
                     <div class="space-y-1 text-sm">
@@ -152,8 +157,10 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
                 <!-- ================= MENU KASIR ================= -->
+                @if ($currentRole === 'kasir')
                 <div>
                     <p class="px-4 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">Role: Kasir</p>
                     <div class="space-y-1 text-sm">
@@ -169,27 +176,31 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
             </nav>
         </div>
 
         <div class="space-y-4 mt-8">
             <!-- User Profile -->
-            <div
-                class="flex items-center justify-between p-3 border border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-800 transition">
+            <div class="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-2xl">
                 <div class="flex items-center gap-3">
-                    <img src="https://i.pravatar.cc/150?img=11" alt="Owner"
-                        class="w-10 h-10 rounded-full border-2 border-green-500">
+                    <div class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-gray-800 flex items-center justify-center text-sm font-bold text-white" aria-hidden="true">
+                        {{ mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) }}
+                    </div>
                     <div>
-                        <p class="text-white text-sm font-medium"> Heldi </p>
-                        <p class="text-[11px] text-green-500 flex items-center gap-1"><span
-                                class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Online</p>
+                        <p class="max-w-28 truncate text-sm font-medium text-white">{{ auth()->user()->nama_lengkap }}</p>
+                        <p class="text-[11px] capitalize text-[#CC9863]">{{ $currentRole }}</p>
                     </div>
                 </div>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                </svg>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-700 hover:text-white focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none" aria-label="Keluar dari sistem" title="Keluar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>
@@ -206,12 +217,36 @@
                 </svg>
                 <span class="text-[#CC9863]">ZeePerfume</span>
             </div>
-            <button class="p-2 bg-gray-800 rounded-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <details class="relative">
+                <summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl bg-gray-800 px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">
+                    Menu
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7">
                     </path>
-                </svg>
-            </button>
+                    </svg>
+                </summary>
+                <div class="absolute right-0 top-13 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-xl">
+                    <p class="px-3 py-2 text-xs text-gray-400">{{ auth()->user()->nama_lengkap }}</p>
+                    @if ($currentRole === 'owner')
+                        <a href="{{ route('owner.dashboard') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Dashboard</a>
+                        <a href="{{ route('owner.finance.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Laporan Keuangan</a>
+                        <a href="{{ route('owner.transaction.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Riwayat Transaksi</a>
+                        <a href="{{ route('owner.employee.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Manajemen Pegawai</a>
+                        <a href="{{ route('owner.outlet.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Kelola Outlet</a>
+                    @elseif ($currentRole === 'admin')
+                        <a href="{{ route('admin.dashboard') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Dashboard</a>
+                        <a href="{{ route('admin.transaction.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Riwayat Transaksi</a>
+                        <a href="{{ route('admin.stock.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Kelola Stok</a>
+                        <a href="{{ route('admin.member.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Kelola Member</a>
+                    @else
+                        <a href="{{ route('kasir.pos') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Buka POS</a>
+                    @endif
+                    <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-gray-700 pt-1">
+                        @csrf
+                        <button type="submit" class="min-h-11 w-full rounded-xl px-3 text-left text-sm text-red-300 hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Keluar</button>
+                    </form>
+                </div>
+            </details>
         </header>
 
         <!-- Dynamic Content Section -->
