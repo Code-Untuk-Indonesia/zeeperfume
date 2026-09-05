@@ -104,8 +104,12 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- OUTLET --
     Route::get('outlet', [OutletController::class, 'index'])->name('outlet.index');
-    Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
-    Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
+    Route::get('outlet/create', [OutletController::class, 'create'])->name('outlet.create');
+    Route::post('outlet', [OutletController::class, 'store'])->name('outlet.store');
+    Route::get('outlet/{outlet}/edit', [OutletController::class, 'edit'])->name('outlet.edit');
+    Route::put('outlet/{outlet}', [OutletController::class, 'update'])->name('outlet.update');
+    Route::delete('outlet/{outlet}', [OutletController::class, 'destroy'])->name('outlet.destroy');
+    Route::patch('outlet/{outlet}/restore', [OutletController::class, 'restore'])->name('outlet.restore');
 
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
