@@ -99,8 +99,12 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
-    Route::view('employee/create', 'owner.employee.create')->name('employee.create');
-    Route::view('employee/edit', 'owner.employee.edit')->name('employee.edit');
+    Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
+    Route::post('employee', [EmployeeController::class, 'store'])->name('employee.store');
+    Route::get('employee/{employee}/edit', [EmployeeController::class, 'edit'])->name('employee.edit');
+    Route::put('employee/{employee}', [EmployeeController::class, 'update'])->name('employee.update');
+    Route::delete('employee/{employee}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
+    Route::patch('employee/{employee}/restore', [EmployeeController::class, 'restore'])->name('employee.restore');
 
     // -- OUTLET --
     Route::get('outlet', [OutletController::class, 'index'])->name('outlet.index');
