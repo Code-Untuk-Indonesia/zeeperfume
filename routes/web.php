@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\EmployeeController;
+use App\Http\Controllers\Owner\MemberController;
 use App\Http\Controllers\Owner\OutletController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
@@ -63,12 +65,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->group(function () {
     Route::view('pos', 'kasir.pos.index')->name('pos');
     Route::view('pos/custom', 'kasir.pos.custom')->name('pos.custom');
-    Route::view('pos/success', 'kasir.pos.success')->name('pos.success');
-
-    // Asumsi file riwayat ada di kasir/pos/history.blade.php
-    Route::view('transaction', 'kasir.pos.history')->name('transaction.index');
+    Route::get('pos/success', [\App\Http\Controllers\Kasir\PosController::class, 'success'])->name('pos.success');
+    Route::get('transaction', [\App\Http\Controllers\Kasir\PosController::class, 'history'])->name('transaction.index');
+    Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
 
     Route::view('member/create', 'kasir.member.create')->name('member.create');
+    Route::get('pos', [PosController::class, 'index'])->name('pos');
 });
 
 
@@ -92,6 +94,8 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::get('outlet', [OutletController::class, 'index'])->name('outlet.index');
     Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
     Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
+
+    Route::get('member', [MemberController::class, 'index'])->name('owner.member.index');
 
     Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
     Route::view('transaction/detail', 'owner.transaction.detail')->name('transaction.detail');
