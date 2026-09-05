@@ -62,8 +62,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Menggunakan AdminMemberController
     Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
-    Route::view('member/create', 'admin.member.create')->name('member.create');
-    Route::view('member/edit', 'admin.member.edit')->name('member.edit');
+    Route::get('member/create', [AdminMemberController::class, 'create'])->name('member.create');
+    Route::post('member', [AdminMemberController::class, 'store'])->name('member.store');
+    Route::get('member/{member}/edit', [AdminMemberController::class, 'edit'])->name('member.edit');
+    Route::put('member/{member}', [AdminMemberController::class, 'update'])->name('member.update');
+    Route::delete('member/{member}', [AdminMemberController::class, 'destroy'])->name('member.destroy');
 });
 
 
