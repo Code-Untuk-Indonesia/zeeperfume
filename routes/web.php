@@ -4,7 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\EmployeeController;
-use App\Http\Controllers\Owner\MemberController;
+use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Owner\OutletController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
@@ -53,7 +53,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('transaction/detail', 'admin.transaction.detail')->name('transaction.detail');
     Route::view('transaction/show', 'admin.transaction.show')->name('transaction.show');
 
-    Route::view('member', 'admin.member.index')->name('member.index');
+    Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
+    // Create dan Edit tetap pakai view karena belum ada databasenya
+    Route::view('member/create', 'admin.member.create')->name('member.create');
+    Route::view('member/edit', 'admin.member.edit')->name('member.edit');
 });
 
 
