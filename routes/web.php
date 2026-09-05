@@ -95,7 +95,9 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
     Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
 
-    Route::get('member', [MemberController::class, 'index'])->name('owner.member.index');
+    Route::get('member', [MemberController::class, 'index'])->name('member.index');
+    Route::view('member/create', 'owner.member.create')->name('member.create');
+    Route::view('member/edit', 'owner.member.edit')->name('member.edit');
 
     Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
     Route::view('transaction/detail', 'owner.transaction.detail')->name('transaction.detail');

@@ -97,6 +97,16 @@
                             </svg>
                             Manajemen Pegawai
                         </a>
+                        <!-- Kelola Member (BARU DITAMBAHKAN) -->
+                        <a href="{{ url('owner/member') }}"
+                            class="{{ request()->is('owner/member*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            Kelola Member
+                        </a>
                         <!-- Kelola Outlet -->
                         <a href="{{ url('owner/outlet') }}"
                             class="{{ request()->is('owner/outlet*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-colors">
@@ -186,10 +196,10 @@
             <div class="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-2xl">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-gray-800 flex items-center justify-center text-sm font-bold text-white" aria-hidden="true">
-                        {{ mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) }}
+                        {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
                     </div>
                     <div>
-                        <p class="max-w-28 truncate text-sm font-medium text-white">{{ auth()->user()->nama_lengkap }}</p>
+                        <p class="max-w-28 truncate text-sm font-medium text-white">{{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
                         <p class="text-[11px] capitalize text-[#CC9863]">{{ $currentRole }}</p>
                     </div>
                 </div>
@@ -217,7 +227,7 @@
                 </svg>
                 <span class="text-[#CC9863]">ZeePerfume</span>
             </div>
-            <details class="relative">
+            <details class="relative group">
                 <summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl bg-gray-800 px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">
                     Menu
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -225,14 +235,16 @@
                     </path>
                     </svg>
                 </summary>
-                <div class="absolute right-0 top-13 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-xl">
-                    <p class="px-3 py-2 text-xs text-gray-400">{{ auth()->user()->nama_lengkap }}</p>
+                <div class="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-xl hidden group-open:block">
+                    <p class="px-3 py-2 text-xs text-gray-400">{{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
                     @if ($currentRole === 'owner')
                         <a href="{{ route('owner.dashboard') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Dashboard</a>
                         <a href="{{ route('owner.finance.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Laporan Keuangan</a>
                         <a href="{{ route('owner.transaction.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Riwayat Transaksi</a>
                         <a href="{{ route('owner.employee.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Manajemen Pegawai</a>
                         <a href="{{ route('owner.outlet.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Kelola Outlet</a>
+                        <!-- Kelola Member (BARU DITAMBAHKAN) -->
+                        <a href="{{ route('owner.member.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Kelola Member</a>
                     @elseif ($currentRole === 'admin')
                         <a href="{{ route('admin.dashboard') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Dashboard</a>
                         <a href="{{ route('admin.transaction.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Riwayat Transaksi</a>
@@ -243,7 +255,7 @@
                     @endif
                     <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-gray-700 pt-1">
                         @csrf
-                        <button type="submit" class="min-h-11 w-full rounded-xl px-3 text-left text-sm text-red-300 hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Keluar</button>
+                        <button type="submit" class="w-full text-left rounded-xl px-3 py-3 text-sm text-red-400 hover:bg-gray-800 hover:text-red-300 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Keluar</button>
                     </form>
                 </div>
             </details>
@@ -254,6 +266,14 @@
 
     </div>
 
+    <!-- Menutup detail otomatis saat mengklik di luar area pada tampilan mobile -->
+    <script>
+        document.addEventListener('click', function(event) {
+            const details = document.querySelector('details');
+            if (details && !details.contains(event.target)) {
+                details.removeAttribute('open');
+            }
+        });
+    </script>
 </body>
-
 </html>

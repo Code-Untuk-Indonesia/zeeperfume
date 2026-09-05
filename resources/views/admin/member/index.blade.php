@@ -148,7 +148,7 @@
         }
 
         function getFilterUrl() {
-            const url = new URL('{{ route('owner.owner.member.index') }}'); // Pastikan route name sesuai
+            const url = new URL('{{ route('owner.member.index') }}'); // Pastikan route name sesuai
             if (searchInput.value) url.searchParams.append('search', searchInput.value);
             if (tipeFilter.value && tipeFilter.value !== 'semua') url.searchParams.append('tipe', tipeFilter.value);
             return url.toString();
