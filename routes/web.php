@@ -4,8 +4,10 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Kasir\PosController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\EmployeeController;
-use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Owner\OutletController;
+use App\Http\Controllers\Owner\MemberController; // <-- Tambahan untuk Owner
+use App\Http\Controllers\Admin\OutletController as AdminOutletController;
+use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +47,11 @@ Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::view('dashboard', 'admin.dashboard')->name('dashboard');
 
+    // Menggunakan AdminOutletController
+    Route::get('outlet', [AdminOutletController::class, 'index'])->name('outlet.index');
+    Route::view('outlet/create', 'admin.outlet.create')->name('outlet.create');
+    Route::view('outlet/edit', 'admin.outlet.edit')->name('outlet.edit');
+
     Route::view('stock', 'admin.stock.index')->name('stock.index');
     Route::view('stock/create', 'admin.stock.create')->name('stock.create');
     Route::view('stock/edit', 'admin.stock.edit')->name('stock.edit');
@@ -53,8 +60,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('transaction/detail', 'admin.transaction.detail')->name('transaction.detail');
     Route::view('transaction/show', 'admin.transaction.show')->name('transaction.show');
 
+    // Menggunakan AdminMemberController
     Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
-    // Create dan Edit tetap pakai view karena belum ada databasenya
     Route::view('member/create', 'admin.member.create')->name('member.create');
     Route::view('member/edit', 'admin.member.edit')->name('member.edit');
 });
@@ -66,14 +73,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->group(function () {
-    Route::view('pos', 'kasir.pos.index')->name('pos');
+    // Route POS utama menggunakan Controller
+    Route::get('pos', [PosController::class, 'index'])->name('pos');
+
     Route::view('pos/custom', 'kasir.pos.custom')->name('pos.custom');
-    Route::get('pos/success', [\App\Http\Controllers\Kasir\PosController::class, 'success'])->name('pos.success');
-    Route::get('transaction', [\App\Http\Controllers\Kasir\PosController::class, 'history'])->name('transaction.index');
+    Route::get('pos/success', [PosController::class, 'success'])->name('pos.success');
+    Route::get('transaction', [PosController::class, 'history'])->name('transaction.index');
     Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
 
     Route::view('member/create', 'kasir.member.create')->name('member.create');
-    Route::get('pos', [PosController::class, 'index'])->name('pos');
 });
 
 
@@ -84,26 +92,25 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
 */
 Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->group(function () {
 
-    // Menggunakan Controller untuk Dashboard Owner
     Route::get('dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
 
-    // Menggunakan Controller untuk Index Pegawai (Menampilkan Data)
+    // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
-
-    // Create & Edit masih berupa view statis, nanti bisa disesuaikan lagi jika controllernya sudah ada method create/edit
     Route::view('employee/create', 'owner.employee.create')->name('employee.create');
     Route::view('employee/edit', 'owner.employee.edit')->name('employee.edit');
 
+    // -- OUTLET --
     Route::get('outlet', [OutletController::class, 'index'])->name('outlet.index');
     Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
     Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
 
+    // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
     Route::view('member/create', 'owner.member.create')->name('member.create');
     Route::view('member/edit', 'owner.member.edit')->name('member.edit');
 
+    // -- TRANSAKSI & LAPORAN --
     Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
     Route::view('transaction/detail', 'owner.transaction.detail')->name('transaction.detail');
-
     Route::view('finance', 'owner.finance.index')->name('finance.index');
 });
