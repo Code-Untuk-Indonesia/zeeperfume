@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens; // 1. Tambahkan import ini
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    // 2. Sisipkan HasApiTokens di sini
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'role_id',

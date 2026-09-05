@@ -12,24 +12,38 @@ class AuthController extends Controller
     // Fungsi Login
     public function login(Request $request)
     {
-        // 1. Validasi input
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // 2. Cek apakah username ada di database
         $user = User::where('username', $request->username)->first();
 
-        // 3. Cek kesesuaian password
+        // Cek apakah user ada dan password benar
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Username atau password salah!'
-            ], 401); // 401 Unauthorized
+            ], 401);
         }
 
-        // 4. Buat token Sanctum
+        // Cek status aktif (mencegah akun yang sudah dinonaktifkan untuk login)
+        if (!$user->status_aktif) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun Anda sudah dinonaktifkan.'
+            ], 403);
+        }
+
+        // Cek role_id (Asumsi role_id 3 adalah Kasir)
+        // Silakan sesuaikan angka 3 jika ID role Kasir di database Anda berbeda
+        if ($user->role_id !== 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak! Aplikasi ini hanya untuk Kasir.'
+            ], 403); // 403 Forbidden
+        }
+
         $token = $user->createToken('pos-kasir-token')->plainTextToken;
 
         return response()->json([
