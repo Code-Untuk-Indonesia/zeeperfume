@@ -3,52 +3,148 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
-use App\Models\Transaction;
+use App\Http\Requests\SaveMemberRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class MemberController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        // 1. Query Utama Member (Hitung Transaksi & Total Belanja per Member)
-        $query = Member::withCount('transactions')
-            ->withSum('transactions as total_belanja', 'total_belanja');
+        $members = $this->memberQuery()
+            ->whereNull('members.deleted_at')
+            ->when($request->filled('search'), function ($query) use ($request): void {
+                $search = '%'.$request->string('search').'%';
+                $query->where(function ($query) use ($search): void {
+                    $query->where('members.nama', 'like', $search)
+                        ->orWhere('members.no_telp', 'like', $search)
+                        ->orWhere('members.kode_member', 'like', $search);
+                });
+            })
+            ->when($request->input('tipe') === 'vip', fn ($query) => $query->where('members.poin', '>=', 500))
+            ->when($request->input('tipe') === 'reguler', fn ($query) => $query->where('members.poin', '<', 500))
+            ->orderByDesc('members.created_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        // 2. Fitur Pencarian (Nama, No HP, Kode Member)
-        if ($request->filled('search')) {
-            $search = '%' . $request->search . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', $search)
-                  ->orWhere('no_telp', 'like', $search)
-                  ->orWhere('kode_member', 'like', $search);
-            });
-        }
-
-        // 3. Filter Tipe Member (berdasarkan jumlah poin sbg simulasi, atau bisa dimodif sesuai DB Anda)
-        if ($request->filled('tipe')) {
-            if ($request->tipe === 'vip') {
-                $query->where('poin', '>=', 500); // Misal: VIP jika poin >= 500
-            } elseif ($request->tipe === 'reguler') {
-                $query->where('poin', '<', 500);
-            }
-        }
-
-        // Eksekusi data dgn pagination
-        $members = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        // Jika request dari AJAX (Search/Filter)
-        if ($request->ajax()) {
-            return view('owner.member.partials.table-rows', compact('members'))->render();
-        }
-
-        // 4. Hitung Quick Stats untuk Card Atas
-        $totalMembers = Member::count();
-        $vipMembers = Member::where('poin', '>=', 500)->count(); // Simulasi VIP
-        $totalBelanjaSemua = Transaction::whereNotNull('member_id')->sum('total_belanja');
+        $totalMembers = DB::table('members')->whereNull('deleted_at')->count();
+        $vipMembers = DB::table('members')->whereNull('deleted_at')->where('poin', '>=', 500)->count();
+        $totalBelanjaSemua = DB::table('transactions')
+            ->whereNotNull('member_id')
+            ->sum('total_belanja');
 
         return view('owner.member.index', compact(
-            'members', 'totalMembers', 'vipMembers', 'totalBelanjaSemua'
+            'members',
+            'totalMembers',
+            'vipMembers',
+            'totalBelanjaSemua',
         ));
+    }
+
+    public function create(): View
+    {
+        return view('owner.member.create');
+    }
+
+    public function store(SaveMemberRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $now = now();
+
+        DB::table('members')->insert([
+            'kode_member' => $this->nextMemberCode(),
+            'nama' => $validated['nama'],
+            'no_telp' => $validated['no_telp'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'poin' => $validated['poin'] ?? 0,
+            'tanggal_bergabung' => $validated['tanggal_bergabung'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return redirect()
+            ->route('owner.member.index')
+            ->with('success', 'Member berhasil ditambahkan.');
+    }
+
+    public function edit(int $member): View
+    {
+        return view('owner.member.edit', ['member' => $this->findMember($member)]);
+    }
+
+    public function update(SaveMemberRequest $request, int $member): RedirectResponse
+    {
+        $this->findMember($member);
+
+        DB::table('members')
+            ->where('id', $member)
+            ->whereNull('deleted_at')
+            ->update([
+                ...$request->validated(),
+                'updated_at' => now(),
+            ]);
+
+        return redirect()
+            ->route('owner.member.index')
+            ->with('success', 'Data member berhasil diperbarui.');
+    }
+
+    public function destroy(int $member): RedirectResponse
+    {
+        $this->findMember($member);
+
+        DB::table('members')
+            ->where('id', $member)
+            ->whereNull('deleted_at')
+            ->update([
+                'deleted_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        return redirect()
+            ->route('owner.member.index')
+            ->with('success', 'Member berhasil dihapus.');
+    }
+
+    private function memberQuery()
+    {
+        $transactionStats = DB::table('transactions')
+            ->select('member_id')
+            ->selectRaw('COUNT(*) as transactions_count')
+            ->selectRaw('COALESCE(SUM(total_belanja), 0) as total_belanja')
+            ->whereNotNull('member_id')
+            ->groupBy('member_id');
+
+        return DB::table('members')
+            ->leftJoinSub($transactionStats, 'transaction_stats', function ($join): void {
+                $join->on('transaction_stats.member_id', '=', 'members.id');
+            })
+            ->select(
+                'members.*',
+                DB::raw('COALESCE(transaction_stats.transactions_count, 0) as transactions_count'),
+                DB::raw('COALESCE(transaction_stats.total_belanja, 0) as total_belanja'),
+            );
+    }
+
+    private function findMember(int $id): object
+    {
+        return $this->memberQuery()
+            ->where('members.id', $id)
+            ->whereNull('members.deleted_at')
+            ->firstOrFail();
+    }
+
+    private function nextMemberCode(): string
+    {
+        $sequence = (int) DB::table('members')->max('id') + 1;
+
+        do {
+            $code = 'MBR-'.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+            $sequence++;
+        } while (DB::table('members')->where('kode_member', $code)->exists());
+
+        return $code;
     }
 }

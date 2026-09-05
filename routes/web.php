@@ -109,8 +109,11 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
-    Route::view('member/create', 'owner.member.create')->name('member.create');
-    Route::view('member/edit', 'owner.member.edit')->name('member.edit');
+    Route::get('member/create', [MemberController::class, 'create'])->name('member.create');
+    Route::post('member', [MemberController::class, 'store'])->name('member.store');
+    Route::get('member/{member}/edit', [MemberController::class, 'edit'])->name('member.edit');
+    Route::put('member/{member}', [MemberController::class, 'update'])->name('member.update');
+    Route::delete('member/{member}', [MemberController::class, 'destroy'])->name('member.destroy');
 
     // -- TRANSAKSI & LAPORAN --
     Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
