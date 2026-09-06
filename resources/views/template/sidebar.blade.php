@@ -192,6 +192,12 @@
         </div>
 
         <div class="space-y-4 mt-8">
+            <a href="{{ route('profile.edit') }}" class="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] {{ request()->routeIs('profile.*') ? 'border-[#CC9863] bg-[#CC9863] text-white' : 'border-gray-700 text-gray-300 hover:border-[#CC9863] hover:bg-gray-800 hover:text-white' }}">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0"></path>
+                </svg>
+                Profil Saya
+            </a>
             <!-- User Profile -->
             <div class="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-2xl">
                 <div class="flex items-center gap-3">
@@ -237,6 +243,7 @@
                 </summary>
                 <div class="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-xl hidden group-open:block">
                     <p class="px-3 py-2 text-xs text-gray-400">{{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
+                    <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-3 text-sm font-semibold hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Profil Saya</a>
                     @if ($currentRole === 'owner')
                         <a href="{{ route('owner.dashboard') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Dashboard</a>
                         <a href="{{ route('owner.finance.index') }}" class="block rounded-xl px-3 py-3 text-sm hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Laporan Keuangan</a>
