@@ -133,6 +133,32 @@ class PosController extends Controller
         }
     }
 
+    /**
+     * Mencari Member berdasarkan No HP via AJAX
+     */
+    public function searchMember(Request $request)
+    {
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+
+        $member = \App\Models\Member::where('no_telp', $phone)
+                    ->orWhere('no_telp', 'like', "%{$phone}%")
+                    ->first();
+
+        if (!$member) {
+            return response()->json(['success' => true, 'found' => false]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'found'   => true,
+            'member'  => [
+                'id'     => $member->id,
+                'name'   => $member->nama,
+                'points' => $member->poin ?? 0, // Pastikan kolom poin ada di tabel members
+            ]
+        ]);
+    }
+
     public function history(Request $request)
     {
         $kasirId = auth()->id() ?? 3; // Ganti 3 dengan ID kasir default jika auth kosong saat testing

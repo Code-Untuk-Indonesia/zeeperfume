@@ -2,7 +2,11 @@
 @section('title', 'Pembayaran Berhasil')
 
 @section('content')
-<div class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FAFAFA] w-full flex items-center justify-center h-full">
+
+{{-- ========================================================= --}}
+{{-- AREA NON-PRINT (TAMPILAN WEB) --}}
+{{-- ========================================================= --}}
+<div id="non-print-area" class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FAFAFA] w-full flex items-center justify-center h-full">
 
     <div class="bg-white rounded-3xl border border-gray-100 shadow-xl w-full max-w-lg overflow-hidden relative">
 
@@ -58,11 +62,29 @@
                 </button>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <!-- Tombol Kirim WA Dinamis -->
+                    <!-- Tombol Kirim WA Dinamis dengan Teks Rinci -->
                     @php
                         // Format nomor telepon member (ganti 0 di depan jadi 62)
                         $phone = $transaction->member ? preg_replace('/^0/', '62', $transaction->member->no_telp) : '';
-                        $waLink = $phone ? "https://wa.me/{$phone}?text=Halo%20kak,%20berikut%20adalah%20detail%20pembayaran%20Anda%20dengan%20No%20Invoice:%20{$transaction->nomor_nota}" : '#';
+
+                        // Membuat pesan WhatsApp yang Rapi
+                        $waText = "Halo Kak" . ($transaction->member ? " " . $transaction->member->nama : "") . ",\n\n";
+                        $waText .= "Terima kasih telah berbelanja di *ZeePerfume*.\n";
+                        $waText .= "Berikut adalah detail transaksi Anda:\n\n";
+                        $waText .= "🧾 *No. Invoice:* " . $transaction->nomor_nota . "\n";
+                        $waText .= "📅 *Tanggal:* " . \Carbon\Carbon::parse($transaction->tanggal_waktu)->format('d M Y H:i') . "\n";
+                        $waText .= "💳 *Metode:* " . strtoupper($transaction->metode_bayar) . "\n";
+                        $waText .= "🛒 *Total Tagihan:* Rp " . number_format($transaction->total_belanja, 0, ',', '.') . "\n";
+
+                        if($transaction->metode_bayar === 'cash') {
+                            $waText .= "💵 *Uang Diterima:* Rp " . number_format($transaction->nominal_bayar, 0, ',', '.') . "\n";
+                            $waText .= "🔄 *Kembalian:* Rp " . number_format($transaction->kembalian, 0, ',', '.') . "\n";
+                        }
+
+                        $waText .= "\nSemoga harimu menyenangkan! ✨";
+
+                        // Encode text agar aman ditaruh di URL
+                        $waLink = $phone ? "https://wa.me/{$phone}?text=" . urlencode($waText) : '#';
                     @endphp
 
                     <a href="{{ $waLink }}" target="_blank" class="w-full {{ $phone ? 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }} border border-transparent py-3.5 rounded-xl font-bold transition flex justify-center items-center gap-2 text-sm" {!! !$phone ? 'onclick="event.preventDefault(); alert(\'Nomor pelanggan tidak tersedia\');"' : '' !!}>
@@ -79,6 +101,127 @@
 
         </div>
     </div>
-
 </div>
+
+{{-- ========================================================= --}}
+{{-- AREA PRINT (KHUSUS PRINTER THERMAL) --}}
+{{-- ========================================================= --}}
+<div id="receipt-area" class="hidden text-black font-mono text-[12px] leading-tight">
+
+    <!-- Header Struk -->
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h2 style="font-size: 16px; font-weight: bold; margin:0;">ZeePerfume</h2>
+        <p style="margin: 2px 0;">Jl. Contoh Alamat Toko No. 123</p>
+        <p style="margin: 2px 0;">Telp: 0812-3456-7890</p>
+    </div>
+
+    <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px;">
+        <p style="margin: 2px 0;">No   : {{ $transaction->nomor_nota }}</p>
+        <p style="margin: 2px 0;">Tgl  : {{ \Carbon\Carbon::parse($transaction->tanggal_waktu)->format('d/m/Y H:i') }}</p>
+        <p style="margin: 2px 0;">Kasir: {{ $transaction->kasir->nama_lengkap ?? 'Kasir' }}</p>
+        <p style="margin: 2px 0;">Plgn : {{ $transaction->member->nama ?? 'Umum' }}</p>
+    </div>
+
+    <!-- Daftar Item -->
+    <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 4px;">
+        <!-- PASTIKAN ANDA SUDAH ME-LOAD RELATION 'details' PADA CONTROLLER (with('details')) -->
+        @if(isset($transaction->details))
+            @foreach($transaction->details as $item)
+            <div style="margin-bottom: 6px;">
+                <p style="margin: 0; font-weight: bold;">{{ $item->variant->nama_varian ?? 'Nama Produk' }}</p>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>{{ $item->qty }} x {{ number_format($item->harga_satuan, 0, ',', '.') }}</span>
+                    <span>{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                </div>
+            </div>
+            @endforeach
+        @else
+            <!-- Fallback jika detail tidak di-load dari controller -->
+            <div style="display: flex; justify-content: space-between;">
+                <span>Total Item Belanja</span>
+                <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
+            </div>
+        @endif
+    </div>
+
+    <!-- Ringkasan Total -->
+    <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between;">
+            <span>Subtotal</span>
+            <span>{{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
+        </div>
+        @if($transaction->diskon_nominal > 0)
+        <div style="display: flex; justify-content: space-between;">
+            <span>Diskon</span>
+            <span>-{{ number_format($transaction->diskon_nominal, 0, ',', '.') }}</span>
+        </div>
+        @endif
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px; font-size: 14px;">
+            <span>TOTAL</span>
+            <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
+        </div>
+    </div>
+
+    <!-- Pembayaran -->
+    <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between;">
+            <span>Metode</span>
+            <span style="text-transform: uppercase;">{{ $transaction->metode_bayar }}</span>
+        </div>
+        @if($transaction->metode_bayar === 'cash')
+        <div style="display: flex; justify-content: space-between;">
+            <span>Bayar (Tunai)</span>
+            <span>{{ number_format($transaction->nominal_bayar, 0, ',', '.') }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span>Kembali</span>
+            <span>{{ number_format($transaction->kembalian, 0, ',', '.') }}</span>
+        </div>
+        @endif
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 10px;">
+        <p style="margin: 2px 0;">Terima Kasih Atas Kunjungan Anda</p>
+        <p style="margin: 2px 0; font-size: 10px;">Barang yang sudah dibeli</p>
+        <p style="margin: 2px 0; font-size: 10px;">tidak dapat ditukar/dikembalikan</p>
+    </div>
+</div>
+
+<style>
+    /* CSS Khusus untuk mengatur Tampilan Printer Thermal */
+    @media print {
+        /* Reset margin browser */
+        @page {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sembunyikan elemen Web (Sidebar, Background, dll) */
+        body * {
+            visibility: hidden;
+        }
+
+        #non-print-area {
+            display: none !important;
+        }
+
+        /* Hanya tampilkan Struk Thermal (lebar 58mm / 80mm) */
+        #receipt-area, #receipt-area * {
+            visibility: visible;
+        }
+
+        #receipt-area {
+            display: block !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 58mm; /* Lebar default printer kasir kecil */
+            padding: 5mm;
+            background: white !important;
+            color: black !important;
+        }
+    }
+</style>
+
 @endsection

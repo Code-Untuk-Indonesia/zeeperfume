@@ -80,6 +80,7 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
     Route::get('pos/success', [PosController::class, 'success'])->name('pos.success');
     Route::get('transaction', [PosController::class, 'history'])->name('transaction.index');
     Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
+    Route::get('pos/search-member', [PosController::class, 'searchMember'])->name('pos.searchMember');
 
     Route::view('member/create', 'kasir.member.create')->name('member.create');
 });
