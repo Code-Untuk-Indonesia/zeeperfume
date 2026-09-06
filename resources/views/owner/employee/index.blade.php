@@ -48,7 +48,7 @@
     </div>
 
     <!-- Filter Bar Form -->
-    <form id="filter-form" class="bg-white p-4 lg:p-5 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col xl:flex-row gap-4 justify-between items-center">
+    <form id="filter-form" method="GET" action="{{ route('owner.employee.index') }}" class="bg-white p-4 lg:p-5 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col xl:flex-row gap-4 justify-between items-center">
         <!-- Search -->
         <div class="relative w-full xl:w-96 shrink-0">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -79,6 +79,10 @@
         </div>
     </form>
 
+    <p id="filter-error" class="hidden rounded-b-2xl border-x border-b border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">
+        Data pegawai gagal dimuat. Coba ulangi pencarian.
+    </p>
+
     <!-- Table Section Dinamis -->
     <div class="bg-white rounded-b-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 relative">
 
@@ -102,32 +106,39 @@
                 <tbody id="table-body" class="text-sm text-gray-700">
                     <!-- Looping Data Dimasukkan Langsung Disini -->
                     @forelse($employees as $emp)
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                    @php($isActive = (bool) $emp->status_aktif)
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-50 last:border-0 {{ $isActive ? '' : 'bg-gray-50/50' }}">
                         <td class="px-4 md:px-6 py-4 flex items-center gap-3 min-w-[200px]">
-                            <div class="w-10 h-10 rounded-full border border-[#CC9863] bg-orange-50 flex items-center justify-center text-[#CC9863] font-bold shrink-0">
+                            <div class="w-10 h-10 rounded-full border border-[#CC9863] bg-orange-50 flex items-center justify-center text-[#CC9863] font-bold shrink-0 {{ $isActive ? '' : 'opacity-60' }}">
                                 {{ mb_strtoupper(mb_substr($emp->nama_lengkap, 0, 1)) }}
                             </div>
-                            <div>
+                            <div class="{{ $isActive ? '' : 'opacity-60' }}">
                                 <p class="font-bold text-gray-900 truncate max-w-[150px] md:max-w-xs">{{ $emp->nama_lengkap }}</p>
                                 <p class="text-xs text-gray-400">{{ '@' . $emp->username }}</p>
                             </div>
                         </td>
                         <td class="px-4 md:px-6 py-4">
-                            @if(strtolower($emp->role->nama_role ?? '') == 'admin')
+                            @if(strtolower($emp->nama_role ?? '') === 'admin')
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                                    {{ ucfirst($emp->role->nama_role ?? 'Tidak ada') }}
+                                    {{ ucfirst($emp->nama_role ?? 'Tidak ada') }}
                                 </span>
                             @else
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                                    {{ ucfirst($emp->role->nama_role ?? 'Tidak ada') }}
+                                    {{ ucfirst($emp->nama_role ?? 'Tidak ada') }}
                                 </span>
                             @endif
                         </td>
                         <td class="px-4 md:px-6 py-4 font-medium text-gray-600 text-xs sm:text-sm">
-                            {{ $emp->branch ? $emp->branch->nama_cabang : 'Semua Outlet (Pusat)' }}
+                            @if ($emp->nama_cabang)
+                                {{ $emp->nama_cabang }}
+                            @elseif ($emp->cabang_id)
+                                Outlet tidak aktif
+                            @else
+                                Semua Outlet (Pusat)
+                            @endif
                         </td>
                         <td class="px-4 md:px-6 py-4">
-                            @if($emp->status_aktif)
+                            @if($isActive)
                                 <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-wider">Aktif</span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">Non-Aktif</span>
@@ -135,12 +146,26 @@
                         </td>
                         <td class="px-4 md:px-6 py-4 text-center">
                             <div class="flex justify-center gap-1 sm:gap-2">
-                                <a href="#" class="text-gray-400 hover:text-blue-500 transition p-1.5 bg-gray-50 hover:bg-blue-50 rounded-lg" title="Edit Data">
+                                <a href="{{ route('owner.employee.edit', $emp->id) }}" class="text-gray-400 hover:text-blue-500 transition p-1.5 bg-gray-50 hover:bg-blue-50 rounded-lg" title="Edit Data">
                                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
-                                <button class="text-gray-400 hover:text-red-500 transition p-1.5 bg-gray-50 hover:bg-red-50 rounded-lg" title="Nonaktifkan Pegawai">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                </button>
+                                @if ($isActive)
+                                    <form method="POST" action="{{ route('owner.employee.destroy', $emp->id) }}" data-employee-action="delete">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1.5 bg-gray-50 hover:bg-red-50 rounded-lg" title="Nonaktifkan Pegawai">
+                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        </button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('owner.employee.restore', $emp->id) }}" data-employee-action="restore">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-gray-400 hover:text-green-500 transition p-1.5 bg-gray-50 hover:bg-green-50 rounded-lg" title="Aktifkan Kembali">
+                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -165,6 +190,8 @@
     </div>
 </main>
 
+@include('owner.employee.partials.toast')
+
 <!-- SCRIPT AJAX SEARCH & FILTER (TIDAK BUTUH PARTIAL) -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -174,6 +201,7 @@
         const tableBody = document.getElementById('table-body');
         const paginationContainer = document.getElementById('pagination-container');
         const loadingOverlay = document.getElementById('loading-overlay');
+        const filterError = document.getElementById('filter-error');
 
         let timeout = null;
 
@@ -186,8 +214,15 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Gagal memuat data pegawai.');
+                }
+
+                return response.text();
+            })
             .then(html => {
+                filterError.classList.add('hidden');
                 // Parse HTML yg diterima dari server
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
@@ -202,7 +237,10 @@
                 // Update URL di browser bar tanpa refresh
                 window.history.pushState({}, '', url);
             })
-            .catch(error => console.error('Error fetching data:', error))
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                filterError.classList.remove('hidden');
+            })
             .finally(() => {
                 loadingOverlay.classList.add('hidden');
             });

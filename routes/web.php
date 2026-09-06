@@ -62,8 +62,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Menggunakan AdminMemberController
     Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
-    Route::view('member/create', 'admin.member.create')->name('member.create');
-    Route::view('member/edit', 'admin.member.edit')->name('member.edit');
+    Route::get('member/create', [AdminMemberController::class, 'create'])->name('member.create');
+    Route::post('member', [AdminMemberController::class, 'store'])->name('member.store');
+    Route::get('member/{member}/edit', [AdminMemberController::class, 'edit'])->name('member.edit');
+    Route::put('member/{member}', [AdminMemberController::class, 'update'])->name('member.update');
+    Route::delete('member/{member}', [AdminMemberController::class, 'destroy'])->name('member.destroy');
 });
 
 
@@ -97,18 +100,29 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
-    Route::view('employee/create', 'owner.employee.create')->name('employee.create');
-    Route::view('employee/edit', 'owner.employee.edit')->name('employee.edit');
+    Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
+    Route::post('employee', [EmployeeController::class, 'store'])->name('employee.store');
+    Route::get('employee/{employee}/edit', [EmployeeController::class, 'edit'])->name('employee.edit');
+    Route::put('employee/{employee}', [EmployeeController::class, 'update'])->name('employee.update');
+    Route::delete('employee/{employee}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
+    Route::patch('employee/{employee}/restore', [EmployeeController::class, 'restore'])->name('employee.restore');
 
     // -- OUTLET --
     Route::get('outlet', [OutletController::class, 'index'])->name('outlet.index');
-    Route::view('outlet/create', 'owner.outlet.create')->name('outlet.create');
-    Route::view('outlet/edit', 'owner.outlet.edit')->name('outlet.edit');
+    Route::get('outlet/create', [OutletController::class, 'create'])->name('outlet.create');
+    Route::post('outlet', [OutletController::class, 'store'])->name('outlet.store');
+    Route::get('outlet/{outlet}/edit', [OutletController::class, 'edit'])->name('outlet.edit');
+    Route::put('outlet/{outlet}', [OutletController::class, 'update'])->name('outlet.update');
+    Route::delete('outlet/{outlet}', [OutletController::class, 'destroy'])->name('outlet.destroy');
+    Route::patch('outlet/{outlet}/restore', [OutletController::class, 'restore'])->name('outlet.restore');
 
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
-    Route::view('member/create', 'owner.member.create')->name('member.create');
-    Route::view('member/edit', 'owner.member.edit')->name('member.edit');
+    Route::get('member/create', [MemberController::class, 'create'])->name('member.create');
+    Route::post('member', [MemberController::class, 'store'])->name('member.store');
+    Route::get('member/{member}/edit', [MemberController::class, 'edit'])->name('member.edit');
+    Route::put('member/{member}', [MemberController::class, 'update'])->name('member.update');
+    Route::delete('member/{member}', [MemberController::class, 'destroy'])->name('member.destroy');
 
     // -- TRANSAKSI & LAPORAN --
     Route::view('transaction', 'owner.transaction.index')->name('transaction.index');

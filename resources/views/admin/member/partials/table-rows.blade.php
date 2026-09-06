@@ -26,10 +26,10 @@
         <td class="px-4 md:px-6 py-4 font-bold text-[#CC9863]">{{ number_format($member->poin, 0, ',', '.') }} Pts</td>
         <td class="px-4 md:px-6 py-4">
             <div class="flex justify-center gap-2">
-                <a href="{{ route('owner.member.edit', $member->id) }}" class="text-gray-400 hover:text-blue-500 transition p-1.5 bg-gray-50 hover:bg-blue-50 rounded-lg" title="Edit Member">
+                <a href="{{ route('admin.member.edit', $member->id) }}" class="text-gray-400 hover:text-blue-500 transition p-1.5 bg-gray-50 hover:bg-blue-50 rounded-lg" title="Edit Member">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 </a>
-                <form method="POST" action="{{ route('owner.member.destroy', $member->id) }}" data-delete-member>
+                <form method="POST" action="{{ route('admin.member.destroy', $member->id) }}" data-delete-member>
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1.5 bg-gray-50 hover:bg-red-50 rounded-lg" title="Hapus Member">
