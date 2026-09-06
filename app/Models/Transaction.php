@@ -26,6 +26,9 @@ class Transaction extends Model
         'kembalian',
         'metode_bayar',
         'cabang_id',
+        'approval_status',
+        'approval_reason',
+        'approval_by',
     ];
 
     protected function casts(): array
@@ -74,5 +77,14 @@ class Transaction extends Model
     public function stockHistories(): HasMany
     {
         return $this->hasMany(StockHistory::class, 'transaksi_id');
+    }
+    public function kasir(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kasir_id');
+    }
+
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'approval_by');
     }
 }

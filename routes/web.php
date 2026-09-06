@@ -8,6 +8,11 @@ use App\Http\Controllers\Owner\OutletController;
 use App\Http\Controllers\Owner\MemberController; // <-- Tambahan untuk Owner
 use App\Http\Controllers\Admin\OutletController as AdminOutletController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
+use App\Http\Controllers\Admin\StockController as AdminStockController;
+use App\Http\Controllers\Owner\StockController as OwnerStockController;
+use App\Http\Controllers\Owner\FinanceController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Owner\TransactionController as OwnerTransactionController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -52,14 +57,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('outlet/create', 'admin.outlet.create')->name('outlet.create');
     Route::view('outlet/edit', 'admin.outlet.edit')->name('outlet.edit');
 
-    Route::view('stock', 'admin.stock.index')->name('stock.index');
-    Route::view('stock/create', 'admin.stock.create')->name('stock.create');
-    Route::view('stock/edit', 'admin.stock.edit')->name('stock.edit');
+    // Stock CRUD
+    Route::get('stock', [AdminStockController::class, 'index'])->name('stock.index');
+    Route::get('stock/create', [AdminStockController::class, 'create'])->name('stock.create');
+    Route::post('stock/store', [AdminStockController::class, 'store'])->name('stock.store');
+    Route::get('stock/edit/{id}', [AdminStockController::class, 'edit'])->name('stock.edit');
+    Route::post('stock/update/{id}', [AdminStockController::class, 'update'])->name('stock.update');
+    Route::delete('stock/destroy/{id}', [AdminStockController::class, 'destroy'])->name('stock.destroy');
 
-    Route::view('transaction', 'admin.transaction.index')->name('transaction.index');
-    Route::view('transaction/detail', 'admin.transaction.detail')->name('transaction.detail');
-    Route::view('transaction/show', 'admin.transaction.show')->name('transaction.show');
-
+    Route::get('transaction', [AdminTransactionController::class, 'index'])->name('transaction.index');
+Route::post('transaction/request-approval', [AdminTransactionController::class, 'requestApproval'])->name('transaction.request_approval');
+Route::get('transaction/{id}/edit', [AdminTransactionController::class, 'edit'])->name('transaction.edit');
+Route::post('transaction/{id}/update', [AdminTransactionController::class, 'update'])->name('transaction.update');
     // Menggunakan AdminMemberController
     Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
     Route::get('member/create', [AdminMemberController::class, 'create'])->name('member.create');
@@ -76,18 +85,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->group(function () {
-    // Route POS utama menggunakan Controller
     Route::get('pos', [PosController::class, 'index'])->name('pos');
-
     Route::view('pos/custom', 'kasir.pos.custom')->name('pos.custom');
     Route::get('pos/success', [PosController::class, 'success'])->name('pos.success');
     Route::get('transaction', [PosController::class, 'history'])->name('transaction.index');
     Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
     Route::get('pos/search-member', [PosController::class, 'searchMember'])->name('pos.searchMember');
 
-    Route::view('member/create', 'kasir.member.create')->name('member.create');
+    // --- PERBAIKAN ROUTE MEMBER ---
+    Route::get('member/create', [PosController::class, 'createMember'])->name('member.create');
+    Route::post('member/store', [PosController::class, 'storeMember'])->name('member.store');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -97,7 +105,7 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
 Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->group(function () {
 
     Route::get('dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
-
+   Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
     Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
@@ -116,6 +124,15 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::delete('outlet/{outlet}', [OutletController::class, 'destroy'])->name('outlet.destroy');
     Route::patch('outlet/{outlet}/restore', [OutletController::class, 'restore'])->name('outlet.restore');
 
+
+     // STOCK
+    Route::get('stock', [OwnerStockController::class, 'index'])->name('stock.index');
+    Route::get('stock/create', [OwnerStockController::class, 'create'])->name('stock.create');
+    Route::post('stock/store', [OwnerStockController::class, 'store'])->name('stock.store');
+    Route::get('stock/edit/{id}', [OwnerStockController::class, 'edit'])->name('stock.edit');
+    Route::post('stock/update/{id}', [OwnerStockController::class, 'update'])->name('stock.update');
+    Route::delete('stock/destroy/{id}', [OwnerStockController::class, 'destroy'])->name('stock.destroy');
+
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
     Route::get('member/create', [MemberController::class, 'create'])->name('member.create');
@@ -125,7 +142,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::delete('member/{member}', [MemberController::class, 'destroy'])->name('member.destroy');
 
     // -- TRANSAKSI & LAPORAN --
-    Route::view('transaction', 'owner.transaction.index')->name('transaction.index');
-    Route::view('transaction/detail', 'owner.transaction.detail')->name('transaction.detail');
-    Route::view('finance', 'owner.finance.index')->name('finance.index');
+    Route::get('transaction', [OwnerTransactionController::class, 'index'])->name('transaction.index');
+Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
+Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
 });

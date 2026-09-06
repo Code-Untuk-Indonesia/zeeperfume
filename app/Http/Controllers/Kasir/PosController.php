@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Kasir;
 use App\Http\Controllers\Controller;
 use App\Models\BranchStock;
 use App\Models\Category;
+use App\Models\Member;
 use App\Models\Product;
 use App\Models\StockHistory;
 use App\Models\Transaction;
@@ -47,9 +48,9 @@ class PosController extends Controller
             'cart'          => 'required|array',
             'metode_bayar'  => 'required|string',
             'nominal_bayar' => 'required|numeric',
-            'subtotal'      => 'required|numeric',
-            'discount'      => 'required|numeric',
-            'total'         => 'required|numeric',
+            'subtotal'      => 'required|numeric', // Subtotal dasar (sebelum diskon global)
+            'discount'      => 'required|numeric', // Diskon global / tambahan
+            'total'         => 'required|numeric', // Total akhir
         ]);
 
         DB::beginTransaction();
@@ -62,8 +63,15 @@ class PosController extends Controller
             $lastTrx = Transaction::whereDate('tanggal_waktu', $waktu->toDateString())->count();
             $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad($lastTrx + 1, 4, '0', STR_PAD_LEFT);
 
-            // Hitung kembalian
-            $kembalian = max(0, $request->nominal_bayar - $request->total);
+            // Hitung kembalian (hanya jika tunai)
+            $kembalian = strtolower($request->metode_bayar) === 'cash'
+                            ? max(0, $request->nominal_bayar - $request->total)
+                            : 0;
+
+            // Jika metode non-cash, nominal bayar dianggap pas (sama dengan total tagihan)
+            $nominalBayarAsli = strtolower($request->metode_bayar) !== 'cash' && !in_array(strtolower($request->metode_bayar), ['tempo', 'cash_tempo'])
+                                ? $request->total
+                                : $request->nominal_bayar;
 
             // 2. Buat Data Transaksi Induk
             $transaction = Transaction::create([
@@ -71,30 +79,38 @@ class PosController extends Controller
                 'member_id'        => $request->member_id, // Bisa null
                 'nomor_nota'       => $nomorNota,
                 'tanggal_waktu'    => $waktu,
-                'subtotal'         => $request->subtotal,
-                'diskon_persen'    => $request->member_id ? 10 : 0, // Asumsi diskon member 10%
-                'diskon_nominal'   => $request->discount,
-                'deskripsi_diskon' => $request->member_id ? 'Diskon Member' : null,
+                'subtotal'         => $request->subtotal, // Subtotal sebelum diskon global
+                'diskon_persen'    => $request->diskon_persen ?? 0,
+                'diskon_nominal'   => $request->discount, // Total diskon tambahan / poin
+                'deskripsi_diskon' => $request->is_point_used ? 'Tukar Poin Member' : ($request->discount > 0 ? 'Diskon Manual/Persen' : null),
                 'total_belanja'    => $request->total,
-                'nominal_bayar'    => $request->nominal_bayar,
+                'nominal_bayar'    => $nominalBayarAsli,
                 'kembalian'        => $kembalian,
                 'metode_bayar'     => strtolower($request->metode_bayar),
                 'cabang_id'        => $cabangId,
+                // Status approval (default dari migration adalah 'none')
             ]);
 
             // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
             foreach ($request->cart as $item) {
                 $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
                 $hargaSatuan = $item['unit'] === 'ml' ? $item['pricePerMl'] : $item['price'];
-                $subtotalItem = $item['unit'] === 'ml' ? $item['price'] : ($item['price'] * $item['qty']);
 
-                // Insert Detail
+                // Hitung Harga Dasar Item
+                $subtotalItemDasar = $item['unit'] === 'ml' ? $item['price'] : ($hargaSatuan * $item['qty']);
+
+                // Potong dengan diskon per item (jika ada input dari kasir)
+                $diskonItem = $item['itemDiscount'] ?? 0;
+                $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
+
+                // Insert Detail Transaksi
                 TransactionDetail::create([
                     'transaksi_id'  => $transaction->id,
                     'varian_id'     => $item['variantId'],
                     'qty'           => $qtyOrMl,
                     'harga_satuan'  => $hargaSatuan,
-                    'subtotal'      => $subtotalItem,
+                    // Opsional: Jika Anda punya kolom 'diskon' di tabel transaction_details, simpan $diskonItem di sana.
+                    'subtotal'      => $subtotalFinalItem,
                 ]);
 
                 // Kurangi Stok Cabang
@@ -118,6 +134,29 @@ class PosController extends Controller
                 ]);
             }
 
+            // 4. Catatan Piutang jika Metode Kasbon/Tempo
+            if (in_array(strtolower($request->metode_bayar), ['tempo', 'cash_tempo'])) {
+                $sisaPiutang = max(0, $request->total - $request->nominal_bayar);
+                $tanggalJatuhTempo = $request->cash_tempo['tanggal_jatuh_tempo'] ?? Carbon::now()->addDays(7)->format('Y-m-d');
+
+                \App\Models\CashTempo::create([
+                    'transaksi_id'        => $transaction->id,
+                    'total_hutang'        => $request->total,
+                    'jumlah_bayar'        => $request->nominal_bayar,
+                    'sisa_piutang'        => $sisaPiutang,
+                    'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
+                    'status'              => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas'
+                ]);
+            }
+
+            // 5. Potong Poin Member (Jika menggunakan opsi Tukar Poin)
+            if ($request->member_id && $request->is_point_used && $request->used_points > 0) {
+                $member = Member::find($request->member_id);
+                if ($member) {
+                    $member->decrement('poin', $request->used_points);
+                }
+            }
+
             DB::commit();
 
             // Kembalikan response sukses beserta ID transaksi untuk dicetak di halaman success
@@ -132,7 +171,6 @@ class PosController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-
     /**
      * Mencari Member berdasarkan No HP via AJAX
      */
@@ -157,6 +195,46 @@ class PosController extends Controller
                 'points' => $member->poin ?? 0, // Pastikan kolom poin ada di tabel members
             ]
         ]);
+    }
+
+    /**
+     * Menampilkan form tambah member dari kasir
+     */
+    public function createMember()
+    {
+        return view('kasir.member.create');
+    }
+
+    /**
+     * Memproses penyimpanan data member baru
+     */
+    public function storeMember(Request $request)
+    {
+        // 1. Validasi Input (Menyesuaikan dengan "name" di HTML Anda)
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:members,no_telp', // Nomor tidak boleh kembar
+        ], [
+            'phone.unique' => 'Nomor HP ini sudah terdaftar sebagai member.',
+        ]);
+
+        // 2. Buat ID Member (Contoh: MEM-20260906-001)
+        $lastMember = Member::latest('id')->first();
+        $nextId = $lastMember ? $lastMember->id + 1 : 1;
+        $kodeMember = 'MEM-' . date('Ymd') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
+
+        // 3. Simpan ke Database
+        Member::create([
+            'kode_member' => $kodeMember,
+            'nama'        => $request->name,
+            'no_telp'     => $request->phone,
+            'poin'        => 0, // Member baru poinnya 0
+            'status'      => 'aktif'
+        ]);
+
+        // 4. Arahkan kembali ke halaman POS dengan pesan sukses
+        // NOTE: Kasir bisa menangkap session 'success' ini menggunakan Javascript alert jika diperlukan
+        return redirect()->route('kasir.pos')->with('success', 'Member baru berhasil didaftarkan!');
     }
 
     public function history(Request $request)
@@ -217,6 +295,8 @@ class PosController extends Controller
 
         return view('kasir.pos.success', compact('transaction'));
     }
+
+
 }
 
 
