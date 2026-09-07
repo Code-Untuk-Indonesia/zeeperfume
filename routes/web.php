@@ -14,6 +14,7 @@ use App\Http\Controllers\Owner\StockController as OwnerStockController;
 use App\Http\Controllers\Owner\FinanceController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Owner\TransactionController as OwnerTransactionController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -56,7 +57,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::view('dashboard', 'admin.dashboard')->name('dashboard');
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Menggunakan AdminOutletController
     Route::get('outlet', [AdminOutletController::class, 'index'])->name('outlet.index');

@@ -77,7 +77,6 @@
                         </svg>
                         Dashboard
                     </a>
-
                     <a href="{{ url('owner/finance') }}"
                         class="{{ request()->is('owner/finance*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +86,6 @@
                         </svg>
                         Laporan Keuangan
                     </a>
-
                     <a href="{{ url('owner/transaction') }}"
                         class="{{ request()->is('owner/transaction*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,41 +97,40 @@
                     </a>
 
                     <!-- GRUP DATA MASTER (OWNER) -->
-                    <details class="group"
-                        {{ request()->is('owner/employee*') || request()->is('owner/member*') || request()->is('owner/outlet*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('owner/employee*') || request()->is('owner/member*') || request()->is('owner/outlet*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Data Master</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ url('owner/employee') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/employee*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Manajemen
-                                Pegawai</a>
-                            <a href="{{ url('owner/member') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/member*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Member</a>
-                            <a href="{{ url('owner/outlet') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/outlet*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Outlet</a>
-                        </div>
-                    </details>
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Data Master
+                    </p>
+                    <a href="{{ url('owner/employee') }}"
+                        class="{{ request()->is('owner/employee*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                        Manajemen Pegawai
+                    </a>
+                    <a href="{{ url('owner/outlet') }}"
+                        class="{{ request()->is('owner/outlet*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                            </path>
+                        </svg>
+                        Kelola Outlet
+                    </a>
+                    <a href="{{ url('owner/member') }}"
+                        class="{{ request()->is('owner/member*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Kelola Member
+                    </a>
                 @endif
 
                 <!-- ================= MENU ADMIN ================= -->
                 @if ($currentRole === 'admin')
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Admin
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Utama
                     </p>
 
                     <a href="{{ url('admin/dashboard') }}"
@@ -147,63 +144,46 @@
                     </a>
 
                     <!-- GRUP TRANSAKSI (ADMIN) -->
-                    <details class="group" {{ request()->is('admin/transaction*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/transaction*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Transaksi</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ route('admin.transaction.online') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/transaction/online') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">
-                                Buat Pesanan Online
-                            </a>
-                            <a href="{{ url('admin/transaction') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/transaction') || request()->is('admin/transaction/*/detail') || request()->is('admin/transaction/*/edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">
-                                Riwayat Transaksi
-                            </a>
-                        </div>
-                    </details>
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Transaksi</p>
+                    <a href="{{ route('admin.transaction.online') }}"
+                        class="{{ request()->routeIs('admin.transaction.online') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Buat Pesanan Online
+                    </a>
+                    <a href="{{ route('admin.transaction.index') }}"
+                        class="{{ request()->routeIs('admin.transaction.index') || request()->routeIs('admin.transaction.show') || request()->routeIs('admin.transaction.edit') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Riwayat Transaksi
+                    </a>
 
                     <!-- GRUP DATA MASTER (ADMIN) -->
-                    <details class="group"
-                        {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Data Master</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ url('admin/stock') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/stock*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Stok Barang</a>
-                            <a href="{{ url('admin/member') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/member*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Member</a>
-                        </div>
-                    </details>
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Data Master
+                    </p>
+                    <a href="{{ url('admin/stock') }}"
+                        class="{{ request()->is('admin/stock*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        Kelola Stok Barang
+                    </a>
+                    <a href="{{ url('admin/member') }}"
+                        class="{{ request()->is('admin/member*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Kelola Member
+                    </a>
                 @endif
 
                 <!-- ================= MENU KASIR ================= -->
@@ -234,19 +214,16 @@
             </nav>
         </div>
 
-        <div class="space-y-4 mt-8">
-<<<<<<< HEAD
-            <div class="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-2xl bg-gray-800/30">
-=======
-            <a href="{{ route('profile.edit') }}" class="flex min-h-11 items-center gap-3 rounded-xl border px-4 py-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] {{ request()->routeIs('profile.*') ? 'border-[#CC9863] bg-[#CC9863] text-white' : 'border-gray-700 text-gray-300 hover:border-[#CC9863] hover:bg-gray-800 hover:text-white' }}">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0"></path>
+        <div class="space-y-4 mt-8 border-t border-gray-700 pt-4">
+            <a href="{{ route('profile.edit') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm font-medium {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 Profil Saya
             </a>
-            <!-- User Profile -->
-            <div class="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-2xl">
->>>>>>> f5d27f239bbb58b32e69159d6b19e52e88bd559b
+            <div class="flex items-center justify-between gap-3 p-3 bg-gray-800/50 rounded-2xl border border-gray-700">
                 <div class="flex items-center gap-3">
                     <div
                         class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white shadow-inner">
@@ -299,14 +276,14 @@
                             d="M4 6h16M4 12h16m-7 6h7"></path>
                     </svg>
                 </summary>
-<<<<<<< HEAD
 
                 <div
-                    class="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-2xl hidden group-open:block">
+                    class="absolute right-0 top-14 z-50 w-64 rounded-3xl border border-gray-700 bg-[#1C1D21] p-3 shadow-2xl hidden group-open:block">
+                    <!-- User Header -->
                     <div
-                        class="px-3 py-3 border-b border-gray-700 mb-2 bg-gray-800/50 rounded-xl flex items-center gap-3">
+                        class="px-3 py-3 border-b border-gray-700 mb-3 bg-gray-800/50 rounded-2xl flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-full border border-[#CC9863] bg-gray-700 flex items-center justify-center text-xs font-bold text-white">
+                            class="w-10 h-10 rounded-full border border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white">
                             {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
                         </div>
                         <div>
@@ -316,11 +293,10 @@
                         </div>
                     </div>
 
-=======
-                <div class="absolute right-0 top-14 z-50 w-64 rounded-2xl border border-gray-700 bg-[#1C1D21] p-2 shadow-xl hidden group-open:block">
-                    <p class="px-3 py-2 text-xs text-gray-400">{{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
-                    <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-3 text-sm font-semibold hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:outline-none">Profil Saya</a>
->>>>>>> f5d27f239bbb58b32e69159d6b19e52e88bd559b
+                    <a href="{{ route('profile.edit') }}"
+                        class="block rounded-xl px-3 py-2.5 text-sm font-semibold mb-2 transition-colors {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }}">Profil
+                        Saya</a>
+
                     @if ($currentRole === 'owner')
                         <a href="{{ route('owner.dashboard') }}"
                             class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Dashboard</a>
@@ -350,7 +326,7 @@
                         <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-3 mb-1">
                             Transaksi</p>
                         <a href="{{ route('admin.transaction.online') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm text-[#CC9863] font-bold hover:bg-gray-800">Buat
+                            class="block rounded-xl px-3 py-2.5 text-sm font-bold {{ request()->routeIs('admin.transaction.online') ? 'text-white bg-[#CC9863]' : 'text-[#CC9863] hover:bg-gray-800' }}">Buat
                             Pesanan Online</a>
                         <a href="{{ route('admin.transaction.index') }}"
                             class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Riwayat
@@ -366,7 +342,7 @@
                             Member</a>
                     @elseif ($currentRole === 'kasir')
                         <a href="{{ route('kasir.pos') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm text-[#CC9863] font-bold bg-gray-800/50">Buka
+                            class="block rounded-xl px-3 py-2.5 text-sm font-bold {{ request()->is('kasir/pos') ? 'bg-[#CC9863] text-white' : 'text-[#CC9863] bg-gray-800/50' }}">Buka
                             POS Kasir</a>
                         <a href="{{ route('kasir.transaction.index') }}"
                             class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300 mt-1">Riwayat
@@ -376,7 +352,7 @@
                     <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-700 pt-2">
                         @csrf
                         <button type="submit"
-                            class="w-full text-left rounded-xl px-3 py-2.5 text-sm text-red-400 font-bold hover:bg-red-500/10">Keluar
+                            class="w-full text-left rounded-xl px-3 py-2.5 text-sm text-red-400 font-bold hover:bg-red-500/10 transition-colors">Keluar
                             Sistem</button>
                     </form>
                 </div>
