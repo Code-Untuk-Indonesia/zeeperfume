@@ -149,6 +149,12 @@
                         {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'K' }}
                     </div>
 
+                    <a href="{{ route('profile.edit') }}"
+                        class="hidden min-h-10 items-center justify-center rounded-xl px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] md:flex {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
+                        aria-label="Buka profil saya">
+                        Profil
+                    </a>
+
                     <div class="hidden lg:block w-px h-7 bg-gray-700"></div>
 
                     <!-- Logout Desktop -->
@@ -199,6 +205,15 @@
                             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span class="text-[10px] sm:text-xs font-bold">Riwayat</span>
+                </a>
+
+                <a href="{{ route('profile.edit') }}"
+                    class="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] {{ request()->routeIs('profile.*') ? 'bg-[#CC9863]/10 text-[#CC9863]' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700' }}"
+                    aria-label="Buka profil saya">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0"></path>
+                    </svg>
+                    <span class="text-[10px] sm:text-xs font-bold">Profil</span>
                 </a>
 
                 <!-- LOGOUT -->
