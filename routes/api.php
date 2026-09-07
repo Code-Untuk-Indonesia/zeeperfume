@@ -14,10 +14,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Endpoint Auth
     Route::post('logout', [AuthController::class, 'logout']);
 
-    // Endpoint Master Data Parfum
-    Route::apiResource('products', ProductController::class);
+    // Endpoint Produk
+    // apiResource otomatis mengarahkan method GET /products ke fungsi index()
+    Route::apiResource('products', ProductController::class)->only(['index']);
 
     // Endpoint Transaksi / Kasir
-    Route::post('checkout', [TransactionController::class, 'checkout']);
+    Route::post('checkout', [TransactionController::class, 'store']); // Ganti method ke store() sesuai controller baru
+    Route::get('transactions/history', [TransactionController::class, 'history']); // Menampilkan riwayat hari ini
+    Route::get('transactions/{id}', [TransactionController::class, 'show']); // Menampilkan detail transaksi spesifik
+
+    // Endpoint Member
+    Route::post('members/search', [TransactionController::class, 'searchMember']); // Mencari member berdasarkan no HP
 
 });
