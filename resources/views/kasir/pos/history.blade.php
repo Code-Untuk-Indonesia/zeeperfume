@@ -110,10 +110,14 @@
                         <td class="px-6 py-4 text-right font-bold text-gray-900">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex justify-center gap-2">
-                                <button class="text-[#CC9863] bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition" title="Lihat Detail Produk">Detail</button>
-                                <button class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="Cetak Struk Lagi">
+                                <button type="button" onclick="openTransactionDetail({{ $trx->id }})"
+                                    class="text-[#CC9863] bg-orange-50 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:ring-offset-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                                    title="Lihat detail transaksi" aria-label="Lihat detail transaksi {{ $trx->nomor_nota }}">Detail</button>
+                                <a href="{{ url('kasir/pos/success?trx_id=' . $trx->id) }}" target="_blank" rel="noopener"
+                                    class="text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                                    title="Cetak struk lagi" aria-label="Cetak struk {{ $trx->nomor_nota }}">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak
-                                </button>
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -135,8 +139,224 @@
     </div>
 </div>
 
+<!-- DETAIL TRANSAKSI -->
+<div id="transaction-detail-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+    aria-hidden="true" onclick="if (event.target === this) closeTransactionDetail()">
+    <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+        role="dialog" aria-modal="true" aria-labelledby="transaction-detail-title">
+        <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-[#CC9863]">Rincian transaksi</p>
+                <h2 id="transaction-detail-title" class="mt-1 text-xl font-extrabold text-gray-900">Detail transaksi</h2>
+            </div>
+            <button type="button" onclick="closeTransactionDetail()"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863]"
+                aria-label="Tutup detail transaksi">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="transaction-detail-content" class="max-h-[calc(90vh-8rem)] overflow-y-auto px-5 py-5 sm:px-6" aria-live="polite">
+            <div class="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-gray-500">
+                <svg class="h-5 w-5 animate-spin text-[#CC9863]" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                Memuat detail transaksi...
+            </div>
+        </div>
+
+        <div class="flex justify-end border-t border-gray-100 bg-gray-50/70 px-5 py-3 sm:px-6">
+            <button type="button" onclick="closeTransactionDetail()"
+                class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- SCRIPT AJAX SEARCH & FILTER -->
 <script>
+    const transactionDetailModal = document.getElementById('transaction-detail-modal');
+    const transactionDetailContent = document.getElementById('transaction-detail-content');
+    const transactionDetailUrl = '{{ url('kasir/transaction') }}';
+    let transactionDetailPreviousFocus = null;
+
+    function formatTransactionCurrency(value) {
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(value) || 0);
+    }
+
+    function escapeTransactionHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function transactionMethodLabel(method) {
+        return {
+            cash: 'Tunai',
+            qris: 'QRIS',
+            transfer: 'Transfer Bank',
+            tempo: 'Tempo',
+            cash_tempo: 'Tempo',
+        }[method] || method || '-';
+    }
+
+    function transactionDateLabel(value) {
+        if (!value) return '-';
+
+        const date = new Date(String(value).replace(' ', 'T'));
+        if (Number.isNaN(date.getTime())) return value;
+
+        return new Intl.DateTimeFormat('id-ID', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        }).format(date) + ' WIB';
+    }
+
+    function transactionStatusMarkup(transaction) {
+        const tempo = transaction.cash_tempo;
+        const isTempo = ['tempo', 'cash_tempo'].includes(transaction.metode_bayar);
+        const isUnpaid = isTempo && tempo && Number(tempo.sisa_piutang) > 0;
+        const label = isUnpaid ? 'Belum lunas' : 'Lunas';
+        const classes = isUnpaid ? 'bg-red-50 text-red-700 border-red-100' : 'bg-green-50 text-green-700 border-green-100';
+
+        return `<span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${classes}">${label}</span>`;
+    }
+
+    function renderTransactionDetail(transaction) {
+        const details = Array.isArray(transaction.details) ? transaction.details : [];
+        const member = transaction.member;
+        const tempo = transaction.cash_tempo;
+        const shipment = transaction.shipment;
+        const detailRows = details.length
+            ? details.map((item) => {
+                const productName = item.nama_produk || 'Produk';
+                const variantName = item.nama_varian || 'Varian tidak tersedia';
+                const unit = item.satuan || 'pcs';
+                const discount = Number(item.diskon_satuan) || 0;
+
+                return `
+                    <div class="flex items-start justify-between gap-4 border-b border-gray-100 py-3 last:border-b-0">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-gray-900">${escapeTransactionHtml(productName)} · ${escapeTransactionHtml(variantName)}</p>
+                            <p class="mt-1 text-xs text-gray-500">${escapeTransactionHtml(item.qty)} ${escapeTransactionHtml(unit)} × ${formatTransactionCurrency(item.harga_satuan)}</p>
+                            ${discount > 0 ? `<p class="mt-1 text-xs font-semibold text-red-600">Diskon ${formatTransactionCurrency(discount)}</p>` : ''}
+                        </div>
+                        <p class="shrink-0 text-sm font-extrabold text-gray-900">${formatTransactionCurrency(item.subtotal)}</p>
+                    </div>`;
+            }).join('')
+            : '<p class="py-6 text-center text-sm text-gray-500">Detail produk tidak tersedia.</p>';
+
+        const tempoMarkup = tempo ? `
+            <div class="mt-4 rounded-xl border border-red-100 bg-red-50/70 p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs font-extrabold uppercase tracking-wide text-red-700">Informasi tempo</p>
+                    ${transactionStatusMarkup(transaction)}
+                </div>
+                <div class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                    <div><p class="text-xs text-red-600">Jatuh tempo</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(tempo.tanggal_jatuh_tempo || '-')}</p></div>
+                    <div><p class="text-xs text-red-600">Jumlah piutang</p><p class="mt-1 font-bold text-gray-900">${formatTransactionCurrency(tempo.jumlah_piutang)}</p></div>
+                    <div><p class="text-xs text-red-600">Sisa piutang</p><p class="mt-1 font-bold text-gray-900">${formatTransactionCurrency(tempo.sisa_piutang)}</p></div>
+                </div>
+            </div>` : '';
+
+        const shipmentMarkup = shipment ? `
+            <div class="mt-4 rounded-xl border border-orange-100 bg-orange-50/70 p-4">
+                <p class="text-xs font-extrabold uppercase tracking-wide text-orange-700">Informasi pengiriman</p>
+                <div class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                    <div><p class="text-xs text-gray-500">Penerima</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(shipment.nama_penerima)}</p></div>
+                    <div><p class="text-xs text-gray-500">Kurir</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(shipment.jenis_pengiriman || '-')}</p></div>
+                    <div><p class="text-xs text-gray-500">Nomor resi</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(shipment.no_resi || 'Belum diinput')}</p></div>
+                    <div><p class="text-xs text-gray-500">Telepon</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(shipment.no_telepon_penerima || '-')}</p></div>
+                </div>
+                <p class="mt-3 text-sm leading-relaxed text-gray-700">${escapeTransactionHtml(shipment.alamat_tujuan || '-')}</p>
+            </div>` : '';
+
+        transactionDetailContent.innerHTML = `
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500">${escapeTransactionHtml(transaction.nomor_nota)}</p>
+                    <p class="mt-1 text-sm text-gray-500">${escapeTransactionHtml(transactionDateLabel(transaction.tanggal_waktu))}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">${escapeTransactionHtml(transactionMethodLabel(transaction.metode_bayar))}</span>
+                    ${transactionStatusMarkup(transaction)}
+                </div>
+            </div>
+
+            <div class="mt-5 grid grid-cols-1 gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4 text-sm sm:grid-cols-2">
+                <div><p class="text-xs text-gray-500">Pelanggan</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(member?.nama || 'Pelanggan Umum')}</p></div>
+                <div><p class="text-xs text-gray-500">Nomor telepon</p><p class="mt-1 font-bold text-gray-900">${escapeTransactionHtml(member?.no_telp || '-')}</p></div>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="text-xs font-extrabold uppercase tracking-wide text-gray-500">Daftar produk</h3>
+                <div class="mt-2 rounded-xl border border-gray-100 px-4">${detailRows}</div>
+            </div>
+
+            <div class="mt-5 space-y-2 border-t border-gray-100 pt-4 text-sm">
+                <div class="flex justify-between gap-4 text-gray-600"><span>Subtotal</span><span class="font-semibold text-gray-900">${formatTransactionCurrency(transaction.subtotal)}</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Diskon</span><span class="font-semibold text-red-600">- ${formatTransactionCurrency(transaction.diskon_nominal)}</span></div>
+                <div class="flex justify-between gap-4 border-t border-gray-100 pt-3 text-base"><span class="font-extrabold text-gray-900">Total</span><span class="font-black text-[#CC9863]">${formatTransactionCurrency(transaction.total_belanja)}</span></div>
+                <div class="flex justify-between gap-4 text-gray-600"><span>Dibayar</span><span class="font-semibold text-gray-900">${formatTransactionCurrency(transaction.nominal_bayar)}</span></div>
+                ${Number(transaction.kembalian) > 0 ? `<div class="flex justify-between gap-4 text-gray-600"><span>Kembalian</span><span class="font-semibold text-green-600">${formatTransactionCurrency(transaction.kembalian)}</span></div>` : ''}
+            </div>
+
+            ${tempoMarkup}
+            ${shipmentMarkup}`;
+    }
+
+    function openTransactionDetail(transactionId) {
+        transactionDetailPreviousFocus = document.activeElement;
+        transactionDetailModal.classList.remove('hidden');
+        transactionDetailModal.classList.add('flex');
+        transactionDetailModal.setAttribute('aria-hidden', 'false');
+        transactionDetailModal.querySelector('button[aria-label="Tutup detail transaksi"]').focus();
+        transactionDetailContent.innerHTML = `
+            <div class="flex items-center justify-center gap-3 py-12 text-sm font-semibold text-gray-500">
+                <svg class="h-5 w-5 animate-spin text-[#CC9863]" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                Memuat detail transaksi...
+            </div>`;
+
+        fetch(`${transactionDetailUrl}/${transactionId}/detail`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (!response.ok || !data.success) throw new Error(data.message || 'Detail transaksi tidak dapat dimuat.');
+                renderTransactionDetail(data.data);
+            })
+            .catch(error => {
+                transactionDetailContent.innerHTML = `
+                    <div class="py-10 text-center">
+                        <p class="text-sm font-bold text-red-600">${escapeTransactionHtml(error.message)}</p>
+                        <button type="button" onclick="openTransactionDetail(${transactionId})" class="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2">Coba lagi</button>
+                    </div>`;
+            });
+    }
+
+    function closeTransactionDetail() {
+        transactionDetailModal.classList.add('hidden');
+        transactionDetailModal.classList.remove('flex');
+        transactionDetailModal.setAttribute('aria-hidden', 'true');
+
+        if (transactionDetailPreviousFocus && typeof transactionDetailPreviousFocus.focus === 'function') {
+            transactionDetailPreviousFocus.focus();
+        }
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !transactionDetailModal.classList.contains('hidden')) {
+            closeTransactionDetail();
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById('search-input');
         const metodeFilter = document.getElementById('metode-filter');

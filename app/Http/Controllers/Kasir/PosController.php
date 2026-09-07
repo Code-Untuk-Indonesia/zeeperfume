@@ -252,7 +252,7 @@ class PosController extends Controller
         $totalTransaksi = (clone $baseQuery)->count();
         $tunai = (clone $baseQuery)->where('metode_bayar', 'cash')->sum('total_belanja');
         $qrisTransfer = (clone $baseQuery)->whereIn('metode_bayar', ['qris', 'transfer'])->sum('total_belanja');
-        $tempo = (clone $baseQuery)->where('metode_bayar', 'tempo')->sum('total_belanja');
+        $tempo = (clone $baseQuery)->whereIn('metode_bayar', ['tempo', 'cash_tempo'])->sum('total_belanja');
 
         // 2. Terapkan Filter Pencarian & Dropdown untuk Tabel
         $query = clone $baseQuery;
@@ -264,6 +264,8 @@ class PosController extends Controller
         if ($request->filled('metode')) {
             if ($request->metode === 'qris_transfer') {
                 $query->whereIn('metode_bayar', ['qris', 'transfer']);
+            } elseif ($request->metode === 'tempo') {
+                $query->whereIn('metode_bayar', ['tempo', 'cash_tempo']);
             } elseif ($request->metode !== 'semua') {
                 $query->where('metode_bayar', $request->metode);
             }
@@ -279,6 +281,67 @@ class PosController extends Controller
     }
 
     /**
+     * Mengambil detail satu transaksi milik kasir yang sedang login.
+     */
+    public function detail(int $transactionId)
+    {
+        $kasirId = auth()->id() ?? 3;
+
+        $transaction = DB::table('transactions')
+            ->where('transactions.id', $transactionId)
+            ->where('transactions.kasir_id', $kasirId)
+            ->first();
+
+        if ($transaction === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan atau bukan milik kasir ini.',
+            ], 404);
+        }
+
+        $transaction->member = $transaction->member_id === null
+            ? null
+            : DB::table('members')
+                ->where('id', $transaction->member_id)
+                ->whereNull('deleted_at')
+                ->first(['id', 'kode_member', 'nama', 'no_telp']);
+
+        $transaction->cash_tempo = DB::table('cash_tempo')
+            ->where('transaksi_id', $transaction->id)
+            ->first();
+
+        $transaction->shipment = DB::table('shipments')
+            ->where('transaksi_id', $transaction->id)
+            ->first();
+
+        $transaction->details = DB::table('transaction_details')
+            ->leftJoin('produk_varian', 'produk_varian.id', '=', 'transaction_details.varian_id')
+            ->leftJoin('products', 'products.id', '=', 'produk_varian.produk_id')
+            ->where('transaction_details.transaksi_id', $transaction->id)
+            ->orderBy('transaction_details.id')
+            ->select([
+                'transaction_details.id',
+                'transaction_details.varian_id',
+                'transaction_details.qty',
+                'transaction_details.harga_satuan',
+                'transaction_details.diskon_persen',
+                'transaction_details.diskon_satuan',
+                'transaction_details.catatan_diskon',
+                'transaction_details.subtotal',
+                'produk_varian.sku',
+                'produk_varian.nama_varian',
+                'produk_varian.satuan',
+                'products.nama_produk',
+            ])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaction,
+        ]);
+    }
+
+    /**
      * Menampilkan halaman sukses setelah pembayaran
      */
     public function success(Request $request)
@@ -291,12 +354,18 @@ class PosController extends Controller
         }
 
         // Ambil data transaksi beserta data member (jika ada)
-        $transaction = Transaction::with('member')->findOrFail($trxId);
+        $kasirId = auth()->id() ?? 3;
+        $transaction = Transaction::with([
+            'member',
+            'cashier',
+            'branch',
+            'details.variant.product',
+            'cashTempo',
+            'shipment',
+        ])->where('kasir_id', $kasirId)->findOrFail($trxId);
 
         return view('kasir.pos.success', compact('transaction'));
     }
 
 
 }
-
-

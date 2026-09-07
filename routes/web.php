@@ -100,6 +100,7 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
     Route::view('pos/custom', 'kasir.pos.custom')->name('pos.custom');
     Route::get('pos/success', [PosController::class, 'success'])->name('pos.success');
     Route::get('transaction', [PosController::class, 'history'])->name('transaction.index');
+    Route::get('transaction/{transactionId}/detail', [PosController::class, 'detail'])->name('transaction.detail');
     Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
     Route::get('pos/search-member', [PosController::class, 'searchMember'])->name('pos.searchMember');
 
