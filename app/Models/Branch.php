@@ -32,4 +32,9 @@ class Branch extends Model
     {
         return $this->hasMany(StockHistory::class, 'cabang_id');
     }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'cabang_id');
+    }
 }
