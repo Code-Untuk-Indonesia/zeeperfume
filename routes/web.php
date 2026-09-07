@@ -66,9 +66,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('stock/destroy/{id}', [AdminStockController::class, 'destroy'])->name('stock.destroy');
 
     Route::get('transaction', [AdminTransactionController::class, 'index'])->name('transaction.index');
-Route::post('transaction/request-approval', [AdminTransactionController::class, 'requestApproval'])->name('transaction.request_approval');
-Route::get('transaction/{id}/edit', [AdminTransactionController::class, 'edit'])->name('transaction.edit');
-Route::post('transaction/{id}/update', [AdminTransactionController::class, 'update'])->name('transaction.update');
+    Route::post('transaction/request-approval', [AdminTransactionController::class, 'requestApproval'])->name('transaction.request_approval');
+    Route::get('transaction/{id}/edit', [AdminTransactionController::class, 'edit'])->name('transaction.edit');
+    Route::post('transaction/{id}/update', [AdminTransactionController::class, 'update'])->name('transaction.update');
+    Route::get('transaction/online', [AdminTransactionController::class, 'createOnline'])->name('transaction.online');
+    Route::get('transaction/search-product', [AdminTransactionController::class, 'searchProduct'])->name('transaction.search_product');
+    Route::post('transaction/online/store', [AdminTransactionController::class, 'storeOnline'])->name('transaction.store_online');
+    Route::get('transaction/{id}/detail', [AdminTransactionController::class, 'show'])->name('transaction.show');
+
     // Menggunakan AdminMemberController
     Route::get('member', [AdminMemberController::class, 'index'])->name('member.index');
     Route::get('member/create', [AdminMemberController::class, 'create'])->name('member.create');
@@ -105,7 +110,7 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
 Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->group(function () {
 
     Route::get('dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
-   Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+    Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
     Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
@@ -125,7 +130,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::patch('outlet/{outlet}/restore', [OutletController::class, 'restore'])->name('outlet.restore');
 
 
-     // STOCK
+    // STOCK
     Route::get('stock', [OwnerStockController::class, 'index'])->name('stock.index');
     Route::get('stock/create', [OwnerStockController::class, 'create'])->name('stock.create');
     Route::post('stock/store', [OwnerStockController::class, 'store'])->name('stock.store');
@@ -143,6 +148,6 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- TRANSAKSI & LAPORAN --
     Route::get('transaction', [OwnerTransactionController::class, 'index'])->name('transaction.index');
-Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
-Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
+    Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
+    Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
 });
