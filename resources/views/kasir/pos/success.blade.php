@@ -31,7 +31,7 @@
             <div class="w-full bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-sm font-semibold text-gray-500">Metode Bayar</span>
-                    <span class="text-sm font-bold text-gray-900 uppercase">{{ $transaction->metode_bayar }}</span>
+                    <span class="text-sm font-bold text-gray-900 uppercase">{{ $transaction->metode_bayar === 'cash_tempo' ? 'TEMPO' : $transaction->metode_bayar }}</span>
                 </div>
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-sm font-semibold text-gray-500">Total Tagihan</span>
@@ -45,11 +45,28 @@
                 </div>
                 @endif
 
+                @if($transaction->cashTempo)
+                <div class="mb-4 rounded-xl border border-red-100 bg-red-50/70 p-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-semibold text-red-700">Pembayaran Awal</span>
+                        <span class="font-bold text-gray-900">Rp {{ number_format($transaction->nominal_bayar, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 text-sm">
+                        <span class="font-semibold text-red-700">Jatuh Tempo</span>
+                        <span class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($transaction->cashTempo->tanggal_jatuh_tempo)->translatedFormat('d M Y') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 text-sm">
+                        <span class="font-semibold text-red-700">Sisa Piutang</span>
+                        <span class="font-bold text-red-700">Rp {{ number_format($transaction->cashTempo->sisa_piutang, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                @endif
+
                 <div class="w-full h-px bg-gray-200 border-dashed border-b border-gray-300 mb-4"></div>
 
-                <div class="flex justify-between items-center {{ $transaction->kembalian > 0 ? 'bg-green-50/50 border-green-100 text-green-600' : 'bg-gray-100 border-gray-200 text-gray-700' }} p-3 rounded-xl border">
-                    <span class="text-sm font-bold">Kembalian</span>
-                    <span class="text-2xl font-extrabold">Rp {{ number_format($transaction->kembalian, 0, ',', '.') }}</span>
+                <div class="flex justify-between items-center {{ $transaction->cashTempo && $transaction->cashTempo->sisa_piutang > 0 ? 'bg-red-50/50 border-red-100 text-red-600' : 'bg-green-50/50 border-green-100 text-green-600' }} p-3 rounded-xl border">
+                    <span class="text-sm font-bold">{{ $transaction->cashTempo ? 'Sisa Piutang' : 'Kembalian' }}</span>
+                    <span class="text-2xl font-extrabold">Rp {{ number_format($transaction->cashTempo ? $transaction->cashTempo->sisa_piutang : $transaction->kembalian, 0, ',', '.') }}</span>
                 </div>
             </div>
 
@@ -166,7 +183,7 @@
     <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px;">
         <div style="display: flex; justify-content: space-between;">
             <span>Metode</span>
-            <span style="text-transform: uppercase;">{{ $transaction->metode_bayar }}</span>
+            <span style="text-transform: uppercase;">{{ $transaction->metode_bayar === 'cash_tempo' ? 'TEMPO' : $transaction->metode_bayar }}</span>
         </div>
         @if($transaction->metode_bayar === 'cash')
         <div style="display: flex; justify-content: space-between;">
@@ -176,6 +193,16 @@
         <div style="display: flex; justify-content: space-between;">
             <span>Kembali</span>
             <span>{{ number_format($transaction->kembalian, 0, ',', '.') }}</span>
+        </div>
+        @endif
+        @if($transaction->cashTempo)
+        <div style="display: flex; justify-content: space-between;">
+            <span>Sisa Piutang</span>
+            <span>{{ number_format($transaction->cashTempo->sisa_piutang, 0, ',', '.') }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span>Jatuh Tempo</span>
+            <span>{{ \Carbon\Carbon::parse($transaction->cashTempo->tanggal_jatuh_tempo)->format('d/m/Y') }}</span>
         </div>
         @endif
     </div>

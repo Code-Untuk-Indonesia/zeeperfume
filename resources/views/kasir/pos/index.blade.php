@@ -405,8 +405,32 @@
                         </div>
                     </div>
 
+                    <div id="tempo-input-area" class="hidden space-y-4 rounded-2xl border border-red-100 bg-red-50/60 p-4">
+                        <div>
+                            <label for="tempo-paid-amount" class="block text-sm font-extrabold text-gray-900 mb-2">Pembayaran Awal (Rp)</label>
+                            <input type="number" id="tempo-paid-amount" min="0" step="1000"
+                                class="w-full border-2 border-red-100 rounded-xl p-4 text-2xl font-black focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all placeholder-gray-300"
+                                placeholder="0" oninput="updateTempoBalance()">
+                            <p id="tempo-balance-hint" class="mt-2 text-xs font-semibold text-red-600">Sisa piutang akan dihitung dari total tagihan.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="tempo-due-date" class="block text-sm font-extrabold text-gray-900 mb-2">Tanggal Jatuh Tempo</label>
+                                <input type="date" id="tempo-due-date"
+                                    class="w-full border-2 border-red-100 rounded-xl p-3.5 font-bold focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all">
+                            </div>
+                            <div>
+                                <label for="tempo-note" class="block text-sm font-extrabold text-gray-900 mb-2">Catatan Penagihan</label>
+                                <textarea id="tempo-note" rows="1" maxlength="1000"
+                                    class="w-full resize-none border-2 border-red-100 rounded-xl p-3.5 font-medium focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all placeholder-gray-400"
+                                    placeholder="Contoh: ditagih saat pengambilan"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center pt-5 border-t border-dashed border-gray-200">
-                        <span class="font-extrabold text-gray-500 uppercase text-xs tracking-wider">Kembalian</span>
+                        <span id="payment-result-label" class="font-extrabold text-gray-500 uppercase text-xs tracking-wider">Kembalian</span>
                         <span id="modal-change-val"
                             class="text-2xl font-black text-green-500 bg-green-50 px-3 py-1 rounded-lg border border-green-100">Rp
                             0</span>
@@ -960,6 +984,10 @@
             document.getElementById('modal-item-count').innerText = `${totalItems} Item`;
             document.getElementById('modal-total-val').innerText = formatRupiah(currentTotal);
             document.getElementById('pay-amount').value = '';
+            document.getElementById('tempo-paid-amount').value = '';
+            document.getElementById('tempo-due-date').value = getDefaultTempoDate();
+            document.getElementById('tempo-due-date').min = getTodayDate();
+            document.getElementById('tempo-note').value = '';
             document.getElementById('modal-change-val').innerText = 'Rp 0';
             document.getElementById('pay-method').value = 'cash';
 
@@ -977,25 +1005,76 @@
             modal.classList.remove('flex');
         }
 
-        function toggleCashInput() {
-            const method = document.getElementById('pay-method').value;
-            const cashArea = document.getElementById('cash-input-area');
-            const payInput = document.getElementById('pay-amount');
-            const changeVal = document.getElementById('modal-change-val');
+    function toggleCashInput() {
+        const method = document.getElementById('pay-method').value;
+        const cashArea = document.getElementById('cash-input-area');
+        const tempoArea = document.getElementById('tempo-input-area');
+        const payInput = document.getElementById('pay-amount');
+        const tempoPaidInput = document.getElementById('tempo-paid-amount');
+        const resultLabel = document.getElementById('payment-result-label');
+        const changeVal = document.getElementById('modal-change-val');
 
-            if (method === 'cash') {
-                cashArea.classList.remove('hidden');
-                payInput.value = '';
-                changeVal.innerText = 'Rp 0';
-                changeVal.classList.replace('text-red-500', 'text-green-500');
-            } else {
-                cashArea.classList.add('hidden');
-                payInput.value = currentTotal;
-                changeVal.innerText = 'LUNAS (Otomatis)';
-                changeVal.classList.replace('text-red-500', 'text-green-500');
-            }
-            if (method === 'cash') calculateChange();
+        if (method === 'cash') {
+            cashArea.classList.remove('hidden');
+            tempoArea.classList.add('hidden');
+            payInput.value = '';
+            resultLabel.innerText = 'Kembalian';
+            changeVal.innerText = 'Rp 0';
+            changeVal.classList.replace('text-red-500', 'text-green-500');
+            changeVal.classList.replace('bg-red-50', 'bg-green-50');
+            changeVal.classList.replace('border-red-100', 'border-green-100');
+        } else if (method === 'cash_tempo') {
+            cashArea.classList.add('hidden');
+            tempoArea.classList.remove('hidden');
+            payInput.value = '';
+            tempoPaidInput.value = '';
+            resultLabel.innerText = 'Sisa Piutang';
+            updateTempoBalance();
+        } else {
+            cashArea.classList.add('hidden');
+            tempoArea.classList.add('hidden');
+            payInput.value = currentTotal;
+            resultLabel.innerText = 'Kembalian';
+            changeVal.innerText = 'LUNAS (Otomatis)';
+            changeVal.classList.replace('text-red-500', 'text-green-500');
+            changeVal.classList.replace('bg-red-50', 'bg-green-50');
+            changeVal.classList.replace('border-red-100', 'border-green-100');
         }
+        if (method === 'cash') calculateChange();
+    }
+
+    function getTodayDate() {
+        const date = new Date();
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().split('T')[0];
+    }
+
+    function getDefaultTempoDate() {
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().split('T')[0];
+    }
+
+    function updateTempoBalance() {
+        const paid = parseFloat(document.getElementById('tempo-paid-amount').value) || 0;
+        const remaining = Math.max(0, currentTotal - paid);
+        const changeVal = document.getElementById('modal-change-val');
+        const hint = document.getElementById('tempo-balance-hint');
+
+        changeVal.innerText = formatRupiah(remaining);
+        hint.innerText = paid > currentTotal
+            ? 'Pembayaran awal tidak boleh melebihi total tagihan.'
+            : `Sisa piutang: ${formatRupiah(remaining)}`;
+        hint.classList.toggle('text-red-600', paid > currentTotal);
+        hint.classList.toggle('text-gray-500', paid <= currentTotal);
+        changeVal.classList.toggle('text-red-500', paid > currentTotal);
+        changeVal.classList.toggle('text-green-500', paid <= currentTotal);
+        changeVal.classList.toggle('bg-red-50', paid > currentTotal);
+        changeVal.classList.toggle('bg-green-50', paid <= currentTotal);
+        changeVal.classList.toggle('border-red-100', paid > currentTotal);
+        changeVal.classList.toggle('border-green-100', paid <= currentTotal);
+    }
 
         function setupQuickCash(total) {
             const btns = document.getElementById('quick-cash-btns');
@@ -1034,12 +1113,21 @@
         }
 
         /* FUNGSI SUBMIT TRANSAKSI KE DATABASE */
-        function submitTransaction() {
+    function submitTransaction() {
             const method = document.getElementById('pay-method').value;
-            const paid = parseFloat(document.getElementById('pay-amount').value) || 0;
+            const paidInput = method === 'cash_tempo' ? document.getElementById('tempo-paid-amount') : document.getElementById('pay-amount');
+            const paid = parseFloat(paidInput.value) || 0;
 
             if (method === 'cash' && paid < currentTotal) {
                 return alert('Nominal uang tunai diterima kurang dari total tagihan!');
+            }
+
+            if (method === 'cash_tempo' && paid > currentTotal) {
+                return alert('Pembayaran awal cash tempo tidak boleh melebihi total tagihan!');
+            }
+
+            if (method === 'cash_tempo' && !document.getElementById('tempo-due-date').value) {
+                return alert('Tanggal jatuh tempo wajib diisi.');
             }
 
             const btn = document.getElementById('btn-process-payment');
@@ -1066,12 +1154,10 @@
                 _token: '{{ csrf_token() }}'
             };
 
-            if (method === 'cash_tempo' || method === 'tempo') {
-                const besok = new Date();
-                besok.setDate(besok.getDate() + 7);
+            if (method === 'cash_tempo') {
                 payload.cash_tempo = {
-                    tanggal_jatuh_tempo: besok.toISOString().split('T')[0],
-                    catatan_penagihan: 'Pembayaran tempo via Kasir POS'
+                    tanggal_jatuh_tempo: document.getElementById('tempo-due-date').value,
+                    catatan_penagihan: document.getElementById('tempo-note').value.trim() || null
                 };
             }
 

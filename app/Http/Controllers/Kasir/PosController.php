@@ -13,6 +13,8 @@ use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PosController extends Controller
 {
@@ -44,14 +46,41 @@ class PosController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'cart'          => 'required|array',
-            'metode_bayar'  => 'required|string',
-            'nominal_bayar' => 'required|numeric',
+            'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
+            'nominal_bayar' => 'required|numeric|min:0',
             'subtotal'      => 'required|numeric', // Subtotal dasar (sebelum diskon global)
             'discount'      => 'required|numeric', // Diskon global / tambahan
             'total'         => 'required|numeric', // Total akhir
+            'member_id'     => [
+                'nullable',
+                'integer',
+                Rule::exists('members', 'id')->whereNull('deleted_at'),
+            ],
+            'is_point_used' => 'sometimes|boolean',
+            'used_points'   => 'sometimes|integer|min:0',
+            'diskon_persen' => 'sometimes|numeric|min:0|max:100',
+            'cash_tempo'    => 'nullable|required_if:metode_bayar,cash_tempo|array',
+            'cash_tempo.tanggal_jatuh_tempo' => 'required_if:metode_bayar,cash_tempo|date|after_or_equal:today',
+            'cash_tempo.catatan_penagihan' => 'nullable|string|max:1000',
         ]);
+
+        $metodeBayar = strtolower($validated['metode_bayar']);
+        $totalBelanja = (float) $validated['total'];
+        $nominalBayar = (float) $validated['nominal_bayar'];
+
+        if ($metodeBayar === 'cash' && $nominalBayar < $totalBelanja) {
+            throw ValidationException::withMessages([
+                'nominal_bayar' => 'Nominal uang tunai kurang dari total tagihan.',
+            ]);
+        }
+
+        if ($metodeBayar === 'cash_tempo' && $nominalBayar > $totalBelanja) {
+            throw ValidationException::withMessages([
+                'nominal_bayar' => 'Pembayaran awal cash tempo tidak boleh melebihi total tagihan.',
+            ]);
+        }
 
         DB::beginTransaction();
         try {
@@ -64,35 +93,35 @@ class PosController extends Controller
             $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad($lastTrx + 1, 4, '0', STR_PAD_LEFT);
 
             // Hitung kembalian (hanya jika tunai)
-            $kembalian = strtolower($request->metode_bayar) === 'cash'
-                            ? max(0, $request->nominal_bayar - $request->total)
+            $kembalian = $metodeBayar === 'cash'
+                            ? max(0, $nominalBayar - $totalBelanja)
                             : 0;
 
             // Jika metode non-cash, nominal bayar dianggap pas (sama dengan total tagihan)
-            $nominalBayarAsli = strtolower($request->metode_bayar) !== 'cash' && !in_array(strtolower($request->metode_bayar), ['tempo', 'cash_tempo'])
-                                ? $request->total
-                                : $request->nominal_bayar;
+            $nominalBayarAsli = ! in_array($metodeBayar, ['cash', 'cash_tempo'], true)
+                                ? $totalBelanja
+                                : $nominalBayar;
 
             // 2. Buat Data Transaksi Induk
             $transaction = Transaction::create([
                 'kasir_id'         => $kasirId,
-                'member_id'        => $request->member_id, // Bisa null
+                'member_id'        => $validated['member_id'] ?? null,
                 'nomor_nota'       => $nomorNota,
                 'tanggal_waktu'    => $waktu,
-                'subtotal'         => $request->subtotal, // Subtotal sebelum diskon global
-                'diskon_persen'    => $request->diskon_persen ?? 0,
-                'diskon_nominal'   => $request->discount, // Total diskon tambahan / poin
-                'deskripsi_diskon' => $request->is_point_used ? 'Tukar Poin Member' : ($request->discount > 0 ? 'Diskon Manual/Persen' : null),
-                'total_belanja'    => $request->total,
+                'subtotal'         => $validated['subtotal'], // Subtotal sebelum diskon global
+                'diskon_persen'    => $validated['diskon_persen'] ?? 0,
+                'diskon_nominal'   => $validated['discount'], // Total diskon tambahan / poin
+                'deskripsi_diskon' => ($validated['is_point_used'] ?? false) ? 'Tukar Poin Member' : ($validated['discount'] > 0 ? 'Diskon Manual/Persen' : null),
+                'total_belanja'    => $totalBelanja,
                 'nominal_bayar'    => $nominalBayarAsli,
                 'kembalian'        => $kembalian,
-                'metode_bayar'     => strtolower($request->metode_bayar),
+                'metode_bayar'     => $metodeBayar,
                 'cabang_id'        => $cabangId,
                 // Status approval (default dari migration adalah 'none')
             ]);
 
             // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
-            foreach ($request->cart as $item) {
+            foreach ($validated['cart'] as $item) {
                 $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
                 $hargaSatuan = $item['unit'] === 'ml' ? $item['pricePerMl'] : $item['price'];
 
@@ -135,25 +164,28 @@ class PosController extends Controller
             }
 
             // 4. Catatan Piutang jika Metode Kasbon/Tempo
-            if (in_array(strtolower($request->metode_bayar), ['tempo', 'cash_tempo'])) {
-                $sisaPiutang = max(0, $request->total - $request->nominal_bayar);
-                $tanggalJatuhTempo = $request->cash_tempo['tanggal_jatuh_tempo'] ?? Carbon::now()->addDays(7)->format('Y-m-d');
+            if ($metodeBayar === 'cash_tempo') {
+                $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
+                $now = Carbon::now();
 
-                \App\Models\CashTempo::create([
+                DB::table('cash_tempo')->insert([
                     'transaksi_id'        => $transaction->id,
-                    'total_hutang'        => $request->total,
-                    'jumlah_bayar'        => $request->nominal_bayar,
+                    'tanggal_jatuh_tempo' => $validated['cash_tempo']['tanggal_jatuh_tempo'],
+                    'jumlah_piutang'      => $totalBelanja,
                     'sisa_piutang'        => $sisaPiutang,
-                    'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
-                    'status'              => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas'
+                    'status_tempo'        => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
+                    'status_verifikasi'   => 'menunggu',
+                    'catatan_penagihan'   => $validated['cash_tempo']['catatan_penagihan'] ?? null,
+                    'created_at'          => $now,
+                    'updated_at'          => $now,
                 ]);
             }
 
             // 5. Potong Poin Member (Jika menggunakan opsi Tukar Poin)
-            if ($request->member_id && $request->is_point_used && $request->used_points > 0) {
-                $member = Member::find($request->member_id);
+            if (($validated['member_id'] ?? null) && ($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
+                $member = Member::find($validated['member_id']);
                 if ($member) {
-                    $member->decrement('poin', $request->used_points);
+                    $member->decrement('poin', $validated['used_points']);
                 }
             }
 
