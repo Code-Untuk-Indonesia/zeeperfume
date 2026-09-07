@@ -71,7 +71,7 @@
                     <option value="cash" {{ request('metode') == 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
                     <option value="qris" {{ request('metode') == 'qris' ? 'selected' : '' }}>QRIS</option>
                     <option value="transfer" {{ request('metode') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                    <option value="tempo" {{ request('metode') == 'tempo' ? 'selected' : '' }}>Tempo (Kasbon)</option>
+                    <option value="cash_tempo" {{ request('metode') == 'cash_tempo' ? 'selected' : '' }}>Cash Tempo (Kasbon)</option>
                 </select>
 
                 <!-- Reset Button -->

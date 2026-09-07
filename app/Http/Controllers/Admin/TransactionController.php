@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Transaction;
-use App\Models\CashTempo;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -140,49 +141,88 @@ class TransactionController extends Controller
                 ->with('error', 'Akses ditolak! Sesi edit tidak valid.');
         }
 
-        $request->validate([
-            'metode_bayar'  => 'required|string',
-            'nominal_bayar' => 'required|numeric|min:0',
-            // Jika ada validasi lain (misal tanggal, kasir), bisa ditambahkan di sini
+        $validated = $request->validate([
+            'member_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('members', 'id')->whereNull('deleted_at'),
+            ],
+            'metode_bayar' => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
+            'nominal_bayar' => ['required', 'numeric', 'min:0'],
+            'tanggal_jatuh_tempo' => ['required_if:metode_bayar,cash_tempo', 'date', 'after_or_equal:today'],
+            'catatan_penagihan' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $metodeBayar = $validated['metode_bayar'];
+        $totalBelanja = (float) $transaction->total_belanja;
+        $nominalBayar = (float) $validated['nominal_bayar'];
+
+        if ($metodeBayar === 'cash' && $nominalBayar < $totalBelanja) {
+            throw ValidationException::withMessages([
+                'nominal_bayar' => 'Nominal uang tunai kurang dari total tagihan.',
+            ]);
+        }
+
+        if ($metodeBayar === 'cash_tempo' && $nominalBayar > $totalBelanja) {
+            throw ValidationException::withMessages([
+                'nominal_bayar' => 'Pembayaran awal cash tempo tidak boleh melebihi total tagihan.',
+            ]);
+        }
+
+        $nominalBayarTersimpan = in_array($metodeBayar, ['cash', 'cash_tempo'], true)
+            ? $nominalBayar
+            : $totalBelanja;
+        $kembalian = $metodeBayar === 'cash'
+            ? max(0, $nominalBayar - $totalBelanja)
+            : 0;
 
         DB::beginTransaction();
         try {
-            // Hitung ulang kembalian
-            $kembalian = max(0, $request->nominal_bayar - $transaction->total_belanja);
+            $now = now();
 
-            // 1. Update Data Transaksi Induk
-            $transaction->update([
-                'member_id'       => $request->member_id, // Bisa null
-                'metode_bayar'    => $request->metode_bayar,
-                'nominal_bayar'   => $request->nominal_bayar,
-                'kembalian'       => $kembalian,
+            DB::table('transactions')
+                ->where('id', $transaction->id)
+                ->update([
+                    'member_id' => $validated['member_id'] ?? null,
+                    'metode_bayar' => $metodeBayar,
+                    'nominal_bayar' => $nominalBayarTersimpan,
+                    'kembalian' => $kembalian,
+                    'approval_status' => 'none',
+                    'approval_reason' => null,
+                    'approval_by' => null,
+                    'updated_at' => $now,
+                ]);
 
-                // PENTING: Kunci kembali transaksi setelah berhasil diedit
-                'approval_status' => 'none',
-                'approval_reason' => null,
-                'approval_by'     => null,
-            ]);
+            if ($metodeBayar === 'cash_tempo') {
+                $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
 
-            // 2. Logika Khusus Jika Metode Berubah Menjadi/Dari Tempo (Kasbon)
-            if ($request->metode_bayar === 'tempo' || $request->metode_bayar === 'cash_tempo') {
-                $sisaPiutang = max(0, $transaction->total_belanja - $request->nominal_bayar);
+                $cashTempoData = [
+                    'tanggal_jatuh_tempo' => $validated['tanggal_jatuh_tempo'],
+                    'jumlah_piutang' => $totalBelanja,
+                    'sisa_piutang' => $sisaPiutang,
+                    'status_tempo' => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
+                    'status_verifikasi' => 'menunggu',
+                    'catatan_penagihan' => $validated['catatan_penagihan'] ?? null,
+                    'updated_at' => $now,
+                ];
 
-                CashTempo::updateOrCreate(
-                    ['transaksi_id' => $transaction->id],
-                    [
-                        'total_hutang'        => $transaction->total_belanja,
-                        'jumlah_bayar'        => $request->nominal_bayar,
-                        'sisa_piutang'        => $sisaPiutang,
-                        'tanggal_jatuh_tempo' => $request->tanggal_jatuh_tempo ?? Carbon::now()->addDays(30),
-                        'status'              => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas'
-                    ]
-                );
-            } else {
-                // Jika metode diubah jadi lunas (cash/qris), hapus catatan hutang (jika ada)
-                if ($transaction->cashTempo) {
-                    $transaction->cashTempo()->delete();
+                $cashTempoExists = DB::table('cash_tempo')
+                    ->where('transaksi_id', $transaction->id)
+                    ->exists();
+
+                if ($cashTempoExists) {
+                    DB::table('cash_tempo')
+                        ->where('transaksi_id', $transaction->id)
+                        ->update($cashTempoData);
+                } else {
+                    DB::table('cash_tempo')->insert([
+                        'transaksi_id' => $transaction->id,
+                        ...$cashTempoData,
+                        'created_at' => $now,
+                    ]);
                 }
+            } else {
+                DB::table('cash_tempo')->where('transaksi_id', $transaction->id)->delete();
             }
 
             // Catatan: Jika form edit Anda mengizinkan tambah/kurang produk,
@@ -276,6 +316,18 @@ class TransactionController extends Controller
             $diskon = $request->diskon ?? 0;
             $grandTotal = ($subtotalProduk + $ongkir) - $diskon;
             $isLunas = $request->status_lunas ? true : false;
+            $inputMetode = strtolower((string) $request->metode_pembayaran);
+            $metodePembayaran = match ($inputMetode) {
+                'cash', 'qris', 'transfer' => $inputMetode,
+                'ewallet' => 'transfer',
+                'cod' => $isLunas ? 'cash' : 'cash_tempo',
+                default => 'transfer',
+            };
+
+            // Pesanan online yang belum lunas selalu dicatat sebagai cash tempo.
+            if (! $isLunas) {
+                $metodePembayaran = 'cash_tempo';
+            }
 
             // 2. Generate Nomor Nota
             $lastTrx = Transaction::whereDate('tanggal_waktu', $waktu->toDateString())->count();
@@ -293,7 +345,7 @@ class TransactionController extends Controller
                 'total_belanja'    => $grandTotal,
                 'nominal_bayar'    => $isLunas ? $grandTotal : 0,
                 'kembalian'        => 0,
-                'metode_bayar'     => $request->metode_pembayaran,
+                'metode_bayar'     => $metodePembayaran,
                 'cabang_id'        => $request->cabang_id,
             ]);
 
@@ -343,14 +395,17 @@ class TransactionController extends Controller
             }
 
             // 6. Jika tidak lunas (Misal: Pembayaran COD / Tempo Kasbon)
-            if (!$isLunas) {
-                \App\Models\CashTempo::create([
+            if ($metodePembayaran === 'cash_tempo') {
+                DB::table('cash_tempo')->insert([
                     'transaksi_id'        => $transaction->id,
-                    'total_hutang'        => $grandTotal,
-                    'jumlah_bayar'        => 0,
+                    'tanggal_jatuh_tempo' => data_get($request->input('cash_tempo'), 'tanggal_jatuh_tempo', Carbon::now()->addDays(7)->format('Y-m-d')),
+                    'jumlah_piutang'     => $grandTotal,
                     'sisa_piutang'        => $grandTotal,
-                    'tanggal_jatuh_tempo' => Carbon::now()->addDays(7)->format('Y-m-d'),
-                    'status'              => 'belum_lunas'
+                    'status_tempo'       => 'belum_lunas',
+                    'status_verifikasi'  => 'menunggu',
+                    'catatan_penagihan'  => data_get($request->input('cash_tempo'), 'catatan_penagihan'),
+                    'created_at'         => $waktu,
+                    'updated_at'         => $waktu,
                 ]);
             }
 

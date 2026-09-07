@@ -105,11 +105,11 @@
                             <option value="cash" {{ $transaction->metode_bayar === 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
                             <option value="qris" {{ $transaction->metode_bayar === 'qris' ? 'selected' : '' }}>QRIS</option>
                             <option value="transfer" {{ $transaction->metode_bayar === 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                            <option value="tempo" {{ in_array($transaction->metode_bayar, ['tempo', 'cash_tempo']) ? 'selected' : '' }}>Tempo / Kasbon (Hutang)</option>
+                            <option value="cash_tempo" {{ in_array($transaction->metode_bayar, ['tempo', 'cash_tempo']) ? 'selected' : '' }}>Cash Tempo / Kasbon (Hutang)</option>
                         </select>
                     </div>
 
-                    <!-- TANGGAL JATUH TEMPO (Muncul jika pilih Tempo) -->
+                    <!-- TANGGAL JATUH TEMPO (Muncul jika pilih Cash Tempo) -->
                     <div id="tempo_date_container" class="{{ in_array($transaction->metode_bayar, ['tempo', 'cash_tempo']) ? '' : 'hidden' }}">
                         <label class="block text-xs font-extrabold text-red-600 uppercase tracking-wide mb-1.5">Tanggal Jatuh Tempo <span class="text-red-500">*</span></label>
                         <input type="date" name="tanggal_jatuh_tempo" id="tanggal_jatuh_tempo" 
@@ -118,11 +118,19 @@
                         <p class="text-[10px] text-red-500 mt-1 font-semibold">*Wajib diisi untuk pengingat hutang pelanggan.</p>
                     </div>
 
+                    <!-- CATATAN PENAGIHAN (Muncul jika pilih Cash Tempo) -->
+                    <div id="tempo_note_container" class="{{ in_array($transaction->metode_bayar, ['tempo', 'cash_tempo']) ? '' : 'hidden' }}">
+                        <label class="block text-xs font-extrabold text-red-600 uppercase tracking-wide mb-1.5">Catatan Penagihan</label>
+                        <textarea name="catatan_penagihan" id="catatan_penagihan" rows="3" maxlength="1000"
+                                  class="w-full px-4 py-3 border-2 border-red-100 rounded-xl bg-red-50 focus:bg-white focus:outline-none focus:border-red-400 transition font-medium text-red-900"
+                                  placeholder="Catatan untuk penagihan pelanggan">{{ old('catatan_penagihan', optional($transaction->cashTempo)->catatan_penagihan) }}</textarea>
+                    </div>
+
                     <!-- Edit Nominal Bayar -->
                     <div>
-                        <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Nominal Dibayar (Rp) <span class="text-red-500">*</span></label>
+                        <label id="nominal_label" class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Nominal Dibayar (Rp) <span class="text-red-500">*</span></label>
                         <input type="number" name="nominal_bayar" value="{{ old('nominal_bayar', $transaction->nominal_bayar) }}" class="w-full px-4 py-3.5 border-2 border-gray-100 rounded-xl bg-white focus:outline-none focus:border-[#CC9863] transition font-black text-xl text-gray-900 tracking-wider" required>
-                        <p class="text-[10px] text-gray-500 mt-1 font-semibold">Ubah jika kasir salah memasukkan jumlah uang yang diterima dari pelanggan.</p>
+                        <p id="nominal_hint" class="text-[10px] text-gray-500 mt-1 font-semibold">Ubah jika kasir salah memasukkan jumlah uang yang diterima dari pelanggan.</p>
                     </div>
 
                 </div>
@@ -144,18 +152,27 @@
 </main>
 
 <script>
-    // Memunculkan kolom tanggal jatuh tempo jika metode yang dipilih adalah Tempo
+    // Memunculkan kolom cash tempo jika metode yang dipilih adalah Cash Tempo
     function toggleTempoDate() {
         const metode = document.getElementById('metode_bayar').value;
         const container = document.getElementById('tempo_date_container');
+        const noteContainer = document.getElementById('tempo_note_container');
         const inputDate = document.getElementById('tanggal_jatuh_tempo');
+        const nominalLabel = document.getElementById('nominal_label');
+        const nominalHint = document.getElementById('nominal_hint');
 
-        if (metode === 'tempo' || metode === 'cash_tempo') {
+        if (metode === 'cash_tempo') {
             container.classList.remove('hidden');
+            noteContainer.classList.remove('hidden');
             inputDate.required = true;
+            nominalLabel.firstChild.textContent = 'Pembayaran Awal Cash Tempo (Rp) ';
+            nominalHint.textContent = 'Boleh sebagian dari total tagihan. Sisa akan dicatat sebagai piutang.';
         } else {
             container.classList.add('hidden');
+            noteContainer.classList.add('hidden');
             inputDate.required = false;
+            nominalLabel.firstChild.textContent = 'Nominal Dibayar (Rp) ';
+            nominalHint.textContent = 'Ubah jika kasir salah memasukkan jumlah uang yang diterima dari pelanggan.';
         }
     }
 
