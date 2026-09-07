@@ -6,83 +6,98 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\BranchStock;
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan Dashboard Admin (Data Realtime)
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $today = Carbon::today();
+        // Default filter diubah menjadi 'today' (Hari Ini)
+        $filter = $request->query('filter', 'today');
+        $now = Carbon::now();
 
-        // 1. Rekap Harian (Semua Cabang)
-        $transactionsToday = Transaction::whereDate('tanggal_waktu', $today);
+        // Setup Query Berdasarkan Filter Waktu
+        $query = Transaction::query();
+        $prevQuery = Transaction::query(); // Untuk membandingkan tren (naik/turun)
+        $filterLabel = 'Hari Ini';
 
-        $totalTransaksi = (clone $transactionsToday)->count();
-        $omzetHariIni   = (clone $transactionsToday)->sum('total_belanja');
-
-        // Pesanan Online (berdasarkan relasi shipment)
-        $pesananOnline = (clone $transactionsToday)->whereHas('shipment')->count();
-        $perluCetakResi = (clone $transactionsToday)->whereHas('shipment', function ($q) {
-            $q->whereNull('no_resi'); // Anggap pesanan yang resinya null = belum dicetak/diinput
-        })->count();
-
-        // 2. Peringatan Stok Menipis (Di bawah 5)
-        $stokMenipis = BranchStock::with(['variant.product', 'branch'])
-            ->where('stok', '<', 5)
-            ->get();
-        $jumlahStokMenipis = $stokMenipis->count();
-
-        // 3. Omzet Per Cabang (Untuk Progress Bar Laporan Pendapatan)
-        // Kita hitung pendapatan kotor per cabang hari ini
-        $branches = Branch::with(['users' => function ($q) {
-            // Ubah 'roles' menjadi 'role' dan 'name' menjadi 'nama_role'
-            $q->whereHas('role', function ($r) {
-                $r->where('nama_role', 'kasir');
-            });
-        }])->get();
-
-        $laporanCabang = [];
-        foreach ($branches as $branch) {
-            $totalSetoran = Transaction::where('cabang_id', $branch->id)
-                ->whereDate('tanggal_waktu', $today)
-                ->sum('total_belanja');
-
-            // Asumsi target harian = Rp 5.000.000 (Bisa disesuaikan nanti)
-            $targetHarian = 5000000;
-            $persentase = $totalSetoran > 0 ? min(100, round(($totalSetoran / $targetHarian) * 100)) : 0;
-
-            // Ambil kasir yang terdaftar di cabang tersebut
-            $kasirAktif = $branch->users->first() ? $branch->users->first()->nama_lengkap : 'System/Admin';
-
-            $laporanCabang[] = [
-                'id' => $branch->id,
-                'nama' => $branch->nama_cabang,
-                'kasir' => $kasirAktif,
-                'setoran' => $totalSetoran,
-                'persentase' => $persentase
-            ];
+        switch ($filter) {
+            case 'this_week':
+                $query->whereBetween('tanggal_waktu', [(clone $now)->startOfWeek()->toDateString(), (clone $now)->endOfWeek()->toDateString()]);
+                $prevQuery->whereBetween('tanggal_waktu', [(clone $now)->subWeek()->startOfWeek()->toDateString(), (clone $now)->subWeek()->endOfWeek()->toDateString()]);
+                $filterLabel = 'Minggu Ini';
+                break;
+            case 'this_month':
+                $query->whereMonth('tanggal_waktu', $now->month)->whereYear('tanggal_waktu', $now->year);
+                $prevQuery->whereMonth('tanggal_waktu', (clone $now)->subMonth()->month)->whereYear('tanggal_waktu', (clone $now)->subMonth()->year);
+                $filterLabel = 'Bulan Ini';
+                break;
+            case 'this_year':
+                $query->whereYear('tanggal_waktu', $now->year);
+                $prevQuery->whereYear('tanggal_waktu', (clone $now)->subYear()->year);
+                $filterLabel = 'Tahun Ini';
+                break;
+            case 'today':
+            default:
+                $query->whereDate('tanggal_waktu', $now->toDateString());
+                $prevQuery->whereDate('tanggal_waktu', (clone $now)->subDay()->toDateString());
+                $filterLabel = 'Hari Ini';
+                break;
         }
 
-        // 4. Aktivitas Live (5 Transaksi Terakhir)
-        $transaksiLive = Transaction::with(['cashier', 'branch', 'shipment'])
-            ->orderBy('tanggal_waktu', 'desc')
+        // 1. Kalkulasi Metrik Utama & Tren
+        $omzet = (clone $query)->sum('total_belanja');
+        $prevOmzet = (clone $prevQuery)->sum('total_belanja');
+        $trendOmzet = $prevOmzet > 0 ? (($omzet - $prevOmzet) / $prevOmzet) * 100 : ($omzet > 0 ? 100 : 0);
+
+        $totalTransaksi = (clone $query)->count();
+        $prevTotalTransaksi = (clone $prevQuery)->count();
+        $trendTransaksi = $prevTotalTransaksi > 0 ? (($totalTransaksi - $prevTotalTransaksi) / $prevTotalTransaksi) * 100 : ($totalTransaksi > 0 ? 100 : 0);
+
+        $pesananOnline = (clone $query)->whereHas('shipment')->count();
+        $prevPesananOnline = (clone $prevQuery)->whereHas('shipment')->count();
+        $trendOnline = $prevPesananOnline > 0 ? (($pesananOnline - $prevPesananOnline) / $prevPesananOnline) * 100 : ($pesananOnline > 0 ? 100 : 0);
+
+        // 2. Peringatan Stok (Stok di bawah 5 dianggap menipis)
+        $stokMenipis = BranchStock::with(['variant.product', 'branch'])->where('stok', '<', 5)->get();
+        $jumlahStokMenipis = $stokMenipis->count();
+
+        // 3. Parfum Terlaris (Top Selling) pada periode terpilih
+        $trxIds = (clone $query)->pluck('id');
+        $topProducts = TransactionDetail::with('variant.product')
+            ->whereIn('transaksi_id', $trxIds)
+            ->select('varian_id', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(subtotal) as total_revenue'))
+            ->groupBy('varian_id')
+            ->orderByDesc('total_qty')
             ->take(5)
             ->get();
 
-        // Lempar data ke view admin/dashboard.blade.php
+        // 4. Omzet Per Cabang
+        $branches = Branch::all();
+        $laporanCabang = [];
+        foreach ($branches as $branch) {
+            $totalSetoran = (clone $query)->where('cabang_id', $branch->id)->sum('total_belanja');
+            $laporanCabang[] = [
+                'nama' => $branch->nama_cabang,
+                'setoran' => $totalSetoran
+            ];
+        }
+        // Urutkan cabang dari pendapatan tertinggi
+        usort($laporanCabang, function($a, $b) { return $b['setoran'] <=> $a['setoran']; });
+
+        // 5. Transaksi Terbaru
+        $recentTransactions = (clone $query)->with(['cashier', 'branch', 'shipment'])
+            ->orderBy('tanggal_waktu', 'desc')
+            ->take(6)
+            ->get();
+
         return view('admin.dashboard', compact(
-            'today',
-            'totalTransaksi',
-            'omzetHariIni',
-            'pesananOnline',
-            'perluCetakResi',
-            'stokMenipis',
-            'jumlahStokMenipis',
-            'laporanCabang',
-            'transaksiLive'
+            'filter', 'filterLabel', 'omzet', 'trendOmzet',
+            'totalTransaksi', 'trendTransaksi', 'pesananOnline', 'trendOnline',
+            'jumlahStokMenipis', 'topProducts', 'laporanCabang', 'recentTransactions'
         ));
     }
 }
