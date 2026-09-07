@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Owner;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
@@ -27,7 +27,7 @@ class ExpenseController extends Controller
 
         $branches = Branch::all();
 
-        return view('owner.expense.index', compact('expenses', 'branches', 'month', 'year', 'totalPengeluaran'));
+        return view('admin.expense.index', compact('expenses', 'branches', 'month', 'year', 'totalPengeluaran'));
     }
 
     public function store(Request $request)
@@ -42,7 +42,7 @@ class ExpenseController extends Controller
 
         Expense::create([
             'cabang_id' => $request->cabang_id,
-            'user_id' => auth()->id(), // Mencatat bahwa Owner yang input
+            'user_id' => auth()->id(), // Admin yang sedang login
             'kategori_pengeluaran' => $request->kategori_pengeluaran,
             'nama_pengeluaran' => $request->nama_pengeluaran,
             'nominal' => $request->nominal,

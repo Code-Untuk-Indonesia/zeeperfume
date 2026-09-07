@@ -4,84 +4,130 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Expense;
 use App\Models\Transaction;
-use App\Models\TransactionDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Tentukan Rentang Waktu (Default: Bulan Ini)
-        $month = $request->input('month', Carbon::now()->format('m'));
-        $year  = $request->input('year', Carbon::now()->format('Y'));
-        
-        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $endDate   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        $month = (int) $request->input('month', now()->month);
+        $year = (int) $request->input('year', now()->year);
 
-        // Nama bulan untuk ditampilkan di UI
+        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
         $monthName = $startDate->translatedFormat('F Y');
 
-        // 2. Ambil Semua Transaksi di Bulan Tersebut (Untuk Menghitung Omzet Total)
-        // Catatan: Jika ada sistem 'belum lunas' pada kasbon, bisa ditambahkan filter where('status_tempo', 'lunas')
-        $transactions = Transaction::whereBetween('tanggal_waktu', [$startDate, $endDate])->get();
-        
+        $transactions = Transaction::with('details.variant')
+            ->whereBetween('tanggal_waktu', [$startDate, $endDate])
+            ->get();
+
+        $expenses = Expense::with(['branch', 'user'])
+            ->whereBetween('tanggal_pengeluaran', [$startDate, $endDate])
+            ->orderByDesc('tanggal_pengeluaran')
+            ->get();
+
+        // =========================================================
+        // LOGIKA PERHITUNGAN
+        // =========================================================
+
+        // 1. Total Omzet / Pendapatan Kotor
         $totalOmzet = $transactions->sum('total_belanja');
 
-        // 3. Hitung Total HPP (Modal) dari Detail Transaksi
-        $details = TransactionDetail::with('variant')
-            ->whereHas('transaction', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('tanggal_waktu', [$startDate, $endDate]);
-            })->get();
+        // 2. Total Modal Barang Terjual (HPP)
+        $totalHpp = $transactions->sum(function ($trx) {
+            return $trx->details->sum(function ($detail) {
+                return ($detail->variant->harga_beli ?? 0) * $detail->qty;
+            });
+        });
 
-        $totalHpp = 0;
-        foreach ($details as $item) {
-            $modalSatuan = $item->variant->harga_modal ?? 0;
-            $totalHpp += ($modalSatuan * $item->qty);
-        }
+        // 3. Laba Kotor (Gross Profit)
+        $labaKotor = $totalOmzet - $totalHpp;
 
-        // 4. Hitung Laba Bersih & Margin
-        $labaBersih = $totalOmzet - $totalHpp;
+        // 4. Total Pengeluaran Operasional
+        $totalPengeluaran = $expenses->sum('nominal');
+
+        // 5. Keuntungan Bersih (Net Profit)
+        $labaBersih = $labaKotor - $totalPengeluaran;
+
+        // Perhitungan Tambahan (Margin)
+        $totalBeban = $totalHpp + $totalPengeluaran;
         $marginPercentage = $totalOmzet > 0 ? round(($labaBersih / $totalOmzet) * 100, 1) : 0;
 
-        // 5. Analisis Per Cabang
-        $branches = Branch::all();
-        $branchReports = [];
 
-        foreach ($branches as $branch) {
-            // Omzet Cabang
-            $omzetCabang = Transaction::where('cabang_id', $branch->id)
-                ->whereBetween('tanggal_waktu', [$startDate, $endDate])
-                ->sum('total_belanja');
+        // =========================================================
+        // DAILY CHART (Untuk Grafik)
+        // =========================================================
+        $labels = [];
+        $income = [];
+        $expenseChart = [];
 
-            // HPP Cabang
-            $hppCabang = 0;
-            $detailCabang = TransactionDetail::with('variant')
-                ->whereHas('transaction', function($q) use ($branch, $startDate, $endDate) {
-                    $q->where('cabang_id', $branch->id)
-                      ->whereBetween('tanggal_waktu', [$startDate, $endDate]);
-                })->get();
+        for ($day = 1; $day <= $startDate->daysInMonth; $day++) {
+            $date = $startDate->copy()->day($day);
+            $dateKey = $date->format('Y-m-d');
 
-            foreach ($detailCabang as $item) {
-                $hppCabang += (($item->variant->harga_modal ?? 0) * $item->qty);
-            }
+            $dailyTransactions = $transactions->filter(
+                fn($trx) => Carbon::parse($trx->tanggal_waktu)->format('Y-m-d') === $dateKey
+            );
 
-            $labaCabang = $omzetCabang - $hppCabang;
-            $marginCabang = $omzetCabang > 0 ? round(($labaCabang / $omzetCabang) * 100, 1) : 0;
+            $dailyOperational = $expenses->filter(
+                fn($exp) => Carbon::parse($exp->tanggal_pengeluaran)->format('Y-m-d') === $dateKey
+            );
 
-            $branchReports[] = (object) [
-                'nama_cabang' => $branch->nama_cabang,
-                'omzet'       => $omzetCabang,
-                'hpp'         => $hppCabang,
-                'laba'        => $labaCabang,
-                'margin'      => $marginCabang
-            ];
+            $dailyHpp = $dailyTransactions->sum(function ($trx) {
+                return $trx->details->sum(
+                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty
+                );
+            });
+
+            $labels[] = $date->format('d M');
+            $income[] = (float) $dailyTransactions->sum('total_belanja');
+            $expenseChart[] = (float) ($dailyHpp + $dailyOperational->sum('nominal'));
         }
 
+        $chartData = [
+            'labels' => $labels,
+            'income' => $income,
+            'expense' => $expenseChart
+        ];
+
+        // =========================================================
+        // REPORT PER CABANG
+        // =========================================================
+        $branchReports = Branch::all()->map(function ($branch) use ($transactions, $expenses) {
+            $branchTransactions = $transactions->where('cabang_id', $branch->id);
+
+            $omzet = $branchTransactions->sum('total_belanja');
+
+            $hpp = $branchTransactions->sum(function ($trx) {
+                return $trx->details->sum(
+                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty
+                );
+            });
+
+            $labaKotorCabang = $omzet - $hpp;
+
+            $pengeluaran = $expenses->where('cabang_id', $branch->id)->sum('nominal');
+
+            $labaBersihCabang = $labaKotorCabang - $pengeluaran;
+
+            return (object) [
+                'nama_cabang' => $branch->nama_cabang,
+                'omzet' => $omzet,
+                'hpp' => $hpp,
+                'laba_kotor' => $labaKotorCabang,
+                'pengeluaran' => $pengeluaran,
+                'laba_bersih' => $labaBersihCabang,
+                'margin' => $omzet > 0 ? round(($labaBersihCabang / $omzet) * 100, 1) : 0,
+            ];
+        });
+
         return view('owner.finance.index', compact(
-            'monthName', 'totalOmzet', 'totalHpp', 'labaBersih', 'marginPercentage', 'branchReports', 'month', 'year'
+            'month', 'year', 'monthName',
+            'totalOmzet', 'totalHpp', 'labaKotor', 'totalPengeluaran', 'totalBeban', 'labaBersih', 'marginPercentage',
+            'branchReports', 'chartData', 'expenses'
         ));
     }
 }

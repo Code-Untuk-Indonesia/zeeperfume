@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS System - @yield('title', 'Dashboard')</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
     <style>
@@ -41,23 +42,43 @@
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen flex text-gray-800 antialiased overflow-hidden">
+<!-- UBAH: Gunakan h-screen dan w-screen untuk mengunci layout full viewport -->
+
+<body class="bg-gray-50 h-screen w-screen flex text-gray-800 antialiased overflow-hidden">
 
     @php($currentRole = strtolower(auth()->user()->role?->nama_role ?? ''))
 
     <!-- ==============================================
-         SIDEBAR (DESKTOP)
+         OVERLAY BACKDROP (MOBILE ONLY)
          ============================================== -->
-    <aside
-        class="hidden lg:flex w-[260px] bg-[#1C1D21] text-gray-400 flex-col justify-between py-8 px-5 shrink-0 h-screen overflow-y-auto">
+    <div id="sidebar-backdrop"
+        class="fixed inset-0 bg-gray-900/60 z-40 hidden lg:hidden transition-opacity duration-300 opacity-0"
+        onclick="toggleSidebar()"></div>
+
+    <!-- ==============================================
+         SIDEBAR (RESPONSIVE)
+         ============================================== -->
+    <!-- UBAH: Gunakan h-full agar mutlak mengikuti tinggi container body -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-[260px] bg-[#1C1D21] text-gray-400 flex flex-col justify-between py-6 lg:py-8 px-5 h-full overflow-y-auto transform -translate-x-full transition-transform duration-300 lg:relative lg:translate-x-0 shrink-0 shadow-2xl lg:shadow-none">
+
         <div>
-            <!-- Logo -->
-            <div class="flex items-center gap-3 text-white font-bold text-2xl mb-10 px-3">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-                <span class="text-[#CC9863]">ZeePerfume</span>
+            <!-- Header Sidebar & Tombol Tutup Mobile -->
+            <div class="flex items-center justify-between mb-10 px-3">
+                <div class="flex items-center gap-3 text-white font-bold text-2xl">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span class="text-[#CC9863]">ZeePerfume</span>
+                </div>
+                <!-- Tombol Tutup (Hanya di Mobile) -->
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
             </div>
 
             <!-- Nav Menu -->
@@ -144,46 +165,73 @@
                     </a>
 
                     <!-- GRUP TRANSAKSI (ADMIN) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Transaksi</p>
-                    <a href="{{ route('admin.transaction.online') }}"
-                        class="{{ request()->routeIs('admin.transaction.online') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
+                    <details class="group mt-2" {{ request()->is('admin/transaction*') ? 'open' : '' }}>
+                        <summary
+                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/transaction*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <span class="font-medium text-sm">Transaksi</span>
+                            </div>
+                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
+                            <a href="{{ route('admin.transaction.online') }}"
+                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.transaction.online') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Buat
+                                Pesanan Online</a>
+                            <a href="{{ route('admin.transaction.index') }}"
+                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.transaction.index') || request()->routeIs('admin.transaction.show') || request()->routeIs('admin.transaction.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat
+                                Transaksi</a>
+                        </div>
+                    </details>
+
+                    <!-- GRUP KEUANGAN (ADMIN) -->
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Keuangan</p>
+                    <a href="{{ route('admin.expense.index') }}"
+                        class="{{ request()->routeIs('admin.expense.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                             </path>
                         </svg>
-                        Buat Pesanan Online
-                    </a>
-                    <a href="{{ route('admin.transaction.index') }}"
-                        class="{{ request()->routeIs('admin.transaction.index') || request()->routeIs('admin.transaction.show') || request()->routeIs('admin.transaction.edit') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                        Riwayat Transaksi
+                        Beban Pengeluaran
                     </a>
 
                     <!-- GRUP DATA MASTER (ADMIN) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-4 mb-2">Data Master
-                    </p>
-                    <a href="{{ url('admin/stock') }}"
-                        class="{{ request()->is('admin/stock*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                        Kelola Stok Barang
-                    </a>
-                    <a href="{{ url('admin/member') }}"
-                        class="{{ request()->is('admin/member*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                        Kelola Member
-                    </a>
+                    <details class="group mt-2"
+                        {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'open' : '' }}>
+                        <summary
+                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                    </path>
+                                </svg>
+                                <span class="font-medium text-sm">Data Master</span>
+                            </div>
+                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
+                            <a href="{{ url('admin/stock') }}"
+                                class="block py-2 text-sm transition-colors {{ request()->is('admin/stock*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
+                                Stok Barang</a>
+                            <a href="{{ url('admin/member') }}"
+                                class="block py-2 text-sm transition-colors {{ request()->is('admin/member*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
+                                Member</a>
+                        </div>
+                    </details>
                 @endif
 
                 <!-- ================= MENU KASIR ================= -->
@@ -200,7 +248,6 @@
                         </svg>
                         Buka Layar Kasir (POS)
                     </a>
-
                     <a href="{{ url('kasir/transaction') }}"
                         class="{{ request()->is('kasir/transaction*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors mt-2 text-sm font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,19 +271,19 @@
                 Profil Saya
             </a>
             <div class="flex items-center justify-between gap-3 p-3 bg-gray-800/50 rounded-2xl border border-gray-700">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 overflow-hidden">
                     <div
-                        class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white shadow-inner">
+                        class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white shadow-inner shrink-0">
                         {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
                     </div>
-                    <div>
-                        <p class="max-w-[100px] truncate text-sm font-bold text-white">
+                    <div class="overflow-hidden">
+                        <p class="truncate text-sm font-bold text-white">
                             {{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
                         <p class="text-[10px] uppercase font-extrabold tracking-wider text-[#CC9863]">
                             {{ $currentRole }}</p>
                     </div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                     @csrf
                     <button type="submit"
                         class="flex w-10 h-10 items-center justify-center rounded-xl text-red-400/80 transition hover:bg-red-500/10 hover:text-red-400 focus:outline-none"
@@ -253,110 +300,29 @@
     </aside>
 
     <!-- ==============================================
-         MAIN WRAPPER & MOBILE HEADER
+         MAIN CONTENT WRAPPER
          ============================================== -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
 
+        <!-- Mobile Header (Hamburger Menu) -->
         <header
             class="lg:hidden flex items-center justify-between p-4 bg-[#1C1D21] text-white shrink-0 shadow-sm relative z-20">
-            <div class="flex items-center gap-2 font-bold text-xl">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-                <span class="text-[#CC9863]">ZeePerfume</span>
-            </div>
-
-            <details class="relative group">
-                <summary
-                    class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl bg-gray-800 px-3 text-sm font-semibold focus:outline-none">
-                    Menu
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()"
+                    class="text-white hover:text-[#CC9863] focus:outline-none transition bg-gray-800 p-2 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16m-7 6h7"></path>
+                            d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
-                </summary>
-
-                <div
-                    class="absolute right-0 top-14 z-50 w-64 rounded-3xl border border-gray-700 bg-[#1C1D21] p-3 shadow-2xl hidden group-open:block">
-                    <!-- User Header -->
-                    <div
-                        class="px-3 py-3 border-b border-gray-700 mb-3 bg-gray-800/50 rounded-2xl flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 rounded-full border border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white">
-                            {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-white truncate max-w-[140px]">
-                                {{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
-                            <p class="text-[10px] uppercase text-[#CC9863] font-bold">{{ $currentRole }}</p>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('profile.edit') }}"
-                        class="block rounded-xl px-3 py-2.5 text-sm font-semibold mb-2 transition-colors {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800' }}">Profil
-                        Saya</a>
-
-                    @if ($currentRole === 'owner')
-                        <a href="{{ route('owner.dashboard') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Dashboard</a>
-                        <a href="{{ route('owner.finance.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Laporan
-                            Keuangan</a>
-                        <a href="{{ route('owner.transaction.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Riwayat &
-                            Approval</a>
-
-                        <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-3 mb-1">Data
-                            Master</p>
-                        <a href="{{ route('owner.employee.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Manajemen
-                            Pegawai</a>
-                        <a href="{{ route('owner.outlet.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Kelola
-                            Outlet</a>
-                        <a href="{{ route('owner.member.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Kelola
-                            Member</a>
-                    @elseif ($currentRole === 'admin')
-                        <a href="{{ route('admin.dashboard') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Dashboard
-                            Admin</a>
-
-                        <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-3 mb-1">
-                            Transaksi</p>
-                        <a href="{{ route('admin.transaction.online') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm font-bold {{ request()->routeIs('admin.transaction.online') ? 'text-white bg-[#CC9863]' : 'text-[#CC9863] hover:bg-gray-800' }}">Buat
-                            Pesanan Online</a>
-                        <a href="{{ route('admin.transaction.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Riwayat
-                            Transaksi</a>
-
-                        <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-3 mb-1">Data
-                            Master</p>
-                        <a href="{{ route('admin.stock.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Kelola Stok
-                            Barang</a>
-                        <a href="{{ route('admin.member.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300">Kelola
-                            Member</a>
-                    @elseif ($currentRole === 'kasir')
-                        <a href="{{ route('kasir.pos') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm font-bold {{ request()->is('kasir/pos') ? 'bg-[#CC9863] text-white' : 'text-[#CC9863] bg-gray-800/50' }}">Buka
-                            POS Kasir</a>
-                        <a href="{{ route('kasir.transaction.index') }}"
-                            class="block rounded-xl px-3 py-2.5 text-sm hover:bg-gray-800 text-gray-300 mt-1">Riwayat
-                            Transaksi</a>
-                    @endif
-
-                    <form method="POST" action="{{ route('logout') }}" class="mt-2 border-t border-gray-700 pt-2">
-                        @csrf
-                        <button type="submit"
-                            class="w-full text-left rounded-xl px-3 py-2.5 text-sm text-red-400 font-bold hover:bg-red-500/10 transition-colors">Keluar
-                            Sistem</button>
-                    </form>
+                </button>
+                <div class="flex items-center gap-2 font-bold text-xl">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span class="text-[#CC9863]">ZeePerfume</span>
                 </div>
-            </details>
+            </div>
         </header>
 
         <!-- Dynamic Content Section -->
@@ -364,14 +330,25 @@
 
     </div>
 
-    <!-- Script menutup Dropdown Mobile saat klik area lain -->
+    <!-- Script Mengendalikan Off-Canvas Sidebar Mobile -->
     <script>
-        document.addEventListener('click', function(event) {
-            const details = document.querySelector('details');
-            if (details && !details.contains(event.target)) {
-                details.removeAttribute('open');
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+
+            // Cek apakah sidebar sedang tertutup (-translate-x-full)
+            if (sidebar.classList.contains('-translate-x-full')) {
+                // Buka Sidebar
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            } else {
+                // Tutup Sidebar
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
             }
-        });
+        }
     </script>
 </body>
 

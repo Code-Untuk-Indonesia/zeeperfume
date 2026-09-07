@@ -15,6 +15,8 @@ use App\Http\Controllers\Owner\FinanceController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Owner\TransactionController as OwnerTransactionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ExpenseController as AdminExpenseController;
+use App\Http\Controllers\Owner\ExpenseController as OwnerExpenseController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +60,12 @@ Route::middleware('auth')->group(function () {
 */
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // RUTE PENGELUARAN (Beban Operasional)
+    Route::get('expense', [AdminExpenseController::class, 'index'])->name('expense.index');
+    Route::post('expense', [AdminExpenseController::class, 'store'])->name('expense.store');
+    Route::put('expense/{id}', [AdminExpenseController::class, 'update'])->name('expense.update');
+    Route::delete('expense/{id}', [AdminExpenseController::class, 'destroy'])->name('expense.destroy');
 
     // Menggunakan AdminOutletController
     Route::get('outlet', [AdminOutletController::class, 'index'])->name('outlet.index');
@@ -119,6 +127,11 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     Route::get('dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
     Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+    // -- PENGELUARAN (Beban Operasional) --
+    Route::get('expense', [OwnerExpenseController::class, 'index'])->name('expense.index');
+    Route::post('expense', [OwnerExpenseController::class, 'store'])->name('expense.store');
+    Route::put('expense/{id}', [OwnerExpenseController::class, 'update'])->name('expense.update');
+    Route::delete('expense/{id}', [OwnerExpenseController::class, 'destroy'])->name('expense.destroy');
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
     Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
