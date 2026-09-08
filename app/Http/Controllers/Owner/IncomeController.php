@@ -14,8 +14,15 @@ class IncomeController extends Controller
 {
     public function index(Request $request)
     {
-        $month = (int) $request->input('month', now()->month);
-        $year = (int) $request->input('year', now()->year);
+        $validated = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'report_date' => ['nullable', 'date_format:Y-m-d'],
+            'report_branch' => ['nullable', 'integer', 'exists:branches,id'],
+        ]);
+
+        $month = (int) ($validated['month'] ?? now()->month);
+        $year = (int) ($validated['year'] ?? now()->year);
 
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
@@ -62,7 +69,50 @@ class IncomeController extends Controller
             ];
         })->sortByDesc('total_income');
 
-        // 5. Produk Terlaris (Berdasarkan Omzet)
+        // 5. Rekap pendapatan harian per outlet.
+        // Transaksi tetap dijumlahkan berdasarkan tanggal transaksi, bukan waktu laporan dibuka.
+        $dailyReportDate = Carbon::createFromFormat(
+            'Y-m-d',
+            $validated['report_date'] ?? now()->toDateString()
+        )->startOfDay();
+        $dailyReportEnd = $dailyReportDate->copy()->endOfDay();
+        $dailyReportBranches = DB::table('branches')
+            ->whereNull('deleted_at')
+            ->orderBy('nama_cabang')
+            ->get(['id', 'nama_cabang']);
+
+        $dailyOutletReports = DB::table('branches')
+            ->leftJoin('transactions', function ($join) use ($dailyReportDate, $dailyReportEnd) {
+                $join->on('transactions.cabang_id', '=', 'branches.id')
+                    ->whereBetween('transactions.tanggal_waktu', [$dailyReportDate, $dailyReportEnd]);
+            })
+            ->leftJoin('cash_tempo', 'cash_tempo.transaksi_id', '=', 'transactions.id')
+            ->whereNull('branches.deleted_at')
+            ->when(
+                isset($validated['report_branch']),
+                fn ($query) => $query->where('branches.id', $validated['report_branch'])
+            )
+            ->select([
+                'branches.id as cabang_id',
+                'branches.nama_cabang',
+                DB::raw('COUNT(transactions.id) as total_transaksi'),
+                DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_pendapatan'),
+                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN transactions.total_belanja - COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE transactions.total_belanja END), 0) as total_diterima"),
+                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE 0 END), 0) as total_piutang"),
+            ])
+            ->groupBy('branches.id', 'branches.nama_cabang')
+            ->orderByDesc('total_pendapatan')
+            ->orderBy('branches.nama_cabang')
+            ->get();
+
+        $dailySummary = [
+            'total_transaksi' => (int) $dailyOutletReports->sum('total_transaksi'),
+            'total_pendapatan' => (float) $dailyOutletReports->sum('total_pendapatan'),
+            'total_diterima' => (float) $dailyOutletReports->sum('total_diterima'),
+            'total_piutang' => (float) $dailyOutletReports->sum('total_piutang'),
+        ];
+
+        // 6. Produk Terlaris (Berdasarkan Omzet)
         $trxIds = $allTransactions->pluck('id');
         $topProducts = TransactionDetail::with('variant.product')
             ->whereIn('transaksi_id', $trxIds)
@@ -72,7 +122,7 @@ class IncomeController extends Controller
             ->take(5)
             ->get();
 
-        // 6. Data Tabel Pemasukan (Income) Dengan Pagination
+        // 7. Data Tabel Pemasukan (Income) Dengan Pagination
         $incomeTransactions = Transaction::with(['branch', 'cashier', 'member'])
             ->whereBetween('tanggal_waktu', [$startDate, $endDate])
             ->orderByDesc('tanggal_waktu')
@@ -83,7 +133,8 @@ class IncomeController extends Controller
             'month', 'year', 'monthName',
             'totalIncome', 'totalTrx', 'avgTransaction',
             'chartData', 'paymentMethods', 'branchIncomes', 'topProducts',
-            'incomeTransactions'
+            'incomeTransactions', 'dailyReportDate', 'dailyReportBranches',
+            'dailyOutletReports', 'dailySummary'
         ));
     }
 }

@@ -104,6 +104,108 @@
             </div>
         </div>
 
+        <!-- ================= DAILY OUTLET REPORT ================= -->
+        <section class="mb-8" aria-labelledby="daily-outlet-report-title">
+            <div class="flex flex-col gap-4 mb-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <h2 id="daily-outlet-report-title" class="text-xl font-black text-gray-900">Rekap Harian per Outlet</h2>
+                    <p class="text-sm text-gray-500 mt-1 font-medium">
+                        Penjualan dan kas diterima pada {{ $dailyReportDate->translatedFormat('d F Y') }}.
+                    </p>
+                </div>
+
+                <form action="{{ route('owner.income.index') }}" method="GET" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <input type="hidden" name="month" value="{{ $month }}">
+                    <input type="hidden" name="year" value="{{ $year }}">
+                    <div>
+                        <label for="report_date" class="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1">Tanggal laporan</label>
+                        <input id="report_date" type="date" name="report_date" value="{{ $dailyReportDate->format('Y-m-d') }}"
+                            class="w-full sm:w-auto rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-bold text-gray-700 shadow-sm focus:border-[#CC9863] focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20">
+                    </div>
+                    <div>
+                        <label for="report_branch" class="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1">Outlet</label>
+                        <select id="report_branch" name="report_branch"
+                            class="w-full sm:w-48 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-bold text-gray-700 shadow-sm focus:border-[#CC9863] focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20">
+                            <option value="">Semua outlet</option>
+                            @foreach ($dailyReportBranches as $reportBranch)
+                                <option value="{{ $reportBranch->id }}" @selected((string) request('report_branch') === (string) $reportBranch->id)>
+                                    {{ $reportBranch->nama_cabang }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="min-h-[44px] rounded-xl bg-[#1C1D21] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#CC9863] focus:ring-offset-2">
+                        Tampilkan
+                    </button>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
+                <div class="rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Omzet tanggal ini</p>
+                    <p class="mt-2 text-xl font-black text-gray-900">Rp {{ number_format($dailySummary['total_pendapatan'], 0, ',', '.') }}</p>
+                </div>
+                <div class="rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Kas diterima</p>
+                    <p class="mt-2 text-xl font-black text-green-700">Rp {{ number_format($dailySummary['total_diterima'], 0, ',', '.') }}</p>
+                </div>
+                <div class="rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Sisa piutang tempo</p>
+                    <p class="mt-2 text-xl font-black text-red-700">Rp {{ number_format($dailySummary['total_piutang'], 0, ',', '.') }}</p>
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[680px] text-left">
+                        <thead class="border-b border-gray-100 bg-gray-50/70 text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+                            <tr>
+                                <th class="px-5 py-4">Outlet</th>
+                                <th class="px-5 py-4 text-right">Transaksi</th>
+                                <th class="px-5 py-4 text-right">Omzet</th>
+                                <th class="px-5 py-4 text-right">Kas diterima</th>
+                                <th class="px-5 py-4 text-right">Piutang tempo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
+                            @forelse ($dailyOutletReports as $report)
+                                <tr class="transition hover:bg-gray-50">
+                                    <td class="px-5 py-4">
+                                        <p class="font-extrabold text-gray-900">{{ $report->nama_cabang }}</p>
+                                        @if ((int) $report->total_transaksi === 0)
+                                            <p class="mt-1 text-[11px] font-semibold text-gray-400">Belum ada transaksi pada tanggal ini</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4 text-right font-bold text-gray-700">{{ number_format($report->total_transaksi, 0, ',', '.') }}</td>
+                                    <td class="px-5 py-4 text-right font-black text-gray-900">Rp {{ number_format($report->total_pendapatan, 0, ',', '.') }}</td>
+                                    <td class="px-5 py-4 text-right font-black text-green-700">Rp {{ number_format($report->total_diterima, 0, ',', '.') }}</td>
+                                    <td class="px-5 py-4 text-right font-black text-red-700">Rp {{ number_format($report->total_piutang, 0, ',', '.') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-5 py-10 text-center">
+                                        <p class="font-bold text-gray-700">Outlet tidak ditemukan</p>
+                                        <p class="mt-1 text-sm text-gray-500">Periksa filter outlet yang dipilih atau tampilkan semua outlet.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        @if ($dailyOutletReports->isNotEmpty())
+                            <tfoot class="border-t-2 border-gray-100 bg-gray-50/50 text-sm">
+                                <tr>
+                                    <th class="px-5 py-4 text-left font-extrabold text-gray-900">Total</th>
+                                    <th class="px-5 py-4 text-right font-black text-gray-900">{{ number_format($dailySummary['total_transaksi'], 0, ',', '.') }}</th>
+                                    <th class="px-5 py-4 text-right font-black text-gray-900">Rp {{ number_format($dailySummary['total_pendapatan'], 0, ',', '.') }}</th>
+                                    <th class="px-5 py-4 text-right font-black text-green-700">Rp {{ number_format($dailySummary['total_diterima'], 0, ',', '.') }}</th>
+                                    <th class="px-5 py-4 text-right font-black text-red-700">Rp {{ number_format($dailySummary['total_piutang'], 0, ',', '.') }}</th>
+                                </tr>
+                            </tfoot>
+                        @endif
+                    </table>
+                </div>
+            </div>
+        </section>
+
 
 
         <!-- ================= BOTTOM SECTION: INCOME TRANSACTIONS ================= -->
