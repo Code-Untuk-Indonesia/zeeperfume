@@ -403,4 +403,29 @@ class PosController extends Controller
 
         return view('kasir.pos.success', compact('transaction'));
     }
+
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255|unique:categories,nama_kategori',
+        ]);
+
+        try {
+            $category = Category::create([
+                'nama_kategori' => $request->nama_kategori,
+                // tambahkan field lain jika ada di tabel categories (seperti 'deskripsi' dll)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'message' => 'Kategori berhasil ditambahkan!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan kategori: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

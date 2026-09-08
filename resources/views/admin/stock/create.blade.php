@@ -101,7 +101,7 @@
 
                         <!-- STOK AREA -->
                         <div class="md:col-span-12 mt-2 pt-4 border-t border-dashed border-gray-200">
-                            
+
                             <!-- Stok Pusat (Wajib) -->
                             <div class="flex items-center gap-4 bg-orange-50 p-4 rounded-xl border border-[#CC9863]/20 mb-4">
                                 <div class="w-10 h-10 rounded-full bg-[#CC9863] text-white flex items-center justify-center shrink-0 shadow-md">
@@ -123,7 +123,7 @@
                                     <input type="checkbox" onchange="toggleBranchPcs(0, this.checked)" class="w-4 h-4 text-[#CC9863] rounded focus:ring-[#CC9863]">
                                     <span class="text-sm font-bold text-gray-700">Distribusikan langsung ke cabang lain?</span>
                                 </label>
-                                
+
                                 <div id="branch-dist-pcs-0" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6 border-l-2 border-gray-100">
                                     @foreach($branches->where('id', '!=', 1) as $branch)
                                         <div class="flex flex-col gap-2 p-3 border border-gray-100 rounded-xl bg-gray-50 hover:bg-white transition-colors">
@@ -238,21 +238,26 @@
 
         </div>
 
-        <!-- ================= KOLOM KANAN: PENGATURAN KATEGORI & SUBMIT ================= -->
-        <div class="w-full xl:w-[360px] space-y-6 shrink-0">
+        <!-- ================= KOLOM KANAN: PENGATURAN KATEGORI (X-DATA) ================= -->
+        <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="categoryManager()">
 
             <!-- Kategori & Status -->
-            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative">
                 <h2 class="text-base font-extrabold text-gray-900 mb-4 border-b border-gray-100 pb-3">Pengaturan Katalog</h2>
                 <div class="space-y-5">
+
+                    <!-- Dropdown Kategori -->
                     <div>
                         <div class="flex justify-between items-center mb-1.5">
                             <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide">Kategori <span class="text-red-500">*</span></label>
-                            <button type="button" onclick="document.getElementById('categoryModal').classList.remove('hidden')" class="text-[10px] bg-orange-50 text-[#CC9863] px-2 py-1 rounded font-bold hover:bg-orange-100 transition flex items-center gap-1">
+
+                            <!-- Tombol Trigger Modal Tambah Kategori -->
+                            <button type="button" @click.prevent="openCategoryModal = true" class="text-[10px] bg-orange-50 text-[#CC9863] px-2 py-1 rounded font-bold hover:bg-orange-100 transition flex items-center gap-1 focus:outline-none">
                                 + Baru
                             </button>
                         </div>
-                        <select name="category_id" class="w-full px-4 py-3.5 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800" required>
+
+                        <select name="category_id" id="category_select" class="w-full px-4 py-3.5 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800" required>
                             <option value="">Pilih Kategori</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->nama_kategori }}</option>
@@ -268,11 +273,46 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- ================= MODAL TAMBAH KATEGORI (ALPINE) ================= -->
+                <!-- x-cloak untuk mencegah modal berkedip saat halaman dimuat -->
+                <div x-cloak x-show="openCategoryModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <!-- Backdrop -->
+                    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="openCategoryModal = false" x-show="openCategoryModal" x-transition.opacity></div>
+
+                    <!-- Modal Content -->
+                    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transform transition-all" x-show="openCategoryModal" x-transition.scale.90>
+                        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 class="text-base font-bold text-gray-900">Tambah Kategori Baru</h3>
+                            <button type="button" @click="openCategoryModal = false" class="text-gray-400 hover:text-red-500 font-bold text-xl leading-none focus:outline-none">&times;</button>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div>
+                                <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-2">Nama Kategori <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="newCategoryName" @keydown.enter.prevent="saveCategory()" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] focus:ring-2 focus:ring-[#CC9863]/20 text-sm font-semibold transition" placeholder="Contoh: Parfum Pria">
+
+                                <p x-show="errorMessage" x-text="errorMessage" x-transition class="text-xs text-red-500 mt-2 font-medium"></p>
+                                <p x-show="successMessage" x-text="successMessage" x-transition class="text-xs text-green-600 mt-2 font-bold"></p>
+                            </div>
+                        </div>
+                        <div class="p-5 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button type="button" @click="openCategoryModal = false" class="flex-1 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-100 transition focus:outline-none">Batal</button>
+                            <button type="button" @click.prevent="saveCategory()" :disabled="isLoading" class="flex-1 py-2.5 bg-[#1C1D21] text-white rounded-xl font-bold text-sm hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none">
+                                <span x-show="!isLoading">Simpan</span>
+                                <span x-show="isLoading" class="flex items-center gap-2">
+                                    <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Memproses...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Modal -->
             </div>
 
             <!-- Action Buttons -->
             <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3 sticky top-6">
-                <button type="submit" class="w-full bg-[#1C1D21] text-white py-4 rounded-2xl font-extrabold text-sm hover:bg-black transition-all shadow-xl shadow-black/10 flex justify-center items-center gap-2 transform active:scale-95">
+                <button type="submit" class="w-full bg-[#1C1D21] text-white py-4 rounded-2xl font-extrabold text-sm hover:bg-black transition-all shadow-xl shadow-black/10 flex justify-center items-center gap-2 transform active:scale-95 focus:outline-none">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                     Simpan Produk
                 </button>
@@ -284,8 +324,15 @@
     </form>
 </main>
 
+<style>
+    /* Menyembunyikan elemen AlpineJS sebelum dimuat */
+    [x-cloak] { display: none !important; }
+</style>
+
 <script>
-    // Logika Toggle Mode Produk (Kemasan vs Refill)
+    // ==========================================
+    // LOGIKA PLAIN JS UNTUK TOGGLE FORM
+    // ==========================================
     function toggleProductType() {
         const type = document.querySelector('input[name="product_type"]:checked').value;
         const secKemasan = document.getElementById('section-kemasan');
@@ -296,11 +343,13 @@
             secRefill.classList.add('hidden');
             document.querySelectorAll('#section-kemasan input, #section-kemasan select').forEach(el => el.disabled = false);
             document.querySelectorAll('#section-refill input, #section-refill select').forEach(el => el.disabled = true);
-            // Matikan disable pada input cabang kemasan (reset state)
+            // Reset disabled pada cabang
             document.querySelectorAll('input[name="assign_branch_pcs[]"]').forEach(el => {
                 if(!el.checked) {
-                    document.getElementById(`pcs_b${el.value}_0`).disabled = true;
-                    document.getElementById(`pcs_s${el.value}_0`).disabled = true;
+                    const bInput = document.getElementById(`pcs_b${el.value}_0`);
+                    const sInput = document.getElementById(`pcs_s${el.value}_0`);
+                    if(bInput) bInput.disabled = true;
+                    if(sInput) sInput.disabled = true;
                 }
             });
         } else {
@@ -308,53 +357,119 @@
             secRefill.classList.remove('hidden');
             document.querySelectorAll('#section-kemasan input, #section-kemasan select').forEach(el => el.disabled = true);
             document.querySelectorAll('#section-refill input, #section-refill select').forEach(el => el.disabled = false);
-            // Matikan disable pada input cabang refill (reset state)
+            // Reset disabled pada cabang refill
             document.querySelectorAll('input[name="assign_branch_refill[]"]').forEach(el => {
                 if(!el.checked) {
-                    document.getElementById(`rfl_b${el.value}`).disabled = true;
-                    document.getElementById(`rfl_u${el.value}`).disabled = true;
-                    document.getElementById(`rfl_s${el.value}`).disabled = true;
+                    const bInput = document.getElementById(`rfl_b${el.value}`);
+                    const uInput = document.getElementById(`rfl_u${el.value}`);
+                    const sInput = document.getElementById(`rfl_s${el.value}`);
+                    if(bInput) bInput.disabled = true;
+                    if(uInput) uInput.disabled = true;
+                    if(sInput) sInput.disabled = true;
                 }
             });
         }
     }
 
-    // Toggle Tampilan Checkbox Cabang (Kemasan)
     function toggleBranchPcs(index, isChecked) {
         const container = document.getElementById(`branch-dist-pcs-${index}`);
         if(isChecked) {
             container.classList.remove('hidden');
         } else {
             container.classList.add('hidden');
-            // Uncheck and disable all
             container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 cb.checked = false;
-                document.getElementById(`pcs_b${cb.value}_${index}`).disabled = true;
-                document.getElementById(`pcs_b${cb.value}_${index}`).value = '';
-                document.getElementById(`pcs_s${cb.value}_${index}`).disabled = true;
+                const bInput = document.getElementById(`pcs_b${cb.value}_${index}`);
+                const sInput = document.getElementById(`pcs_s${cb.value}_${index}`);
+                if(bInput) { bInput.disabled = true; bInput.value = ''; }
+                if(sInput) sInput.disabled = true;
             });
         }
     }
 
-    // Toggle Tampilan Checkbox Cabang (Refill)
     function toggleBranchRefill(isChecked) {
         const container = document.getElementById(`branch-dist-refill`);
         if(isChecked) {
             container.classList.remove('hidden');
         } else {
             container.classList.add('hidden');
-            // Uncheck and disable all
             container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 cb.checked = false;
-                document.getElementById(`rfl_b${cb.value}`).disabled = true;
-                document.getElementById(`rfl_u${cb.value}`).disabled = true;
-                document.getElementById(`rfl_s${cb.value}`).disabled = true;
-                document.getElementById(`rfl_b${cb.value}`).value = '';
+                const bInput = document.getElementById(`rfl_b${cb.value}`);
+                const uInput = document.getElementById(`rfl_u${cb.value}`);
+                const sInput = document.getElementById(`rfl_s${cb.value}`);
+                if(bInput) { bInput.disabled = true; bInput.value = ''; }
+                if(uInput) uInput.disabled = true;
+                if(sInput) sInput.disabled = true;
             });
         }
     }
 
-    // Initialize state
     document.addEventListener("DOMContentLoaded", toggleProductType);
+
+    // ==========================================
+    // LOGIKA ALPINE JS UNTUK MODAL KATEGORI
+    // ==========================================
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('categoryManager', () => ({
+            openCategoryModal: false,
+            newCategoryName: '',
+            isLoading: false,
+            errorMessage: '',
+            successMessage: '',
+
+            async saveCategory() {
+                if (!this.newCategoryName.trim()) {
+                    this.errorMessage = 'Nama kategori tidak boleh kosong!';
+                    this.successMessage = '';
+                    return;
+                }
+
+                this.isLoading = true;
+                this.errorMessage = '';
+                this.successMessage = '';
+
+                try {
+                    const response = await fetch("{{ route('admin.category.storeAjax') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nama_kategori: this.newCategoryName
+                        })
+                    });
+
+                    const data = await response.json();
+                    this.isLoading = false;
+
+                    if (response.ok && data.success) {
+                        this.successMessage = data.message;
+
+                        // Tambahkan option baru ke select HTML & pilih otomatis
+                        const selectEl = document.getElementById('category_select');
+                        const newOption = new Option(data.category.nama_kategori, data.category.id, true, true);
+                        selectEl.add(newOption);
+
+                        // Tutup modal otomatis setelah 1 detik
+                        setTimeout(() => {
+                            this.openCategoryModal = false;
+                            this.newCategoryName = '';
+                            this.successMessage = '';
+                        }, 1000);
+
+                    } else {
+                        this.errorMessage = data.message || 'Terjadi kesalahan.';
+                    }
+                } catch (error) {
+                    this.isLoading = false;
+                    this.errorMessage = 'Koneksi terputus. Pastikan controller & route sudah benar.';
+                    console.error('Error:', error);
+                }
+            }
+        }));
+    });
 </script>
 @endsection

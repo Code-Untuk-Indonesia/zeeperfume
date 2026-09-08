@@ -74,6 +74,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('outlet/create', 'admin.outlet.create')->name('outlet.create');
     Route::view('outlet/edit', 'admin.outlet.edit')->name('outlet.edit');
 
+    Route::post('category/ajax', [AdminStockController::class, 'storeAjax'])->name('category.storeAjax');
+
     // Stock CRUD
     Route::get('stock', [AdminStockController::class, 'index'])->name('stock.index');
     Route::get('stock/history', [StockHistoryController::class, 'page'])->name('stock.history');

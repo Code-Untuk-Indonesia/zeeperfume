@@ -51,7 +51,6 @@ class StockController extends Controller
         ));
     }
 
-
     /**
      * Menampilkan Form Tambah Produk
      */
@@ -60,6 +59,36 @@ class StockController extends Controller
         $categories = Category::all();
         $branches = Branch::all(); // Mengambil daftar semua cabang untuk checkbox alokasi
         return view('admin.stock.create', compact('categories', 'branches'));
+    }
+
+    /**
+     * FUNGSI BARU: Menyimpan Kategori Baru via AJAX dari Form Modal
+     */
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255|unique:categories,nama_kategori',
+        ], [
+            'nama_kategori.unique' => 'Nama kategori ini sudah ada di database!',
+            'nama_kategori.required' => 'Nama kategori tidak boleh kosong!'
+        ]);
+
+        try {
+            $category = Category::create([
+                'nama_kategori' => $request->nama_kategori,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'message' => 'Kategori berhasil ditambahkan!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan kategori: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -107,7 +136,7 @@ class StockController extends Controller
                     $stokPusat = $request->stock_pusat_pcs[$index] ?? 0;
                     if ($stokPusat > 0) {
                         \App\Models\BranchStock::create(['varian_id' => $variant->id, 'cabang_id' => 1, 'stok' => $stokPusat]);
-                        
+
                         \App\Models\StockHistory::create([
                             'cabang_id'     => 1,
                             'varian_id'     => $variant->id,
@@ -136,20 +165,35 @@ class StockController extends Controller
 
                                     // History Keluar di Pusat
                                     \App\Models\StockHistory::create([
-                                        'cabang_id' => 1, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                        'jenis_riwayat' => 'keluar', 'qty' => $stokCabang, 'keterangan' => "Distribusi ke Cabang ID: $branchId", 'waktu' => now()
+                                        'cabang_id' => 1,
+                                        'varian_id' => $variant->id,
+                                        'user_id' => $userId,
+                                        'jenis_riwayat' => 'keluar',
+                                        'qty' => $stokCabang,
+                                        'keterangan' => "Distribusi ke Cabang ID: $branchId",
+                                        'waktu' => now()
                                     ]);
 
                                     // History Masuk di Cabang
                                     \App\Models\StockHistory::create([
-                                        'cabang_id' => $branchId, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                        'jenis_riwayat' => 'masuk', 'qty' => $stokCabang, 'keterangan' => "Menerima distribusi dari Pusat", 'waktu' => now()
+                                        'cabang_id' => $branchId,
+                                        'varian_id' => $variant->id,
+                                        'user_id' => $userId,
+                                        'jenis_riwayat' => 'masuk',
+                                        'qty' => $stokCabang,
+                                        'keterangan' => "Menerima distribusi dari Pusat",
+                                        'waktu' => now()
                                     ]);
                                 } else {
                                     // Direct dari Supplier
                                     \App\Models\StockHistory::create([
-                                        'cabang_id' => $branchId, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                        'jenis_riwayat' => 'masuk', 'qty' => $stokCabang, 'keterangan' => "Stok awal langsung dari supplier", 'waktu' => now()
+                                        'cabang_id' => $branchId,
+                                        'varian_id' => $variant->id,
+                                        'user_id' => $userId,
+                                        'jenis_riwayat' => 'masuk',
+                                        'qty' => $stokCabang,
+                                        'keterangan' => "Stok awal langsung dari supplier",
+                                        'waktu' => now()
                                     ]);
                                 }
 
@@ -181,10 +225,15 @@ class StockController extends Controller
 
                 if ($stokPusat > 0) {
                     \App\Models\BranchStock::create(['varian_id' => $variant->id, 'cabang_id' => 1, 'stok' => $stokPusat]);
-                    
+
                     \App\Models\StockHistory::create([
-                        'cabang_id' => 1, 'varian_id' => $variant->id, 'user_id' => $userId,
-                        'jenis_riwayat' => 'masuk', 'qty' => $stokPusat, 'keterangan' => 'Stok awal biang pusat', 'waktu' => now()
+                        'cabang_id' => 1,
+                        'varian_id' => $variant->id,
+                        'user_id' => $userId,
+                        'jenis_riwayat' => 'masuk',
+                        'qty' => $stokPusat,
+                        'keterangan' => 'Stok awal biang pusat',
+                        'waktu' => now()
                     ]);
                 }
 
@@ -206,19 +255,34 @@ class StockController extends Controller
 
                                 // History Pusat
                                 \App\Models\StockHistory::create([
-                                    'cabang_id' => 1, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                    'jenis_riwayat' => 'keluar', 'qty' => $stokCabang, 'keterangan' => "Transfer biang ke Cabang ID: $branchId", 'waktu' => now()
+                                    'cabang_id' => 1,
+                                    'varian_id' => $variant->id,
+                                    'user_id' => $userId,
+                                    'jenis_riwayat' => 'keluar',
+                                    'qty' => $stokCabang,
+                                    'keterangan' => "Transfer biang ke Cabang ID: $branchId",
+                                    'waktu' => now()
                                 ]);
 
                                 // History Cabang
                                 \App\Models\StockHistory::create([
-                                    'cabang_id' => $branchId, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                    'jenis_riwayat' => 'masuk', 'qty' => $stokCabang, 'keterangan' => "Menerima biang dari Gudang Pusat", 'waktu' => now()
+                                    'cabang_id' => $branchId,
+                                    'varian_id' => $variant->id,
+                                    'user_id' => $userId,
+                                    'jenis_riwayat' => 'masuk',
+                                    'qty' => $stokCabang,
+                                    'keterangan' => "Menerima biang dari Gudang Pusat",
+                                    'waktu' => now()
                                 ]);
                             } else {
                                 \App\Models\StockHistory::create([
-                                    'cabang_id' => $branchId, 'varian_id' => $variant->id, 'user_id' => $userId,
-                                    'jenis_riwayat' => 'masuk', 'qty' => $stokCabang, 'keterangan' => "Stok awal biang (Langsung Supplier)", 'waktu' => now()
+                                    'cabang_id' => $branchId,
+                                    'varian_id' => $variant->id,
+                                    'user_id' => $userId,
+                                    'jenis_riwayat' => 'masuk',
+                                    'qty' => $stokCabang,
+                                    'keterangan' => "Stok awal biang (Langsung Supplier)",
+                                    'waktu' => now()
                                 ]);
                             }
 
@@ -230,7 +294,6 @@ class StockController extends Controller
 
             DB::commit();
             return redirect()->route('admin.stock.index')->with('success', 'Produk baru dan riwayat stok berhasil disimpan!');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal menyimpan produk: ' . $e->getMessage());
@@ -245,7 +308,7 @@ class StockController extends Controller
         $product = Product::with(['variants.branchStocks'])->findOrFail($id);
         $categories = Category::all();
         $branches = Branch::all();
-        
+
         // Deteksi apakah ini produk kemasan (botol) atau biang (ml)
         $firstVariant = $product->variants->first();
         $productType = ($firstVariant && strtolower($firstVariant->satuan) === 'ml') ? 'refill' : 'kemasan';
@@ -253,7 +316,7 @@ class StockController extends Controller
         return view('admin.stock.edit', compact('product', 'categories', 'branches', 'productType'));
     }
 
-/**
+    /**
      * Memproses Update Data Produk & History Stok
      */
     public function update(Request $request, $id)
@@ -268,7 +331,7 @@ class StockController extends Controller
         try {
             $product = Product::findOrFail($id);
             $userId  = auth()->id() ?? 1; // Mendapatkan ID Admin yang mengedit
-            
+
             // 1. Update Induk Produk
             $product->update([
                 'nama_produk' => $request->name,
@@ -295,13 +358,13 @@ class StockController extends Controller
                             ['varian_id' => $variant->id, 'cabang_id' => 1],
                             ['stok' => 0]
                         );
-                        
+
                         $diffPusat = $stokPusatBaru - $pusatRecord->stok;
-                        
+
                         // Jika ada perubahan stok di pusat, catat history-nya
                         if ($diffPusat != 0) {
                             $pusatRecord->update(['stok' => $stokPusatBaru]);
-                            
+
                             \App\Models\StockHistory::create([
                                 'cabang_id'     => 1,
                                 'varian_id'     => $variant->id,
@@ -320,7 +383,7 @@ class StockController extends Controller
                                     ['varian_id' => $variant->id, 'cabang_id' => $branchId],
                                     ['stok' => 0]
                                 );
-                                
+
                                 $diffCabang = $stokCabangBaru - $cabangRecord->stok;
                                 $source = $request->input("stock_source.{$index}.{$branchId}") ?? 'direct';
 
@@ -332,7 +395,7 @@ class StockController extends Controller
                                             throw new \Exception("Stok Pusat varian '{$variant->nama_varian}' tidak cukup untuk ditransfer.");
                                         }
                                         $pusatRecord->decrement('stok', $diffCabang);
-                                        
+
                                         \App\Models\StockHistory::create([
                                             'cabang_id'     => 1,
                                             'varian_id'     => $variant->id,
@@ -405,7 +468,7 @@ class StockController extends Controller
                     $diffPusat = $stokPusatBaru - $pusatRecord->stok;
                     if ($diffPusat != 0) {
                         $pusatRecord->update(['stok' => $stokPusatBaru]);
-                        
+
                         \App\Models\StockHistory::create([
                             'cabang_id'     => 1,
                             'varian_id'     => $variant->id,
@@ -424,7 +487,7 @@ class StockController extends Controller
                                 ['varian_id' => $variant->id, 'cabang_id' => $branchId],
                                 ['stok' => 0]
                             );
-                            
+
                             $diffCabang = $stokCabangBaru - $cabangRecord->stok;
                             $source = $request->input("refill_stock_source.{$branchId}") ?? 'direct';
 
@@ -458,30 +521,19 @@ class StockController extends Controller
                                         'waktu'         => now(),
                                     ]);
                                 } else {
-                                    // Direct
                                     \App\Models\StockHistory::create([
                                         'cabang_id'     => $branchId,
                                         'varian_id'     => $variant->id,
                                         'user_id'       => $userId,
                                         'jenis_riwayat' => 'masuk',
                                         'qty'           => $diffCabang,
-                                        'keterangan'    => 'Penambahan biang (Langsung)',
+                                        'keterangan'    => "Stok awal biang (Langsung Supplier)",
                                         'waktu'         => now(),
                                     ]);
                                 }
-                            } elseif ($diffCabang < 0) {
-                                \App\Models\StockHistory::create([
-                                    'cabang_id'     => $branchId,
-                                    'varian_id'     => $variant->id,
-                                    'user_id'       => $userId,
-                                    'jenis_riwayat' => 'keluar',
-                                    'qty'           => $diffCabang,
-                                    'keterangan'    => 'Penyesuaian pengurangan biang',
-                                    'waktu'         => now(),
-                                ]);
-                            }
 
-                            $cabangRecord->update(['stok' => $stokCabangBaru]);
+                                \App\Models\BranchStock::create(['varian_id' => $variant->id, 'cabang_id' => $branchId, 'stok' => $stokCabang]);
+                            }
                         }
                     }
                 }
@@ -489,10 +541,38 @@ class StockController extends Controller
 
             DB::commit();
             return redirect()->route('admin.stock.index')->with('success', 'Data stok dan riwayat berhasil diperbarui secara otomatis!');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal update produk: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Menghapus Produk beserta seluruh data varian dan stok terkait
+     */
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $product = Product::with('variants')->findOrFail($id);
+
+            // Hapus data yang berelasi dengan variant jika tidak menggunakan ON DELETE CASCADE di database
+            if ($product->variants) {
+                foreach ($product->variants as $variant) {
+                    \App\Models\BranchStock::where('varian_id', $variant->id)->delete();
+                    \App\Models\StockHistory::where('varian_id', $variant->id)->delete();
+                    $variant->delete();
+                }
+            }
+
+            // Hapus data induk produk
+            $product->delete();
+
+            DB::commit();
+            return redirect()->route('admin.stock.index')->with('success', 'Produk beserta seluruh data terkait berhasil dihapus!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus produk: ' . $e->getMessage());
         }
     }
 }
