@@ -7,7 +7,6 @@ use App\Models\Branch;
 use App\Models\BranchStock;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
-use App\Models\Member;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +34,7 @@ class DashboardController extends Controller
         $kasDiterima = $totalOmzet - $totalPiutang;
         $totalTransactions = $allTransactions->count();
 
-        // 2. Metrik Lainnya
+        // 2. Metrik Lainnya & Aset Modal
         $paymentMethods = Transaction::select('metode_bayar', DB::raw('count(*) as total_transaksi'))
             ->groupBy('metode_bayar')
             ->get();
@@ -48,6 +47,13 @@ class DashboardController extends Controller
             ->orderByDesc('tanggal_waktu')
             ->limit(5)
             ->get();
+
+        // MENGHITUNG TOTAL ASET MODAL BARANG SAAT INI
+        // (Jumlah Stok Fisik x Harga Modal)
+        $totalAsetModal = BranchStock::with('variant')->get()->sum(function ($stock) {
+            return $stock->stok * ($stock->variant->harga_modal ?? 0);
+        });
+
 
         // 3. Persiapan Data Grafik
         $startOfWeek = Carbon::now()->startOfWeek();
@@ -66,7 +72,7 @@ class DashboardController extends Controller
             $dailyOmzet = $dailyTrx->sum('total_belanja');
             $dailyHpp = $dailyTrx->sum(function($trx) {
                 return $trx->details->sum(function($detail) {
-                    return ($detail->variant->harga_beli ?? 0) * $detail->qty;
+                    return ($detail->variant->harga_modal ?? 0) * $detail->qty;
                 });
             });
 
@@ -80,7 +86,7 @@ class DashboardController extends Controller
             'hpp' => $chartHpp
         ];
 
-        // 4. TOP PRODUCTS & CABANG (DIPINDAHKAN KE SINI)
+        // 4. TOP PRODUCTS & CABANG
         $trxIds = $allTransactions->pluck('id');
         $topProducts = TransactionDetail::with('variant.product')
             ->whereIn('transaksi_id', $trxIds)
@@ -103,6 +109,7 @@ class DashboardController extends Controller
             'kasDiterima',
             'totalPiutang',
             'totalTransactions',
+            'totalAsetModal', // <-- Variabel baru dilempar ke View
             'paymentMethods',
             'lowStocks',
             'recentTransactions',
