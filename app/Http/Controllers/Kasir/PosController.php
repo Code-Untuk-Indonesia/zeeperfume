@@ -35,8 +35,8 @@ class PosController extends Controller
                 $stockQuery->where('cabang_id', $cabangId);
             }]);
         }])
-        ->where('tipe_stok', 'ada_stok')
-        ->get();
+            ->where('tipe_stok', 'ada_stok')
+            ->get();
 
         return view('kasir.pos.index', compact('categories', 'products'));
     }
@@ -94,13 +94,13 @@ class PosController extends Controller
 
             // Hitung kembalian (hanya jika tunai)
             $kembalian = $metodeBayar === 'cash'
-                            ? max(0, $nominalBayar - $totalBelanja)
-                            : 0;
+                ? max(0, $nominalBayar - $totalBelanja)
+                : 0;
 
             // Jika metode non-cash, nominal bayar dianggap pas (sama dengan total tagihan)
             $nominalBayarAsli = ! in_array($metodeBayar, ['cash', 'cash_tempo'], true)
-                                ? $totalBelanja
-                                : $nominalBayar;
+                ? $totalBelanja
+                : $nominalBayar;
 
             // 2. Buat Data Transaksi Induk
             $transaction = Transaction::create([
@@ -144,8 +144,8 @@ class PosController extends Controller
 
                 // Kurangi Stok Cabang
                 $stock = BranchStock::where('cabang_id', $cabangId)
-                                    ->where('varian_id', $item['variantId'])
-                                    ->first();
+                    ->where('varian_id', $item['variantId'])
+                    ->first();
                 if ($stock) {
                     $stock->decrement('stok', $qtyOrMl);
                 }
@@ -197,12 +197,12 @@ class PosController extends Controller
                 'transaction_id' => $transaction->id,
                 'redirect_url' => url('kasir/pos/success?trx_id=' . $transaction->id)
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
     /**
      * Mencari Member berdasarkan No HP via AJAX
      */
@@ -211,8 +211,8 @@ class PosController extends Controller
         $phone = preg_replace('/[^0-9]/', '', $request->phone);
 
         $member = \App\Models\Member::where('no_telp', $phone)
-                    ->orWhere('no_telp', 'like', "%{$phone}%")
-                    ->first();
+            ->orWhere('no_telp', 'like', "%{$phone}%")
+            ->first();
 
         if (!$member) {
             return response()->json(['success' => true, 'found' => false]);
@@ -242,36 +242,36 @@ class PosController extends Controller
      */
     public function storeMember(Request $request)
     {
-        // 1. Validasi Input (Menyesuaikan dengan "name" di HTML Anda)
+        // 1. Validasi Input
         $request->validate([
             'name'  => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:members,no_telp', // Nomor tidak boleh kembar
+            'phone' => 'required|string|max:20|unique:members,no_telp',
         ], [
             'phone.unique' => 'Nomor HP ini sudah terdaftar sebagai member.',
         ]);
 
-        // 2. Buat ID Member (Contoh: MEM-20260906-001)
+        // 2. Buat ID Member
         $lastMember = Member::latest('id')->first();
         $nextId = $lastMember ? $lastMember->id + 1 : 1;
         $kodeMember = 'MEM-' . date('Ymd') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
 
         // 3. Simpan ke Database
         Member::create([
-            'kode_member' => $kodeMember,
-            'nama'        => $request->name,
-            'no_telp'     => $request->phone,
-            'poin'        => 0, // Member baru poinnya 0
-            'status'      => 'aktif'
+            'kode_member'       => $kodeMember,
+            'nama'              => $request->name,
+            'no_telp'           => $request->phone,
+            'poin'              => 0,
+            'tanggal_bergabung' => Carbon::now()->toDateString(), // PERBAIKAN: Isi default tanggal bergabung
+            'status'            => 'aktif'
         ]);
 
         // 4. Arahkan kembali ke halaman POS dengan pesan sukses
-        // NOTE: Kasir bisa menangkap session 'success' ini menggunakan Javascript alert jika diperlukan
         return redirect()->route('kasir.pos')->with('success', 'Member baru berhasil didaftarkan!');
     }
 
     public function history(Request $request)
     {
-        $kasirId = auth()->id() ?? 3; // Ganti 3 dengan ID kasir default jika auth kosong saat testing
+        $kasirId = auth()->id() ?? 3;
         $today = Carbon::today();
 
         // Query dasar: transaksi oleh kasir ini, pada hari ini
@@ -307,8 +307,13 @@ class PosController extends Controller
         $transactions = $query->orderBy('tanggal_waktu', 'desc')->paginate(10);
 
         return view('kasir.pos.history', compact(
-            'transactions', 'totalPendapatan', 'totalTransaksi',
-            'tunai', 'qrisTransfer', 'tempo', 'today'
+            'transactions',
+            'totalPendapatan',
+            'totalTransaksi',
+            'tunai',
+            'qrisTransfer',
+            'tempo',
+            'today'
         ));
     }
 
@@ -334,9 +339,9 @@ class PosController extends Controller
         $transaction->member = $transaction->member_id === null
             ? null
             : DB::table('members')
-                ->where('id', $transaction->member_id)
-                ->whereNull('deleted_at')
-                ->first(['id', 'kode_member', 'nama', 'no_telp']);
+            ->where('id', $transaction->member_id)
+            ->whereNull('deleted_at')
+            ->first(['id', 'kode_member', 'nama', 'no_telp']);
 
         $transaction->cash_tempo = DB::table('cash_tempo')
             ->where('transaksi_id', $transaction->id)
@@ -398,6 +403,4 @@ class PosController extends Controller
 
         return view('kasir.pos.success', compact('transaction'));
     }
-
-
 }
