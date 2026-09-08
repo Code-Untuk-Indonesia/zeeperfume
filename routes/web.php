@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExpenseController as AdminExpenseController;
 use App\Http\Controllers\Owner\ExpenseController as OwnerExpenseController;
 use App\Http\Controllers\Owner\IncomeController as OwnerIncomeController;
+use App\Http\Controllers\StockHistoryController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Stock CRUD
     Route::get('stock', [AdminStockController::class, 'index'])->name('stock.index');
+    Route::get('stock/history', [StockHistoryController::class, 'page'])->name('stock.history');
     Route::get('stock/create', [AdminStockController::class, 'create'])->name('stock.create');
     Route::post('stock/store', [AdminStockController::class, 'store'])->name('stock.store');
     Route::get('stock/edit/{id}', [AdminStockController::class, 'edit'])->name('stock.edit');
@@ -159,6 +161,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // STOCK
     Route::get('stock', [OwnerStockController::class, 'index'])->name('stock.index');
+    Route::get('stock/history', [StockHistoryController::class, 'page'])->name('stock.history');
     Route::get('stock/create', [OwnerStockController::class, 'create'])->name('stock.create');
     Route::post('stock/store', [OwnerStockController::class, 'store'])->name('stock.store');
     Route::get('stock/edit/{id}', [OwnerStockController::class, 'edit'])->name('stock.edit');
