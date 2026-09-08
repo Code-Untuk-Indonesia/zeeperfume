@@ -29,7 +29,6 @@
     <!-- ================= ALERT NOTIFIKASI APPROVAL ================= -->
     @if(isset($pendingApprovals) && $pendingApprovals->count() > 0)
     <div class="bg-orange-50 border border-orange-200 rounded-3xl p-5 md:p-6 mb-8 shadow-sm relative overflow-hidden">
-        <!-- Dekorasi bg -->
         <div class="absolute -right-4 -top-4 text-orange-200/40 pointer-events-none">
             <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
         </div>
@@ -47,16 +46,16 @@
                         <div class="bg-white p-4 rounded-2xl border border-orange-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-sm hover:border-orange-300 transition-colors">
                             <div>
                                 <p class="text-sm font-extrabold text-gray-900">
-                                    Pengajuan 
+                                    Pengajuan
                                     @if($pending->approval_status === 'pending_delete')
                                         <span class="text-red-500 uppercase tracking-wider text-[11px] bg-red-50 px-2 py-0.5 rounded ml-1">Hapus Transaksi</span>
                                     @else
                                         <span class="text-blue-500 uppercase tracking-wider text-[11px] bg-blue-50 px-2 py-0.5 rounded ml-1">Edit Transaksi</span>
-                                    @endif 
+                                    @endif
                                     <span class="text-gray-400 ml-1">({{ $pending->nomor_nota }})</span>
                                 </p>
                                 <p class="text-xs font-semibold text-gray-500 mt-1.5 flex items-center gap-2">
-                                    <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">Oleh: {{ $pending->requester->nama_lengkap ?? 'Admin' }}</span> 
+                                    <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">Oleh: {{ $pending->requester->nama_lengkap ?? 'Admin' }}</span>
                                     <span class="italic text-gray-600">"{{ $pending->approval_reason }}"</span>
                                 </p>
                             </div>
@@ -83,48 +82,57 @@
     </div>
     @endif
 
-    <!-- ================= FILTER & PENCARIAN ================= -->
-    <form action="{{ route('owner.transaction.index') }}" method="GET" class="bg-white p-4 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col md:flex-row gap-4">
-        <!-- Search -->
-        <div class="relative w-full md:w-1/3">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <input type="text" name="search" value="{{ request('search') }}" class="block w-full pl-11 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#CC9863] focus:ring-2 focus:ring-[#CC9863]/20 text-sm font-semibold transition" placeholder="Cari No. Invoice atau Pelanggan..." onblur="this.form.submit()">
-        </div>
-
-        <!-- Dropdown Filters -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 w-full md:w-2/3">
-            <select name="cabang" onchange="this.form.submit()" class="block w-full px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
-                <option value="all">Semua Outlet</option>
-                @if(isset($branches))
-                    @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}" {{ request('cabang') == $branch->id ? 'selected' : '' }}>{{ $branch->nama_cabang }}</option>
-                    @endforeach
-                @endif
-            </select>
-            <select name="tanggal" onchange="this.form.submit()" class="block w-full px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
-                <option value="all">Semua Tanggal</option>
-                <option value="hari_ini" {{ request('tanggal') == 'hari_ini' ? 'selected' : '' }}>Hari Ini</option>
-                <option value="kemarin" {{ request('tanggal') == 'kemarin' ? 'selected' : '' }}>Kemarin</option>
-                <option value="7_hari" {{ request('tanggal') == '7_hari' ? 'selected' : '' }}>7 Hari Terakhir</option>
-                <option value="bulan_ini" {{ request('tanggal') == 'bulan_ini' ? 'selected' : '' }}>Bulan Ini</option>
-            </select>
-            <select name="metode" onchange="this.form.submit()" class="block w-full px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
-                <option value="all">Semua Pembayaran</option>
-                <option value="cash" {{ request('metode') == 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
-                <option value="qris" {{ request('metode') == 'qris' ? 'selected' : '' }}>QRIS</option>
-                <option value="transfer" {{ request('metode') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                <option value="tempo" {{ request('metode') == 'tempo' ? 'selected' : '' }}>Tempo (Kasbon)</option>
-            </select>
-            
-            @if(request()->anyFilled(['search', 'cabang', 'tanggal', 'metode']))
-                <div class="col-span-2 lg:col-span-2 flex">
-                    <a href="{{ route('owner.transaction.index') }}" class="w-full flex items-center justify-center bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition">Reset Filter</a>
+    <!-- ================= FILTER & PENCARIAN DENGAN ALPINE JS ================= -->
+    <div x-data="{ filterTanggal: '{{ request('tanggal', 'all') }}' }">
+        <form action="{{ route('owner.transaction.index') }}" method="GET" class="bg-white p-4 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col md:flex-row gap-4">
+            <!-- Search -->
+            <div class="relative w-full md:w-1/3">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-            @endif
-        </div>
-    </form>
+                <input type="text" name="search" value="{{ request('search') }}" class="block w-full pl-11 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#CC9863] focus:ring-2 focus:ring-[#CC9863]/20 text-sm font-semibold transition" placeholder="Cari No. Invoice atau Pelanggan..." onblur="this.form.submit()">
+            </div>
+
+            <!-- Dropdown Filters -->
+            <div class="flex-1 flex flex-wrap lg:flex-nowrap gap-3">
+                <select name="cabang" onchange="this.form.submit()" class="flex-1 min-w-[140px] px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
+                    <option value="all">Semua Outlet</option>
+                    @if(isset($branches))
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ request('cabang') == $branch->id ? 'selected' : '' }}>{{ $branch->nama_cabang }}</option>
+                        @endforeach
+                    @endif
+                </select>
+
+                <!-- Alpine JS untuk mengontrol Select Tanggal -->
+                <select name="tanggal" x-model="filterTanggal" @change="if(filterTanggal !== 'custom') $el.form.submit()" class="flex-1 min-w-[140px] px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
+                    <option value="all">Semua Tanggal</option>
+                    <option value="hari_ini">Hari Ini</option>
+                    <option value="kemarin">Kemarin</option>
+                    <option value="7_hari">7 Hari Terakhir</option>
+                    <option value="bulan_ini">Bulan Ini</option>
+                    <option value="custom">Pilih Tanggal...</option>
+                </select>
+
+                <!-- Input Khusus Tanggal (Akan Muncul Jika 'Pilih Tanggal...' di Klik) -->
+                <template x-if="filterTanggal === 'custom'">
+                    <input type="date" name="tanggal_spesifik" value="{{ request('tanggal_spesifik') }}" onchange="this.form.submit()" class="flex-1 min-w-[140px] px-3 py-3 text-sm font-semibold border border-[#CC9863] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 animate-fade-in cursor-pointer">
+                </template>
+
+                <select name="metode" onchange="this.form.submit()" class="flex-1 min-w-[140px] px-3 py-3 text-sm font-semibold border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:border-[#CC9863] cursor-pointer">
+                    <option value="all">Semua Bayar</option>
+                    <option value="cash" {{ request('metode') == 'cash' ? 'selected' : '' }}>Tunai (Cash)</option>
+                    <option value="qris" {{ request('metode') == 'qris' ? 'selected' : '' }}>QRIS</option>
+                    <option value="transfer" {{ request('metode') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
+                    <option value="tempo" {{ request('metode') == 'tempo' ? 'selected' : '' }}>Tempo (Kasbon)</option>
+                </select>
+
+                @if(request()->anyFilled(['search', 'cabang', 'tanggal', 'metode', 'tanggal_spesifik']))
+                    <a href="{{ route('owner.transaction.index') }}" class="px-5 py-3 flex items-center justify-center bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition whitespace-nowrap">Reset Filter</a>
+                @endif
+            </div>
+        </form>
+    </div>
 
     <!-- ================= TRANSACTION TABLE ================= -->
     <div class="bg-white rounded-b-3xl border border-gray-100 shadow-sm overflow-hidden mb-6">
@@ -143,10 +151,10 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
 
-                    @if(isset($transactions))
-                        @forelse($transactions as $trx)
+                    @if(isset($transactions) && $transactions->count() > 0)
+                        @foreach($transactions as $trx)
                             @php
-                                $isTempo = strtolower($trx->metode_bayar) === 'tempo' || strtolower($trx->metode_bayar) === 'cash_tempo';
+                                $isTempo = in_array(strtolower($trx->metode_bayar), ['tempo', 'cash_tempo']);
                                 $belumLunas = $isTempo && $trx->cashTempo && $trx->cashTempo->sisa_piutang > 0;
                             @endphp
                             <tr class="hover:bg-gray-50/80 transition-colors {{ $belumLunas ? 'bg-red-50/10' : '' }}">
@@ -224,19 +232,19 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-6 py-16 text-center bg-gray-50/50">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <div class="w-16 h-16 bg-gray-100 text-gray-300 rounded-full flex items-center justify-center mb-4">
-                                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        </div>
-                                        <h3 class="text-gray-900 font-bold text-base mb-1">Belum Ada Transaksi</h3>
-                                        <p class="text-gray-500 text-sm max-w-sm">Data pencarian atau riwayat penjualan tidak ditemukan.</p>
+                        @endforeach
+                    @else
+                        <tr>
+                            <td colspan="7" class="px-6 py-16 text-center bg-gray-50/50">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-gray-100 text-gray-300 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
-                                </td>
-                            </tr>
-                        @endforelse
+                                    <h3 class="text-gray-900 font-bold text-base mb-1">Belum Ada Transaksi</h3>
+                                    <p class="text-gray-500 text-sm max-w-sm">Data pencarian atau riwayat penjualan tidak ditemukan.</p>
+                                </div>
+                            </td>
+                        </tr>
                     @endif
 
                 </tbody>

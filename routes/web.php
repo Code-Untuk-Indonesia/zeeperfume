@@ -17,6 +17,7 @@ use App\Http\Controllers\Owner\TransactionController as OwnerTransactionControll
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExpenseController as AdminExpenseController;
 use App\Http\Controllers\Owner\ExpenseController as OwnerExpenseController;
+use App\Http\Controllers\Owner\IncomeController as OwnerIncomeController;
 use App\Support\RoleDashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -132,6 +133,11 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::post('expense', [OwnerExpenseController::class, 'store'])->name('expense.store');
     Route::put('expense/{id}', [OwnerExpenseController::class, 'update'])->name('expense.update');
     Route::delete('expense/{id}', [OwnerExpenseController::class, 'destroy'])->name('expense.destroy');
+
+    // -- PENDAPATAN (Income) --
+    Route::get('income', [OwnerIncomeController::class, 'index'])->name('income.index');
+    Route::get('expense', [OwnerExpenseController::class, 'index'])->name('expense.index');
+
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
     Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');

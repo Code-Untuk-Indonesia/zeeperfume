@@ -30,7 +30,7 @@ class FinanceController extends Controller
             ->get();
 
         // =========================================================
-        // LOGIKA PERHITUNGAN
+        // 1. LOGIKA PERHITUNGAN SESUAI "UNTUNG.JPEG"
         // =========================================================
 
         // 1. Total Omzet / Pendapatan Kotor
@@ -39,6 +39,7 @@ class FinanceController extends Controller
         // 2. Total Modal Barang Terjual (HPP)
         $totalHpp = $transactions->sum(function ($trx) {
             return $trx->details->sum(function ($detail) {
+                // Asumsi harga modal disimpan di 'harga_beli'
                 return ($detail->variant->harga_beli ?? 0) * $detail->qty;
             });
         });
@@ -52,13 +53,13 @@ class FinanceController extends Controller
         // 5. Keuntungan Bersih (Net Profit)
         $labaBersih = $labaKotor - $totalPengeluaran;
 
-        // Perhitungan Tambahan (Margin)
+        // Variabel tambahan untuk kebutuhan UI View
         $totalBeban = $totalHpp + $totalPengeluaran;
         $marginPercentage = $totalOmzet > 0 ? round(($labaBersih / $totalOmzet) * 100, 1) : 0;
 
 
         // =========================================================
-        // DAILY CHART (Untuk Grafik)
+        // 2. DAILY CHART (Untuk Grafik Line)
         // =========================================================
         $labels = [];
         $income = [];
@@ -84,17 +85,19 @@ class FinanceController extends Controller
 
             $labels[] = $date->format('d M');
             $income[] = (float) $dailyTransactions->sum('total_belanja');
+            // Biaya harian = HPP harian + Operasional harian
             $expenseChart[] = (float) ($dailyHpp + $dailyOperational->sum('nominal'));
         }
 
         $chartData = [
-            'labels' => $labels,
-            'income' => $income,
+            'labels'  => $labels,
+            'income'  => $income,
             'expense' => $expenseChart
         ];
 
+
         // =========================================================
-        // REPORT PER CABANG
+        // 3. REPORT PER CABANG
         // =========================================================
         $branchReports = Branch::all()->map(function ($branch) use ($transactions, $expenses) {
             $branchTransactions = $transactions->where('cabang_id', $branch->id);
@@ -115,19 +118,32 @@ class FinanceController extends Controller
 
             return (object) [
                 'nama_cabang' => $branch->nama_cabang,
-                'omzet' => $omzet,
-                'hpp' => $hpp,
-                'laba_kotor' => $labaKotorCabang,
+                'omzet'       => $omzet,
+                'hpp'         => $hpp,
+                'laba_kotor'  => $labaKotorCabang,
                 'pengeluaran' => $pengeluaran,
                 'laba_bersih' => $labaBersihCabang,
-                'margin' => $omzet > 0 ? round(($labaBersihCabang / $omzet) * 100, 1) : 0,
+                'margin'      => $omzet > 0 ? round(($labaBersihCabang / $omzet) * 100, 1) : 0,
             ];
         });
 
+        // =========================================================
+        // 4. LEMPAR SEMUA DATA KE VIEW
+        // =========================================================
         return view('owner.finance.index', compact(
-            'month', 'year', 'monthName',
-            'totalOmzet', 'totalHpp', 'labaKotor', 'totalPengeluaran', 'totalBeban', 'labaBersih', 'marginPercentage',
-            'branchReports', 'chartData', 'expenses'
+            'month',
+            'year',
+            'monthName',
+            'totalOmzet',
+            'totalHpp',
+            'labaKotor',          // Pastikan labaKotor dimasukkan
+            'totalPengeluaran',
+            'totalBeban',
+            'labaBersih',
+            'marginPercentage',
+            'branchReports',
+            'chartData',
+            'expenses'            // Pastikan expenses dimasukkan
         ));
     }
 }
