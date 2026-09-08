@@ -3,30 +3,61 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BranchStock;
+use App\Models\Member;
+use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
-use App\Models\BranchStock;
-use App\Models\StockHistory;
-use App\Models\Member;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
     /**
-     * Memproses Pembayaran (Checkout)
+     * Memproses dan menyimpan transaksi ke Database (Checkout)
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'cart'          => 'required|array',
-            'metode_bayar'  => 'required|string',
-            'nominal_bayar' => 'required|numeric',
+            'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo', 'tempo'])],
+            'nominal_bayar' => 'required|numeric|min:0',
             'subtotal'      => 'required|numeric',
             'discount'      => 'required|numeric',
             'total'         => 'required|numeric',
+            'member_id'     => [
+                'nullable',
+                'integer',
+                Rule::exists('members', 'id')->whereNull('deleted_at'),
+            ],
+            'is_point_used' => 'sometimes|boolean',
+            'used_points'   => 'sometimes|integer|min:0',
+            'diskon_persen' => 'sometimes|numeric|min:0|max:100',
+            'cash_tempo'    => 'nullable|required_if:metode_bayar,cash_tempo|array',
+            'cash_tempo.tanggal_jatuh_tempo' => 'required_if:metode_bayar,cash_tempo|date|after_or_equal:today',
+            'cash_tempo.catatan_penagihan' => 'nullable|string|max:1000',
         ]);
+
+        $metodeBayar = strtolower($validated['metode_bayar']);
+        $totalBelanja = (float) $validated['total'];
+        $nominalBayar = (float) $validated['nominal_bayar'];
+
+        if ($metodeBayar === 'cash' && $nominalBayar < $totalBelanja) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nominal uang tunai kurang dari total tagihan.'
+            ], 400);
+        }
+
+        if ($metodeBayar === 'cash_tempo' && $nominalBayar > $totalBelanja) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran awal cash tempo tidak boleh melebihi total tagihan.'
+            ], 400);
+        }
 
         DB::beginTransaction();
         try {
@@ -39,39 +70,48 @@ class TransactionController extends Controller
             $lastTrx = Transaction::whereDate('tanggal_waktu', $waktu->toDateString())->count();
             $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad($lastTrx + 1, 4, '0', STR_PAD_LEFT);
 
-            // Hitung kembalian
-            $kembalian = max(0, $request->nominal_bayar - $request->total);
+            // Hitung kembalian (hanya jika tunai)
+            $kembalian = $metodeBayar === 'cash' ? max(0, $nominalBayar - $totalBelanja) : 0;
+
+            // Jika metode non-cash, nominal bayar dianggap pas (sama dengan total tagihan)
+            $nominalBayarAsli = ! in_array($metodeBayar, ['cash', 'cash_tempo'], true)
+                                ? $totalBelanja
+                                : $nominalBayar;
 
             // 2. Buat Data Transaksi Induk
             $transaction = Transaction::create([
                 'kasir_id'         => $kasirId,
-                'member_id'        => $request->member_id,
+                'member_id'        => $validated['member_id'] ?? null,
                 'nomor_nota'       => $nomorNota,
                 'tanggal_waktu'    => $waktu,
-                'subtotal'         => $request->subtotal,
-                'diskon_persen'    => $request->member_id ? 10 : 0,
-                'diskon_nominal'   => $request->discount,
-                'deskripsi_diskon' => $request->member_id ? 'Diskon Member' : null,
-                'total_belanja'    => $request->total,
-                'nominal_bayar'    => $request->nominal_bayar,
+                'subtotal'         => $validated['subtotal'],
+                'diskon_persen'    => $validated['diskon_persen'] ?? 0,
+                'diskon_nominal'   => $validated['discount'],
+                'deskripsi_diskon' => ($validated['is_point_used'] ?? false) ? 'Tukar Poin Member' : ($validated['discount'] > 0 ? 'Diskon Manual/Persen' : null),
+                'total_belanja'    => $totalBelanja,
+                'nominal_bayar'    => $nominalBayarAsli,
                 'kembalian'        => $kembalian,
-                'metode_bayar'     => strtolower($request->metode_bayar),
+                'metode_bayar'     => $metodeBayar,
                 'cabang_id'        => $cabangId,
             ]);
 
             // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
-            foreach ($request->cart as $item) {
+            foreach ($validated['cart'] as $item) {
                 $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
                 $hargaSatuan = $item['unit'] === 'ml' ? $item['pricePerMl'] : $item['price'];
-                $subtotalItem = $item['unit'] === 'ml' ? $item['price'] : ($item['price'] * $item['qty']);
 
-                // Insert Detail
+                // Hitung Harga Dasar Item
+                $subtotalItemDasar = $item['unit'] === 'ml' ? $item['price'] : ($hargaSatuan * $item['qty']);
+                $diskonItem = $item['itemDiscount'] ?? 0;
+                $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
+
+                // Insert Detail Transaksi
                 TransactionDetail::create([
                     'transaksi_id'  => $transaction->id,
                     'varian_id'     => $item['variantId'],
                     'qty'           => $qtyOrMl,
                     'harga_satuan'  => $hargaSatuan,
-                    'subtotal'      => $subtotalItem,
+                    'subtotal'      => $subtotalFinalItem,
                 ]);
 
                 // Kurangi Stok Cabang
@@ -95,9 +135,34 @@ class TransactionController extends Controller
                 ]);
             }
 
+            // 4. Catatan Piutang jika Metode Kasbon/Tempo
+            if ($metodeBayar === 'cash_tempo' || $metodeBayar === 'tempo') {
+                $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
+
+                DB::table('cash_tempo')->insert([
+                    'transaksi_id'        => $transaction->id,
+                    'tanggal_jatuh_tempo' => $validated['cash_tempo']['tanggal_jatuh_tempo'] ?? $waktu->addDays(7)->toDateString(), // fallback 7 hari
+                    'jumlah_piutang'      => $totalBelanja,
+                    'sisa_piutang'        => $sisaPiutang,
+                    'status_tempo'        => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
+                    'status_verifikasi'   => 'menunggu',
+                    'catatan_penagihan'   => $validated['cash_tempo']['catatan_penagihan'] ?? null,
+                    'created_at'          => $waktu,
+                    'updated_at'          => $waktu,
+                ]);
+            }
+
+            // 5. Potong Poin Member (Jika menggunakan opsi Tukar Poin)
+            if (($validated['member_id'] ?? null) && ($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
+                $member = Member::find($validated['member_id']);
+                if ($member) {
+                    $member->decrement('poin', $validated['used_points']);
+                }
+            }
+
             DB::commit();
 
-            // Load relasi agar Flutter langsung mendapat data lengkap untuk cetak struk
+            // Load data lengkap untuk dicetak struk di Flutter
             $transaction->load(['details.variant.product', 'member']);
 
             return response()->json([
@@ -124,11 +189,7 @@ class TransactionController extends Controller
                     ->first();
 
         if (!$member) {
-            return response()->json([
-                'success' => true,
-                'found'   => false,
-                'message' => 'Member tidak ditemukan'
-            ]);
+            return response()->json(['success' => true, 'found' => false]);
         }
 
         return response()->json([
@@ -143,7 +204,38 @@ class TransactionController extends Controller
     }
 
     /**
-     * Menampilkan Riwayat Transaksi Hari Ini beserta Statistik
+     * Memproses penyimpanan data member baru dari aplikasi Kasir
+     */
+    public function storeMember(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:members,no_telp',
+        ], [
+            'phone.unique' => 'Nomor HP ini sudah terdaftar sebagai member.',
+        ]);
+
+        $lastMember = Member::latest('id')->first();
+        $nextId = $lastMember ? $lastMember->id + 1 : 1;
+        $kodeMember = 'MEM-' . date('Ymd') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
+
+        $member = Member::create([
+            'kode_member' => $kodeMember,
+            'nama'        => $request->name,
+            'no_telp'     => $request->phone,
+            'poin'        => 0,
+            'status'      => 'aktif'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Member baru berhasil didaftarkan!',
+            'data'    => $member
+        ], 201);
+    }
+
+    /**
+     * Menampilkan riwayat transaksi harian dengan filter
      */
     public function history(Request $request)
     {
@@ -151,7 +243,6 @@ class TransactionController extends Controller
         $kasirId = $user ? $user->id : 3;
         $today = Carbon::today();
 
-        // Query dasar: transaksi oleh kasir ini, pada hari ini
         $baseQuery = Transaction::with('member')
             ->where('kasir_id', $kasirId)
             ->whereDate('tanggal_waktu', $today);
@@ -161,7 +252,7 @@ class TransactionController extends Controller
         $totalTransaksi = (clone $baseQuery)->count();
         $tunai = (clone $baseQuery)->where('metode_bayar', 'cash')->sum('total_belanja');
         $qrisTransfer = (clone $baseQuery)->whereIn('metode_bayar', ['qris', 'transfer'])->sum('total_belanja');
-        $tempo = (clone $baseQuery)->where('metode_bayar', 'tempo')->sum('total_belanja');
+        $tempo = (clone $baseQuery)->whereIn('metode_bayar', ['tempo', 'cash_tempo'])->sum('total_belanja');
 
         // 2. Terapkan Filter Pencarian
         $query = clone $baseQuery;
@@ -173,6 +264,8 @@ class TransactionController extends Controller
         if ($request->filled('metode')) {
             if ($request->metode === 'qris_transfer') {
                 $query->whereIn('metode_bayar', ['qris', 'transfer']);
+            } elseif ($request->metode === 'tempo') {
+                $query->whereIn('metode_bayar', ['tempo', 'cash_tempo']);
             } elseif ($request->metode !== 'semua') {
                 $query->where('metode_bayar', $request->metode);
             }
@@ -183,7 +276,6 @@ class TransactionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Data riwayat transaksi berhasil diambil.',
             'data' => [
                 'stats' => [
                     'total_pendapatan' => (double) $totalPendapatan,
@@ -199,24 +291,64 @@ class TransactionController extends Controller
     }
 
     /**
-     * Menampilkan detail satu transaksi spesifik (Pengganti halaman success web)
-     * Dapat dipanggil dari Flutter untuk melihat/cetak ulang struk nota tertentu
+     * Mengambil detail satu transaksi spesifik milik kasir
      */
-    public function show($id)
+    public function show(Request $request, int $transactionId)
     {
-        $transaction = Transaction::with(['member', 'details.variant.product'])->find($id);
+        $user = $request->user();
+        $kasirId = $user ? $user->id : 3;
 
-        if (!$transaction) {
+        $transaction = DB::table('transactions')
+            ->where('transactions.id', $transactionId)
+            ->where('transactions.kasir_id', $kasirId)
+            ->first();
+
+        if ($transaction === null) {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaksi tidak ditemukan.'
+                'message' => 'Transaksi tidak ditemukan atau bukan milik kasir ini.',
             ], 404);
         }
 
+        $transaction->member = $transaction->member_id === null
+            ? null
+            : DB::table('members')
+                ->where('id', $transaction->member_id)
+                ->whereNull('deleted_at')
+                ->first(['id', 'kode_member', 'nama', 'no_telp']);
+
+        $transaction->cash_tempo = DB::table('cash_tempo')
+            ->where('transaksi_id', $transaction->id)
+            ->first();
+
+        $transaction->shipment = DB::table('shipments')
+            ->where('transaksi_id', $transaction->id)
+            ->first();
+
+        $transaction->details = DB::table('transaction_details')
+            ->leftJoin('produk_varian', 'produk_varian.id', '=', 'transaction_details.varian_id')
+            ->leftJoin('products', 'products.id', '=', 'produk_varian.produk_id')
+            ->where('transaction_details.transaksi_id', $transaction->id)
+            ->orderBy('transaction_details.id')
+            ->select([
+                'transaction_details.id',
+                'transaction_details.varian_id',
+                'transaction_details.qty',
+                'transaction_details.harga_satuan',
+                'transaction_details.diskon_persen',
+                'transaction_details.diskon_satuan',
+                'transaction_details.catatan_diskon',
+                'transaction_details.subtotal',
+                'produk_varian.sku',
+                'produk_varian.nama_varian',
+                'produk_varian.satuan',
+                'products.nama_produk',
+            ])
+            ->get();
+
         return response()->json([
             'success' => true,
-            'message' => 'Detail transaksi berhasil diambil.',
-            'data'    => $transaction
+            'data' => $transaction,
         ]);
     }
 }
