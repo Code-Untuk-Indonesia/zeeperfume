@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\MemberController;
 
 // Rute Publik (Tidak butuh login)
 Route::post('login', [AuthController::class, 'login']);
@@ -25,5 +26,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Endpoint Member
     Route::post('members/search', [TransactionController::class, 'searchMember']); // Mencari member berdasarkan no HP
+    Route::post('members', [MemberController::class, 'store']);
 
 });

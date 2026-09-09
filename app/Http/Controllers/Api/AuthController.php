@@ -17,7 +17,8 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('username', $request->username)->first();
+        // Tambahkan with('branch') agar data tabel branches ikut terpanggil
+        $user = User::with('branch')->where('username', $request->username)->first();
 
         // Cek apakah user ada dan password benar
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -27,7 +28,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Cek status aktif (mencegah akun yang sudah dinonaktifkan untuk login)
+        // Cek status aktif
         if (!$user->status_aktif) {
             return response()->json([
                 'success' => false,
@@ -36,12 +37,11 @@ class AuthController extends Controller
         }
 
         // Cek role_id (Asumsi role_id 3 adalah Kasir)
-        // Silakan sesuaikan angka 3 jika ID role Kasir di database Anda berbeda
         if ($user->role_id !== 3) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak! Aplikasi ini hanya untuk Kasir.'
-            ], 403); // 403 Forbidden
+            ], 403);
         }
 
         $token = $user->createToken('pos-kasir-token')->plainTextToken;
@@ -59,7 +59,6 @@ class AuthController extends Controller
     // Fungsi Logout
     public function logout(Request $request)
     {
-        // Hapus token yang sedang digunakan saat ini
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
