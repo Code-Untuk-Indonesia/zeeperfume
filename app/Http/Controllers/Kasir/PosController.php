@@ -133,12 +133,17 @@ class PosController extends Controller
                 $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
 
                 // Insert Detail Transaksi
+                $discountType = $item['discountType'] ?? 'rupiah';
+                $discountInput = (float) ($item['discountInput'] ?? 0);
+
                 TransactionDetail::create([
                     'transaksi_id'  => $transaction->id,
                     'varian_id'     => $item['variantId'],
                     'qty'           => $qtyOrMl,
                     'harga_satuan'  => $hargaSatuan,
-                    // Opsional: Jika Anda punya kolom 'diskon' di tabel transaction_details, simpan $diskonItem di sana.
+                    'diskon_persen' => $discountType === 'percent' ? $discountInput : 0,
+                    'diskon_satuan' => $diskonItem,
+                    'catatan_diskon' => $diskonItem > 0 ? 'Diskon item' : null,
                     'subtotal'      => $subtotalFinalItem,
                 ]);
 

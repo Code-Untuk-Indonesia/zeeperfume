@@ -240,13 +240,17 @@
                 const variantName = item.nama_varian || 'Varian tidak tersedia';
                 const unit = item.satuan || 'pcs';
                 const discount = Number(item.diskon_satuan) || 0;
+                const discountPercent = Number(item.diskon_persen) || 0;
+                const discountMarkup = discount > 0
+                    ? `<p class="mt-1 text-xs font-semibold text-red-600">Diskon item${discountPercent > 0 ? ` (${discountPercent}%)` : ''}: - ${formatTransactionCurrency(discount)}</p>`
+                    : '';
 
                 return `
                     <div class="flex items-start justify-between gap-4 border-b border-gray-100 py-3 last:border-b-0">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-gray-900">${escapeTransactionHtml(productName)} · ${escapeTransactionHtml(variantName)}</p>
                             <p class="mt-1 text-xs text-gray-500">${escapeTransactionHtml(item.qty)} ${escapeTransactionHtml(unit)} × ${formatTransactionCurrency(item.harga_satuan)}</p>
-                            ${discount > 0 ? `<p class="mt-1 text-xs font-semibold text-red-600">Diskon ${formatTransactionCurrency(discount)}</p>` : ''}
+                            ${discountMarkup}
                         </div>
                         <p class="shrink-0 text-sm font-extrabold text-gray-900">${formatTransactionCurrency(item.subtotal)}</p>
                     </div>`;

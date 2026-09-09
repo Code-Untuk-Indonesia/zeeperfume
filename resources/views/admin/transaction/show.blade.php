@@ -103,7 +103,7 @@
             <!-- ================= KOLOM KIRI: Daftar Produk ================= -->
             <div class="flex-1 print-struk-only">
                 <div
-                    class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden print:border-none print:shadow-none">
+                    class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden print:rounded-none print:border-none print:shadow-none">
 
                     <!-- Info Struk -->
                     <div
@@ -141,11 +141,13 @@
 
                         <div class="space-y-4 mb-6 border-b border-gray-100 pb-6 print:border-black print:space-y-2">
                             @foreach ($transaction->details as $item)
-                                @php
-                                    $variantName = $item->variant->nama_varian ?? 'Produk Terhapus';
-                                    $productName = $item->variant->product->nama_produk ?? '';
-                                    $satuan = strtolower($item->variant->satuan ?? 'pcs');
-                                @endphp
+                                    @php
+                                        $variantName = $item->variant->nama_varian ?? 'Produk Terhapus';
+                                        $productName = $item->variant->product->nama_produk ?? '';
+                                        $satuan = strtolower($item->variant->satuan ?? 'pcs');
+                                        $itemDiscount = (float) ($item->diskon_satuan ?? 0);
+                                        $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+                                    @endphp
                                 <div class="flex justify-between items-start">
                                     <div class="flex gap-3">
                                         <div
@@ -162,6 +164,12 @@
                                                 Rp {{ number_format($item->harga_satuan, 0, ',', '.') }} <span
                                                     class="print:hidden">x {{ $item->qty }} {{ $satuan }}</span>
                                             </p>
+                                            @if ($itemDiscount > 0)
+                                                <p class="mt-1 text-[11px] font-semibold text-red-600 print:text-xs print:text-black">
+                                                    Diskon item{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}:
+                                                    - Rp {{ number_format($itemDiscount, 0, ',', '.') }}
+                                                </p>
+                                            @endif
                                         </div>
                                     </div>
                                     <p class="font-black text-gray-900 text-sm print:text-xs">Rp
@@ -379,6 +387,11 @@
                 top: 0;
                 width: 100%;
                 padding: 10px;
+            }
+
+            .print-struk-only,
+            .print-struk-only * {
+                border-radius: 0 !important;
             }
 
             /* Logic toggle: Cetak Resi vs Cetak Struk */

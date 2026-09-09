@@ -33,6 +33,23 @@ class ProfileTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
+    public function test_cashier_avatar_and_profile_action_share_one_link(): void
+    {
+        $cashier = $this->createUser('kasir');
+
+        $content = $this->actingAs($cashier)
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->getContent();
+
+        $initial = mb_strtoupper(mb_substr($cashier->nama_lengkap, 0, 1));
+
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]*aria-label="Buka profil saya"[^>]*>.*?'.preg_quote($initial, '/').'.*?<span>Profil<\/span>/s',
+            $content,
+        );
+    }
+
     public function test_user_can_update_profile_without_changing_password_or_access(): void
     {
         $user = $this->createUser('admin');

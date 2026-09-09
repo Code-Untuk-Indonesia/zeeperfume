@@ -143,16 +143,13 @@
                         </p>
                     </div>
 
-                    <!-- Avatar -->
-                    <div
-                        class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#CC9863] bg-gray-800 flex items-center justify-center text-sm font-bold text-white shadow-sm shrink-0">
-                        {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'K' }}
-                    </div>
-
                     <a href="{{ route('profile.edit') }}"
-                        class="hidden min-h-10 items-center justify-center rounded-xl px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] md:flex {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
+                        class="hidden min-h-10 items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] md:flex {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                         aria-label="Buka profil saya">
-                        Profil
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[#CC9863] bg-gray-800 text-sm font-bold text-white shadow-sm sm:h-10 sm:w-10">
+                            {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'K' }}
+                        </span>
+                        <span>Profil</span>
                     </a>
 
                     <div class="hidden lg:block w-px h-7 bg-gray-700"></div>

@@ -144,12 +144,22 @@
         <!-- PASTIKAN ANDA SUDAH ME-LOAD RELATION 'details' PADA CONTROLLER (with('details')) -->
         @if(isset($transaction->details))
             @foreach($transaction->details as $item)
+            @php
+                $itemDiscount = (float) ($item->diskon_satuan ?? 0);
+                $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+            @endphp
             <div style="margin-bottom: 6px;">
                 <p style="margin: 0; font-weight: bold;">{{ $item->variant->nama_varian ?? 'Nama Produk' }}</p>
                 <div style="display: flex; justify-content: space-between;">
                     <span>{{ $item->qty }} x {{ number_format($item->harga_satuan, 0, ',', '.') }}</span>
                     <span>{{ number_format($item->subtotal, 0, ',', '.') }}</span>
                 </div>
+                @if($itemDiscount > 0)
+                <div style="display: flex; justify-content: space-between; color: #b91c1c;">
+                    <span>Diskon item{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}</span>
+                    <span>-{{ number_format($itemDiscount, 0, ',', '.') }}</span>
+                </div>
+                @endif
             </div>
             @endforeach
         @else
@@ -169,7 +179,7 @@
         </div>
         @if($transaction->diskon_nominal > 0)
         <div style="display: flex; justify-content: space-between;">
-            <span>Diskon</span>
+            <span>Diskon{{ $transaction->deskripsi_diskon ? ' (' . $transaction->deskripsi_diskon . ')' : '' }}</span>
             <span>-{{ number_format($transaction->diskon_nominal, 0, ',', '.') }}</span>
         </div>
         @endif
