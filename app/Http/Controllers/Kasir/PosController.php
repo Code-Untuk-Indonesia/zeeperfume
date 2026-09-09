@@ -200,7 +200,11 @@ class PosController extends Controller
             return response()->json([
                 'success' => true,
                 'transaction_id' => $transaction->id,
-                'redirect_url' => url('kasir/pos/success?trx_id=' . $transaction->id)
+                'redirect_url' => url('kasir/pos/success?trx_id=' . $transaction->id),
+                // ==========================================
+                // BARIS INI YANG DITAMBAHKAN UNTUK MOBILE API
+                // ==========================================
+                'receipt_url' => route('kasir.pos.receipt', $transaction->id)
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -432,5 +436,21 @@ class PosController extends Controller
                 'message' => 'Gagal menambahkan kategori: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * URL API TAMPILAN RESI WEBVIEW UNTUK MOBILE APP
+     */
+    public function receipt($trx_id)
+    {
+        $transaction = Transaction::with([
+            'member',
+            'cashier',
+            'branch',
+            'details.variant.product',
+            'cashTempo',
+        ])->findOrFail($trx_id);
+
+        return view('kasir.pos.receipt', compact('transaction'));
     }
 }

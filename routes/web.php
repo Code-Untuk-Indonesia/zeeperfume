@@ -117,6 +117,8 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
     Route::get('transaction/{transactionId}/detail', [PosController::class, 'detail'])->name('transaction.detail');
     Route::post('pos/store', [PosController::class, 'store'])->name('pos.store');
     Route::get('pos/search-member', [PosController::class, 'searchMember'])->name('pos.searchMember');
+    // API STRUK MOBILE
+    Route::get('pos/receipt/{trx_id}', [PosController::class, 'receipt'])->name('pos.receipt');
 
     // --- PERBAIKAN ROUTE MEMBER ---
     Route::get('member/create', [PosController::class, 'createMember'])->name('member.create');
