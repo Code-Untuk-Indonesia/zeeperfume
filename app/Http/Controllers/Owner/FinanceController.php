@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\BranchStock; // <-- Tambahan Model
 use App\Models\Expense;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -37,10 +38,10 @@ class FinanceController extends Controller
 
         $totalOmzet = $transactions->sum('total_belanja');
 
-        // Total Modal Barang Terjual (HPP) ditarik dari harga_modal di tabel produk_varian
+        // Total Modal Barang Terjual (HPP) ditarik dari 'harga_beli' di tabel produk_varian
         $totalHpp = $transactions->sum(function ($trx) {
             return $trx->details->sum(function ($detail) {
-                return ($detail->variant->harga_modal ?? 0) * $detail->qty;
+                return ($detail->variant->harga_beli ?? 0) * $detail->qty; // PERBAIKAN: harga_beli
             });
         });
 
@@ -52,7 +53,14 @@ class FinanceController extends Controller
         $marginPercentage = $totalOmzet > 0 ? round(($labaBersih / $totalOmzet) * 100, 1) : 0;
 
         // =========================================================
-        // 2. RINCIAN MODAL BARANG TERJUAL (TABEL HPP)
+        // 2. MENGHITUNG TOTAL ASET MODAL BARANG SAAT INI (FITUR BARU)
+        // =========================================================
+        $totalAsetModal = BranchStock::with('variant')->get()->sum(function ($stock) {
+            return $stock->stok * ($stock->variant->harga_beli ?? 0); // PERBAIKAN: harga_beli
+        });
+
+        // =========================================================
+        // 3. RINCIAN MODAL BARANG TERJUAL (TABEL HPP)
         // =========================================================
         $trxIds = $transactions->pluck('id');
         $hppDetails = TransactionDetail::with('variant.product')
@@ -62,17 +70,15 @@ class FinanceController extends Controller
             ->get()
             ->map(function ($item) {
                 // Ambil harga modal dari produk varian
-                $modalSatuan = $item->variant->harga_modal ?? 0;
+                $modalSatuan = $item->variant->harga_beli ?? 0; // PERBAIKAN: harga_beli
                 $item->modal_satuan = $modalSatuan;
                 $item->total_modal = $modalSatuan * $item->total_qty;
                 return $item;
             })
-            // Saring agar hanya menampilkan yang modalnya lebih dari 0 jika diinginkan
             ->sortByDesc('total_modal');
 
-
         // =========================================================
-        // 3. DAILY CHART
+        // 4. DAILY CHART
         // =========================================================
         $labels = [];
         $income = [];
@@ -92,7 +98,7 @@ class FinanceController extends Controller
 
             $dailyHpp = $dailyTransactions->sum(function ($trx) {
                 return $trx->details->sum(
-                    fn($detail) => ($detail->variant->harga_modal ?? 0) * $detail->qty
+                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty // PERBAIKAN: harga_beli
                 );
             });
 
@@ -104,7 +110,7 @@ class FinanceController extends Controller
         $chartData = ['labels' => $labels, 'income' => $income, 'expense' => $expenseChart];
 
         // =========================================================
-        // 4. REPORT PER CABANG
+        // 5. REPORT PER CABANG
         // =========================================================
         $branchReports = Branch::all()->map(function ($branch) use ($transactions, $expenses) {
             $branchTransactions = $transactions->where('cabang_id', $branch->id);
@@ -112,7 +118,7 @@ class FinanceController extends Controller
             $omzet = $branchTransactions->sum('total_belanja');
             $hpp = $branchTransactions->sum(function ($trx) {
                 return $trx->details->sum(
-                    fn($detail) => ($detail->variant->harga_modal ?? 0) * $detail->qty
+                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty // PERBAIKAN: harga_beli
                 );
             });
 
@@ -142,6 +148,7 @@ class FinanceController extends Controller
             'totalBeban',
             'labaBersih',
             'marginPercentage',
+            'totalAsetModal', // <-- Variabel baru dilempar ke View
             'branchReports',
             'chartData',
             'expenses',

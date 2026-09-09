@@ -29,6 +29,7 @@
                             @endfor
                         </select>
                     </div>
+
                     <div class="flex items-center bg-white border border-gray-200 rounded-2xl px-3 shadow-sm">
                         <select name="year" onchange="this.form.submit()"
                             class="bg-transparent border-none text-gray-700 py-2.5 font-bold text-sm focus:outline-none cursor-pointer appearance-none">
@@ -37,6 +38,7 @@
                         </select>
                     </div>
                 </form>
+
                 <button onclick="window.print()"
                     class="bg-indigo-500 text-white px-5 py-2.5 rounded-2xl font-bold shadow-sm hover:bg-indigo-600 flex items-center gap-2 text-sm transition-colors print:hidden">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,16 +49,18 @@
             </div>
         </div>
 
-        <!-- ================= TOP METRICS CARDS ================= -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- ================= TOP METRICS CARDS (MENJADI 4 CARD) ================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+
             <!-- 1. LABA BERSIH -->
-            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-6">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-gray-900">Total balance (Net Profit)</h3>
-                    <span
-                        class="text-xs font-semibold bg-gray-50 text-gray-500 px-2 py-1 rounded-lg border border-gray-200">IDR</span>
+            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-5 md:p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs md:text-sm font-bold text-gray-900">Total balance (Net Profit)</h3>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-4">Rp
+                        {{ number_format($labaBersih, 0, ',', '.') }}</h2>
                 </div>
-                <h2 class="text-3xl font-black text-gray-900 mb-4">Rp {{ number_format($labaBersih, 0, ',', '.') }}</h2>
                 <div class="flex items-center justify-between">
                     <span
                         class="{{ $marginPercentage >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }} text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -66,41 +70,59 @@
                         </svg>
                         {{ $marginPercentage }}% Margin
                     </span>
-                    <span class="text-[10px] font-bold text-gray-400">Laba Kotor - Operasional</span>
                 </div>
             </div>
 
             <!-- 2. LABA KOTOR -->
-            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-6">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-gray-900">Gross Profit (Laba Kotor)</h3>
-                    <span
-                        class="text-xs font-semibold bg-gray-50 text-gray-500 px-2 py-1 rounded-lg border border-gray-200">IDR</span>
+            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-5 md:p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs md:text-sm font-bold text-gray-900">Gross Profit (Laba Kotor)</h3>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-4">Rp
+                        {{ number_format($labaKotor, 0, ',', '.') }}</h2>
                 </div>
-                <h2 class="text-3xl font-black text-gray-900 mb-4">Rp {{ number_format($labaKotor, 0, ',', '.') }}</h2>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-semibold text-gray-400">Omzet - Modal HPP Barang</span>
-                    <div class="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
-                        <span class="text-[10px] font-bold text-blue-700">Gross</span>
-                    </div>
                 </div>
             </div>
 
             <!-- 3. TOTAL EXPENSE -->
-            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-6">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-gray-900">Total Expenses</h3>
-                    <span
-                        class="text-xs font-semibold bg-gray-50 text-gray-500 px-2 py-1 rounded-lg border border-gray-200">IDR</span>
-                </div>
-                <h2 class="text-3xl font-black text-gray-900 mb-4">Rp {{ number_format($totalBeban, 0, ',', '.') }}</h2>
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-semibold text-gray-400">Total semua modal & biaya.</span>
-                    <div class="flex items-center gap-2 bg-red-50 px-2 py-1 rounded-lg">
-                        <span class="text-[10px] font-bold text-red-700">Cost</span>
+            <div class="bg-white rounded-[24px] border border-gray-100 shadow-sm p-5 md:p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs md:text-sm font-bold text-gray-900">Total Expenses</h3>
                     </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-4">Rp
+                        {{ number_format($totalBeban, 0, ',', '.') }}</h2>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-semibold text-gray-400">HPP Barang + Biaya Ops.</span>
                 </div>
             </div>
+
+            <!-- 4. TOTAL ASET BARANG (MODAL) - KARTU BARU -->
+            <div
+                class="bg-indigo-50/50 rounded-[24px] border border-indigo-100 shadow-sm p-5 md:p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs md:text-sm font-bold text-indigo-900">Total Aset Stok (Modal)</h3>
+                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-indigo-700 mb-4">Rp
+                        {{ number_format($totalAsetModal ?? 0, 0, ',', '.') }}</h2>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-semibold text-indigo-400">Nilai aset barang aktif di gudang.</span>
+                </div>
+            </div>
+
         </div>
 
         <!-- ================= CHART SECTION ================= -->
