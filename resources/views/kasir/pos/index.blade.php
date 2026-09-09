@@ -54,68 +54,41 @@
             <div class="flex-1 overflow-y-auto p-4 sm:px-6 pb-32 lg:pb-6">
                 <div id="productGrid"
                     class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-5">
-                    @if (isset($products))
-                        @foreach ($products as $product)
-                            @foreach ($product->variants as $variant)
-                                @php
-                                    $isRefill = strtolower($variant->satuan) === 'ml';
-                                    $stock = $variant->stok ?? ($variant->branchStocks->first()->stok ?? 0);
-                                    $price = $variant->harga_jual;
-                                @endphp
+                    @php
+                        $availableCards = collect();
+                        $outOfStockCards = collect();
 
-                                <div class="product-card bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-[#CC9863]/10 hover:border-[#CC9863]/30 transition-all cursor-pointer group flex flex-col h-full transform hover:-translate-y-1"
-                                    data-name="{{ strtolower($variant->nama_varian) }}"
-                                    data-category="{{ $product->kategori_id }}"
-                                    onclick="@if ($isRefill) openRefillModal({variantId: '{{ $variant->varian_id ?? $variant->id }}', name: '{{ addslashes($variant->nama_varian) }}', mlPrice: {{ $price }}, stockMl: {{ $stock }}}) @else addPcsToCart({variantId: '{{ $variant->varian_id ?? $variant->id }}', name: '{{ addslashes($variant->nama_varian) }}', pcsPrice: {{ $price }}, stockPcs: {{ $stock }}}) @endif">
+                        foreach ($products ?? [] as $product) {
+                            foreach ($product->variants as $variant) {
+                                $stock = (int) ($variant->branchStocks->first()->stok ?? 0);
+                                $card = [
+                                    'product' => $product,
+                                    'variant' => $variant,
+                                    'stock' => $stock,
+                                    'isRefill' => strtolower((string) $variant->satuan) === 'ml',
+                                    'price' => $variant->harga_jual,
+                                    'isOutOfStock' => $stock <= 0,
+                                ];
 
-                                    {{-- Product Image / Icon --}}
-                                    <div
-                                        class="h-32 sm:h-40 rounded-2xl w-full {{ $isRefill ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-500' : 'bg-gradient-to-br from-orange-50 to-orange-100/50 text-orange-500' }} flex flex-col items-center justify-center mb-4 relative overflow-hidden">
-                                        <svg class="w-12 h-12 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-sm"
-                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
-                                            </path>
-                                        </svg>
+                                if ($card['isOutOfStock']) {
+                                    $outOfStockCards->push($card);
+                                } else {
+                                    $availableCards->push($card);
+                                }
+                            }
+                        }
+                    @endphp
 
-                                        <div
-                                            class="absolute top-2 right-2 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-lg text-[10px] font-extrabold text-gray-600 uppercase shadow-sm">
-                                            {{ $product->category->nama_kategori ?? 'Umum' }}
-                                        </div>
-                                        <div
-                                            class="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10px] font-extrabold shadow-sm uppercase {{ $isRefill ? 'bg-blue-500 text-white' : 'bg-[#CC9863] text-white' }}">
-                                            {{ $isRefill ? 'REFILL' : 'PCS' }}
-                                        </div>
-                                    </div>
+                    @foreach ($availableCards as $card)
+                        @include('kasir.pos.partials.product-card', $card)
+                    @endforeach
 
-                                    <div class="mt-auto flex flex-col gap-1">
-                                        <h3
-                                            class="text-sm font-extrabold text-gray-900 leading-snug line-clamp-2 group-hover:text-[#CC9863] transition-colors">
-                                            {{ $variant->nama_varian }}
-                                        </h3>
-                                        <div class="flex items-end justify-between mt-2">
-                                            <div>
-                                                <p class="text-xs font-bold text-gray-400 mb-0.5">Stok: {{ $stock }}
-                                                    {{ $isRefill ? 'ml' : 'pcs' }}</p>
-                                                <p class="text-base font-extrabold text-gray-900">
-                                                    Rp {{ number_format($price, 0, ',', '.') }}
-                                                    @if ($isRefill)
-                                                        <span class="text-xs font-semibold text-gray-400">/ ml</span>
-                                                    @endif
-                                                </p>
-                                            </div>
-                                            <div
-                                                class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#1C1D21] group-hover:text-white text-gray-400 transition-colors">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                                        d="M12 4v16m8-8H4"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                    @if ($outOfStockCards->isNotEmpty())
+                        <div id="outOfStockHeading" class="out-of-stock-heading col-span-full mt-2 border-t border-dashed border-gray-200 pt-4 text-xs font-extrabold uppercase tracking-wider text-gray-400">
+                            Stok Habis
+                        </div>
+                        @foreach ($outOfStockCards as $card)
+                            @include('kasir.pos.partials.product-card', $card)
                         @endforeach
                     @endif
                 </div>
@@ -523,6 +496,13 @@
                 if (activeCategory !== 'all' && card.dataset.category !== activeCategory) isMatchCategory = false;
                 card.classList.toggle('hidden', !(isMatchSearch && isMatchCategory));
             });
+
+            const outOfStockHeading = document.getElementById('outOfStockHeading');
+            if (outOfStockHeading) {
+                const visibleOutOfStock = Array.from(document.querySelectorAll('.product-card[data-stock-status="out-of-stock"]'))
+                    .some(card => !card.classList.contains('hidden'));
+                outOfStockHeading.classList.toggle('hidden', !visibleOutOfStock);
+            }
         }
 
         function filterCategory(catId) {
