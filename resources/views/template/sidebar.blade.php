@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 
+@php
+    $currentRole = strtolower(auth()->user()->role?->nama_role ?? '');
+    $canToggleDesktopSidebar = in_array($currentRole, ['owner', 'admin'], true);
+@endphp
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +17,62 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .sidebar-shell {
+            transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+            will-change: transform, opacity;
+        }
+
+        #sidebar-open-button {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            body.sidebar-layout {
+                display: grid;
+                grid-template-columns: 260px minmax(0, 1fr);
+                transition: grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1);
+                will-change: grid-template-columns;
+            }
+
+            body.sidebar-layout #sidebar {
+                width: 100% !important;
+                min-width: 0 !important;
+                flex-basis: auto !important;
+            }
+
+            html.sidebar-hidden body.sidebar-layout {
+                grid-template-columns: 0 minmax(0, 1fr);
+            }
+
+            html.sidebar-hidden #sidebar {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                opacity: 0;
+                pointer-events: none;
+                overflow: hidden;
+            }
+
+            html.sidebar-hidden #sidebar-open-button {
+                display: inline-flex !important;
+                pointer-events: auto;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .sidebar-shell,
+            body.sidebar-layout {
+                transition: none;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            #sidebar {
+                width: min(260px, calc(100vw - 2rem));
+                padding-left: max(1.25rem, env(safe-area-inset-left));
+                padding-right: max(1.25rem, env(safe-area-inset-right));
+            }
         }
 
         ::-webkit-scrollbar {
@@ -40,11 +101,22 @@
             display: none;
         }
     </style>
+    @if ($canToggleDesktopSidebar)
+        <script>
+            (() => {
+                try {
+                    if (window.localStorage.getItem('zeeperfume.sidebar.{{ $currentRole }}') === 'hidden') {
+                        document.documentElement.classList.add('sidebar-hidden');
+                    }
+                } catch (error) {
+                    // Storage can be unavailable in private browsing modes.
+                }
+            })();
+        </script>
+    @endif
 </head>
 
-<body class="bg-gray-50 h-screen w-screen flex text-gray-800 antialiased overflow-hidden">
-
-    @php($currentRole = strtolower(auth()->user()->role?->nama_role ?? ''))
+<body class="flex {{ $canToggleDesktopSidebar ? 'sidebar-layout' : '' }} bg-gray-50 h-screen w-screen text-gray-800 antialiased overflow-hidden">
 
     <!-- ==============================================
          OVERLAY BACKDROP (MOBILE ONLY)
@@ -56,8 +128,20 @@
     <!-- ==============================================
          SIDEBAR (RESPONSIVE)
          ============================================== -->
+    @if ($canToggleDesktopSidebar)
+        <button id="sidebar-open-button" type="button" onclick="toggleDesktopSidebar()"
+            class="fixed left-0 top-1/2 z-[60] hidden h-14 w-11 -translate-y-1/2 items-center justify-center rounded-r-2xl bg-[#1C1D21] text-white shadow-lg shadow-gray-900/20 transition hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] focus-visible:ring-offset-2 lg:flex"
+            aria-controls="sidebar" aria-expanded="true" aria-label="Tampilkan menu samping" title="Tampilkan menu samping">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span class="sr-only">Tampilkan menu samping</span>
+        </button>
+    @endif
+
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-[260px] bg-[#1C1D21] text-gray-400 flex flex-col justify-between py-6 lg:py-8 px-5 h-full overflow-y-auto transform -translate-x-full transition-transform duration-300 lg:relative lg:translate-x-0 shrink-0 shadow-2xl lg:shadow-none">
+        class="sidebar-shell fixed inset-y-0 left-0 z-50 w-[260px] bg-[#1C1D21] text-gray-400 flex flex-col justify-between py-6 lg:py-8 px-5 h-full overflow-y-auto transform -translate-x-full lg:relative lg:translate-x-0 shrink-0 shadow-2xl lg:shadow-none"
+        aria-label="Menu utama">
 
         <div>
             <!-- Header Sidebar & Tombol Tutup Mobile -->
@@ -70,12 +154,26 @@
                     <span class="text-[#CC9863]">ZeePerfume</span>
                 </div>
                 <!-- Tombol Tutup (Hanya di Mobile) -->
-                <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white focus:outline-none">
+                <div class="flex items-center gap-2">
+                    @if ($canToggleDesktopSidebar)
+                        <button id="desktop-sidebar-toggle" type="button" onclick="toggleDesktopSidebar()"
+                            class="hidden h-11 w-11 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] lg:inline-flex"
+                            aria-controls="sidebar" aria-expanded="true" aria-label="Sembunyikan menu samping" title="Sembunyikan menu samping">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 6l-6 6 6 6"></path>
+                            </svg>
+                            <span class="sr-only">Sembunyikan menu samping</span>
+                        </button>
+                    @endif
+                    <button id="mobile-sidebar-close" type="button" onclick="toggleSidebar()"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863] lg:hidden"
+                        aria-controls="sidebar" aria-label="Tutup menu samping" title="Tutup menu samping">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
                     </svg>
-                </button>
+                    </button>
+                </div>
             </div>
 
             <!-- Nav Menu -->
@@ -327,18 +425,20 @@
     <!-- ==============================================
          MAIN CONTENT WRAPPER
          ============================================== -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+    <div class="min-w-0 flex-1 flex flex-col h-full overflow-hidden w-full relative">
 
         <!-- Mobile Header (Hamburger Menu) -->
         <header
             class="lg:hidden flex items-center justify-between p-4 bg-[#1C1D21] text-white shrink-0 shadow-sm relative z-20">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()"
-                    class="text-white hover:text-[#CC9863] focus:outline-none transition bg-gray-800 p-2 rounded-lg">
+                <button id="mobile-sidebar-open" type="button" onclick="toggleSidebar()"
+                    class="inline-flex h-11 min-w-11 items-center justify-center rounded-xl bg-gray-800 px-3 text-white transition hover:text-[#CC9863] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863]"
+                    aria-controls="sidebar" aria-expanded="false" aria-label="Buka menu samping">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
+                    <span class="sr-only">Buka menu samping</span>
                 </button>
                 <div class="flex items-center gap-2 font-bold text-xl">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -355,25 +455,91 @@
 
     </div>
 
-    <!-- Script Mengendalikan Off-Canvas Sidebar Mobile -->
+    <!-- Script navigasi sidebar desktop dan mobile -->
     <script>
-        function toggleSidebar() {
+        const sidebarStorageKey = 'zeeperfume.sidebar.{{ $currentRole }}';
+
+        function isDesktopSidebarViewport() {
+            return window.innerWidth >= 1024;
+        }
+
+        function syncSidebarState() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const root = document.documentElement;
+            const desktopHidden = root.classList.contains('sidebar-hidden');
+            const mobileClosed = sidebar.classList.contains('-translate-x-full');
+            const desktopToggle = document.getElementById('desktop-sidebar-toggle');
+            const desktopOpen = document.getElementById('sidebar-open-button');
+            const mobileOpen = document.getElementById('mobile-sidebar-open');
+            const mobileClose = document.getElementById('mobile-sidebar-close');
+            const isDesktop = isDesktopSidebarViewport();
+
+            sidebar.setAttribute('aria-hidden', String(isDesktop ? desktopHidden : mobileClosed));
+            if (desktopToggle) desktopToggle.setAttribute('aria-expanded', String(!desktopHidden));
+            if (desktopOpen) {
+                desktopOpen.setAttribute('aria-expanded', String(!desktopHidden));
+                desktopOpen.style.display = isDesktop && desktopHidden ? 'inline-flex' : 'none';
+                desktopOpen.style.pointerEvents = isDesktop && desktopHidden ? 'auto' : 'none';
+            }
+            if (mobileOpen) mobileOpen.setAttribute('aria-expanded', String(!mobileClosed));
+            if (mobileClose) mobileClose.setAttribute('aria-expanded', String(!mobileClosed));
+        }
+
+        window.toggleDesktopSidebar = function () {
+            const root = document.documentElement;
+            const hidden = !root.classList.contains('sidebar-hidden');
+            const desktopToggle = document.getElementById('desktop-sidebar-toggle');
+            const desktopOpen = document.getElementById('sidebar-open-button');
+
+            root.classList.toggle('sidebar-hidden', hidden);
+            try {
+                window.localStorage.setItem(sidebarStorageKey, hidden ? 'hidden' : 'visible');
+            } catch (error) {
+                // The toggle remains available when browser storage is blocked.
+            }
+
+            syncSidebarState();
+            const focusTarget = hidden ? desktopOpen : desktopToggle;
+            if (focusTarget) focusTarget.focus();
+        };
+
+        window.toggleSidebar = function () {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
+            if (!sidebar || !backdrop) return;
 
-            // Cek apakah sidebar sedang tertutup (-translate-x-full)
-            if (sidebar.classList.contains('-translate-x-full')) {
-                // Buka Sidebar
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            const mobileOpen = document.getElementById('mobile-sidebar-open');
+            const mobileClose = document.getElementById('mobile-sidebar-close');
+
+            if (isClosed) {
                 sidebar.classList.remove('-translate-x-full');
                 backdrop.classList.remove('hidden');
-                setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+                window.requestAnimationFrame(() => backdrop.classList.remove('opacity-0'));
+                window.requestAnimationFrame(() => mobileClose && mobileClose.focus());
             } else {
-                // Tutup Sidebar
                 sidebar.classList.add('-translate-x-full');
                 backdrop.classList.add('opacity-0');
-                setTimeout(() => backdrop.classList.add('hidden'), 300);
+                window.setTimeout(() => {
+                    if (sidebar.classList.contains('-translate-x-full')) backdrop.classList.add('hidden');
+                }, 300);
+                window.requestAnimationFrame(() => mobileOpen && mobileOpen.focus());
             }
-        }
+
+            syncSidebarState();
+        };
+
+        window.addEventListener('resize', syncSidebarState);
+        document.addEventListener('keydown', (event) => {
+            const sidebar = document.getElementById('sidebar');
+            if (event.key === 'Escape' && !isDesktopSidebarViewport() && sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                window.toggleSidebar();
+            }
+        });
+
+        syncSidebarState();
     </script>
 </body>
 
