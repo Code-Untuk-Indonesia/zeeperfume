@@ -257,7 +257,7 @@
                         </summary>
                         <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
                             <a href="{{ url('owner/stock') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/stock*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Stok Barang</a>
+                                class="block py-2 text-sm transition-colors {{ request()->routeIs('owner.stock.index', 'owner.stock.create', 'owner.stock.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Stok Barang</a>
                             <a href="{{ route('owner.stock.history') }}"
                                 class="block py-2 text-sm transition-colors {{ request()->routeIs('owner.stock.history') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat Perpindahan Stok</a>
                             <a href="{{ url('owner/employee') }}"
@@ -346,7 +346,7 @@
                         </summary>
                         <div class="mt-1 space-y-1 pl-11 pr-2 pb-2">
                             <a href="{{ url('admin/stock') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/stock*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
+                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.stock.index', 'admin.stock.create', 'admin.stock.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
                                 Stok Barang</a>
                             <a href="{{ route('admin.stock.history') }}"
                                 class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.stock.history') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat Perpindahan Stok</a>

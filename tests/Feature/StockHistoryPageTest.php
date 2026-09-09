@@ -47,6 +47,17 @@ class StockHistoryPageTest extends TestCase
             ->assertSee('Parfum Floral');
     }
 
+    public function test_admin_stock_history_highlights_only_the_history_menu(): void
+    {
+        $admin = $this->createUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('admin.stock.history'))
+            ->assertOk()
+            ->assertSee('class="block py-2 text-sm transition-colors text-gray-500 hover:text-gray-300">Kelola', false)
+            ->assertSee('class="block py-2 text-sm transition-colors text-[#CC9863] font-bold">Riwayat Perpindahan Stok', false);
+    }
+
     public function test_cashier_cannot_view_stock_history(): void
     {
         $cashier = $this->createUser('kasir');
