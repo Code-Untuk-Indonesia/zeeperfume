@@ -68,6 +68,81 @@ class OwnerIncomeReportTest extends TestCase
             ->assertSee('Rp 50.000');
     }
 
+    public function test_owner_can_open_a_full_printable_income_report(): void
+    {
+        $owner = $this->createUser('owner');
+        $kasir = $this->createUser('kasir');
+        $outlet = Branch::create(['nama_cabang' => 'Outlet Print']);
+
+        foreach (['INV-PRINT-1', 'INV-PRINT-2'] as $invoice) {
+            Transaction::create([
+                'kasir_id' => $kasir->id,
+                'nomor_nota' => $invoice,
+                'tanggal_waktu' => '2026-09-08 10:00:00',
+                'subtotal' => 75000,
+                'diskon_persen' => 0,
+                'diskon_nominal' => 0,
+                'total_belanja' => 75000,
+                'nominal_bayar' => 75000,
+                'kembalian' => 0,
+                'metode_bayar' => 'cash',
+                'cabang_id' => $outlet->id,
+            ]);
+        }
+
+        $this->actingAs($owner)
+            ->get(route('owner.income.print', [
+                'start_date' => '2026-09-08',
+                'end_date' => '2026-09-08',
+            ]))
+            ->assertOk()
+            ->assertSee('INV-PRINT-1')
+            ->assertSee('INV-PRINT-2')
+            ->assertSee('Outlet Print')
+            ->assertDontSee('id="sidebar"');
+    }
+
+    public function test_owner_can_export_income_report_for_excel(): void
+    {
+        $owner = $this->createUser('owner');
+        $kasir = $this->createUser('kasir');
+        $outlet = Branch::create(['nama_cabang' => 'Outlet Excel']);
+
+        Transaction::create([
+            'kasir_id' => $kasir->id,
+            'nomor_nota' => 'INV-EXCEL-1',
+            'tanggal_waktu' => '2026-09-08 10:00:00',
+            'subtotal' => 125000,
+            'diskon_persen' => 0,
+            'diskon_nominal' => 0,
+            'total_belanja' => 125000,
+            'nominal_bayar' => 125000,
+            'kembalian' => 0,
+            'metode_bayar' => 'cash',
+            'cabang_id' => $outlet->id,
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('owner.income.export', [
+            'start_date' => '2026-09-08',
+            'end_date' => '2026-09-08',
+        ]));
+
+        $response->assertDownload('Laporan_Pendapatan_08-09-2026_sampai_08-09-2026.xlsx');
+        $this->assertSame(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $response->headers->get('Content-Type')
+        );
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'income_xlsx_test_');
+        file_put_contents($temporaryFile, $response->streamedContent());
+
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($temporaryFile) === true);
+        $this->assertStringContainsString('INV-EXCEL-1', $zip->getFromName('xl/worksheets/sheet1.xml'));
+        $zip->close();
+        unlink($temporaryFile);
+    }
+
     private function createUser(string $roleName): User
     {
         $role = Role::create(['nama_role' => $roleName]);
