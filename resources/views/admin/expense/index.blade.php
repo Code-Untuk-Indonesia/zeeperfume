@@ -4,43 +4,82 @@
 @section('content')
 <main class="flex-1 bg-[#FAFAFA] overflow-y-auto px-4 lg:px-10 py-6 lg:py-8 w-full relative">
 
-    <!-- Header & Filter -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <!-- ================= HEADER & BREADCRUMB ================= -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Pengeluaran Operasional</h1>
             <p class="text-gray-500 text-sm mt-1">Catat dan pantau seluruh beban biaya operasional toko/cabang.</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-            <form action="{{ route('admin.expense.index') }}" method="GET" class="flex gap-2">
-                <select name="month" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm focus:outline-none focus:border-[#CC9863]">
-                    @for($i=1; $i<=12; $i++)
-                        <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ $month == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
-                            {{ date('F', mktime(0, 0, 0, $i, 1)) }}
-                        </option>
-                    @endfor
-                </select>
-                <select name="year" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm focus:outline-none focus:border-[#CC9863]">
-                    <option value="2026" {{ $year == '2026' ? 'selected' : '' }}>2026</option>
-                    <option value="2025" {{ $year == '2025' ? 'selected' : '' }}>2025</option>
-                </select>
-            </form>
-
-            <button onclick="openModal('addModal')" class="bg-[#1C1D21] text-white px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-black transition flex items-center gap-2 text-sm">
+            <button onclick="openModal('addModal')" class="bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-[#CC9863]/20 hover:bg-[#b58555] transition transform active:scale-95 flex items-center gap-2 text-sm shrink-0 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Tambah Pengeluaran
             </button>
         </div>
     </div>
 
-    <!-- Info Card -->
-    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6 flex items-center gap-5">
-        <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
-        </div>
-        <div>
-            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Pengeluaran ({{ date('F', mktime(0, 0, 0, $month, 1)) }} {{ $year }})</p>
-            <h2 class="text-3xl font-black text-gray-900">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</h2>
+    <!-- ================= FILTER & EXPORT BAR ================= -->
+    <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-6">
+        <form action="{{ url()->current() }}" method="GET" class="flex flex-col lg:flex-row gap-4">
+
+            <!-- Pencarian -->
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:border-[#CC9863]" placeholder="Cari nama pengeluaran...">
+            </div>
+
+            <!-- Filter Cabang -->
+            <select name="cabang_id" onchange="this.form.submit()" class="w-full lg:w-48 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:border-[#CC9863] cursor-pointer">
+                <option value="all">Semua Outlet</option>
+                <option value="general" {{ request('cabang_id') == 'general' ? 'selected' : '' }}>General (Pusat)</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ request('cabang_id') == $branch->id ? 'selected' : '' }}>
+                        {{ $branch->nama_cabang }}
+                    </option>
+                @endforeach
+            </select>
+
+            <!-- Rentang Tanggal -->
+            <div class="flex items-center gap-2 w-full lg:w-auto">
+                <input type="date" name="start_date" value="{{ request('start_date', date('Y-m-01')) }}" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:border-[#CC9863]">
+                <span class="text-gray-400 font-bold">-</span>
+                <input type="date" name="end_date" value="{{ request('end_date', date('Y-m-t')) }}" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:border-[#CC9863]">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 w-full lg:w-auto shrink-0">
+                <button type="submit" class="flex-1 lg:flex-none px-5 py-2.5 bg-[#1C1D21] text-white rounded-xl text-sm font-bold hover:bg-black transition">
+                    Filter
+                </button>
+
+                <!-- TOMBOL EXPORT (Mengirimkan name="export" value="1") -->
+                <button type="submit" name="export" value="1" class="flex-1 lg:flex-none px-5 py-2.5 bg-green-50 text-green-600 border border-green-200 rounded-xl text-sm font-bold hover:bg-green-100 transition flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Export
+                </button>
+
+                @if(request()->anyFilled(['search', 'cabang_id']))
+                    <a href="{{ url()->current() }}" class="flex items-center justify-center px-4 py-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition" title="Reset Filter">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
+    <!-- ================= INFO CARD (TOTAL PENGELUARAN) ================= -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6 flex justify-between items-center">
+        <div class="flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Pengeluaran (Filter Aktif)</p>
+                <h2 class="text-3xl font-black text-gray-900">Rp {{ number_format($totalPengeluaran ?? 0, 0, ',', '.') }}</h2>
+            </div>
         </div>
     </div>
 
@@ -52,7 +91,7 @@
     </div>
     @endif
 
-    <!-- Table -->
+    <!-- ================= TABLE DAFTAR PENGELUARAN ================= -->
     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
@@ -60,7 +99,7 @@
                     <tr>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Kategori & Nama</th>
-                        <th class="px-6 py-4">Lokasi (Cabang)</th>
+                        <th class="px-6 py-4">Lokasi / Cabang</th>
                         <th class="px-6 py-4 text-right">Nominal</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
@@ -78,8 +117,12 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <p class="font-bold text-gray-800">{{ $exp->branch->nama_cabang ?? 'Pusat' }}</p>
-                            <p class="text-[10px] text-gray-500 font-semibold mt-0.5">Oleh: {{ explode(' ', $exp->user->nama_lengkap)[0] }}</p>
+                            @if($exp->cabang_id)
+                                <p class="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded inline-block">{{ $exp->branch->nama_cabang }}</p>
+                            @else
+                                <p class="font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">General (Pusat)</p>
+                            @endif
+                            <p class="text-[10px] text-gray-500 font-semibold mt-1">Oleh: {{ explode(' ', $exp->user->nama_lengkap ?? 'Unknown')[0] }}</p>
                         </td>
                         <td class="px-6 py-4 text-right font-black text-red-500">
                             Rp {{ number_format($exp->nominal, 0, ',', '.') }}
@@ -102,7 +145,7 @@
                     <tr>
                         <td colspan="5" class="px-6 py-10 text-center text-gray-400">
                             <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <p class="font-medium italic">Tidak ada catatan pengeluaran bulan ini.</p>
+                            <p class="font-medium italic">Tidak ada catatan pengeluaran pada filter saat ini.</p>
                         </td>
                     </tr>
                     @endforelse
@@ -111,7 +154,7 @@
         </div>
         @if($expenses->hasPages())
             <div class="p-4 border-t border-gray-100">
-                {{ $expenses->links('pagination::tailwind') }}
+                {{ $expenses->appends(request()->query())->links('pagination::tailwind') }}
             </div>
         @endif
     </div>
@@ -124,6 +167,7 @@
                 <button type="button" onclick="closeModal('addModal')" class="text-gray-400 hover:text-red-500 bg-white border border-gray-200 w-8 h-8 rounded-full flex items-center justify-center font-bold transition">×</button>
             </div>
 
+            <!-- Ganti Route Sesuai Kebutuhan (admin.expense.store / owner.expense.store) -->
             <form id="expenseForm" method="POST" action="{{ route('admin.expense.store') }}">
                 @csrf
                 <input type="hidden" name="_method" id="formMethod" value="POST">
@@ -135,8 +179,9 @@
                             <input type="date" name="tanggal_pengeluaran" id="input_tanggal" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] font-semibold text-sm" required value="{{ date('Y-m-d') }}">
                         </div>
                         <div>
-                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Cabang/Outlet <span class="text-red-500">*</span></label>
-                            <select name="cabang_id" id="input_cabang" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] font-semibold text-sm" required>
+                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Cabang/Outlet</label>
+                            <select name="cabang_id" id="input_cabang" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] font-semibold text-sm">
+                                <option value="">-- General / Pusat --</option>
                                 @foreach($branches as $branch)
                                     <option value="{{ $branch->id }}">{{ $branch->nama_cabang }}</option>
                                 @endforeach
@@ -168,7 +213,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Keterangan / Catatan Tambahan</label>
+                        <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Keterangan Tambahan</label>
                         <textarea name="keterangan" id="input_keterangan" rows="2" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] font-medium text-sm" placeholder="Opsional..."></textarea>
                     </div>
                 </div>
@@ -189,6 +234,7 @@
 <script>
     function openModal(id) {
         document.getElementById('modalTitle').innerText = 'Tambah Pengeluaran';
+        // Pastikan route ini mengarah ke URL Admin atau Owner sesuai yang login
         document.getElementById('expenseForm').action = "{{ route('admin.expense.store') }}";
         document.getElementById('formMethod').value = 'POST';
 
@@ -196,6 +242,7 @@
         document.getElementById('input_nama').value = '';
         document.getElementById('input_nominal').value = '';
         document.getElementById('input_keterangan').value = '';
+        document.getElementById('input_cabang').value = ''; // Reset ke opsi General/Pusat
         document.getElementById('input_tanggal').value = "{{ date('Y-m-d') }}";
 
         const modal = document.getElementById(id);
@@ -209,12 +256,14 @@
 
     function openEditModal(data) {
         document.getElementById('modalTitle').innerText = 'Edit Pengeluaran';
+
+        // GANTI BAGIAN INI JIKA ANDA SEDANG DI FOLDER OWNER (/owner/expense)
         document.getElementById('expenseForm').action = `/admin/expense/${data.id}`;
         document.getElementById('formMethod').value = 'PUT';
 
         // Isi form dengan data yang mau diedit
         document.getElementById('input_tanggal').value = data.tanggal_pengeluaran.split('T')[0];
-        document.getElementById('input_cabang').value = data.cabang_id;
+        document.getElementById('input_cabang').value = data.cabang_id || ''; // Jika null, akan select opsi General/Pusat
         document.getElementById('input_kategori').value = data.kategori_pengeluaran;
         document.getElementById('input_nama').value = data.nama_pengeluaran;
         document.getElementById('input_nominal').value = data.nominal;

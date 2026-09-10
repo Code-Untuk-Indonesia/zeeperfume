@@ -142,6 +142,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- PENDAPATAN (Income) --
     Route::get('income', [OwnerIncomeController::class, 'index'])->name('income.index');
+    Route::get('income/export', [OwnerIncomeController::class, 'export'])->name('income.export');
     Route::get('expense', [OwnerExpenseController::class, 'index'])->name('expense.index');
 
     // -- PEGAWAI --
