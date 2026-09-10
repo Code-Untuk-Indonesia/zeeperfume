@@ -10,11 +10,15 @@
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Riwayat Transaksi</h1>
             <p class="text-gray-500 text-sm mt-1 font-medium">Pantau seluruh aktivitas penjualan dan kelola otorisasi perubahan data.</p>
         </div>
-        <div class="flex gap-3 w-full sm:w-auto">
-            <button class="bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-[#CC9863]/20 hover:bg-[#b58555] transition transform active:scale-95 flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Export PDF/Excel
-            </button>
+        <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+            <a href="{{ route('owner.transaction.print', request()->only(['search', 'cabang', 'metode', 'tanggal', 'tanggal_spesifik'])) }}" target="_blank" rel="noopener" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-gray-900/20 hover:bg-black transition transform active:scale-95 flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5h-2m-2 0v4H8v-4m-2-9h12"></path></svg>
+                Cetak / PDF
+            </a>
+            <a href="{{ route('owner.transaction.export', request()->only(['search', 'cabang', 'metode', 'tanggal', 'tanggal_spesifik'])) }}" class="bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-[#CC9863]/20 hover:bg-[#b58555] transition transform active:scale-95 flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707 0.293l5.414 5.414a1 1 0 01.293 0.707V19a2 2 0 01-2 2z"></path></svg>
+                Export Excel (.xlsx)
+            </a>
         </div>
     </div>
 

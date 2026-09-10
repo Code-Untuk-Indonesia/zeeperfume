@@ -184,6 +184,8 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 
     // -- TRANSAKSI & LAPORAN --
     Route::get('transaction', [OwnerTransactionController::class, 'index'])->name('transaction.index');
+    Route::get('transaction/print', [OwnerTransactionController::class, 'print'])->name('transaction.print');
+    Route::get('transaction/export', [OwnerTransactionController::class, 'export'])->name('transaction.export');
     Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
     Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
 });
