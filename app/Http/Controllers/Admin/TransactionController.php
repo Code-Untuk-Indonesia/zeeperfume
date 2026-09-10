@@ -18,7 +18,7 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         // 1. Ambil relasi yang dibutuhkan
-        $query = Transaction::with(['cashier', 'branch', 'member', 'details.variant', 'cashTempo']);
+        $query = Transaction::with(['cashier', 'branch', 'member', 'details.variant', 'cashTempo', 'shipment']);
 
         // 2. Filter Pencarian (Invoice / Nama Member)
         if ($request->filled('search')) {
@@ -331,7 +331,7 @@ class TransactionController extends Controller
 
             // 2. Generate Nomor Nota
             $lastTrx = Transaction::whereDate('tanggal_waktu', $waktu->toDateString())->count();
-            $nomorNota = 'INV-' . $waktu->format('Ymd') . '-O' . str_pad($lastTrx + 1, 3, '0', STR_PAD_LEFT);
+            $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad($lastTrx + 1, 4, '0', STR_PAD_LEFT);
 
             // 3. Simpan Transaksi Induk
             $transaction = Transaction::create([
