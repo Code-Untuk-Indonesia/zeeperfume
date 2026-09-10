@@ -441,8 +441,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Pengajuan berhasil dikirim! Silakan tunggu konfirmasi dari Owner.');
-                        location.reload();
+                        AppFeedback.success('Pengajuan berhasil dikirim! Silakan tunggu konfirmasi dari Owner.');
+                        window.setTimeout(() => location.reload(), 1200);
                     } else {
                         errorMsg.innerText = data.message || "Gagal mengirim pengajuan.";
                         errorMsg.classList.remove('hidden');

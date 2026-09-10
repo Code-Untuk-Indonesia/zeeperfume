@@ -46,9 +46,9 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-3 justify-between pt-2">
                 @if ($outlet->deleted_at === null)
-                    <button type="submit" form="delete-outlet-form" class="px-6 py-3.5 rounded-xl text-red-600 font-bold hover:bg-red-50 transition" data-outlet-action="delete">Nonaktifkan Outlet</button>
+                    <button type="submit" form="delete-outlet-form" class="px-6 py-3.5 rounded-xl text-red-600 font-bold hover:bg-red-50 transition">Nonaktifkan Outlet</button>
                 @else
-                    <button type="submit" form="restore-outlet-form" class="px-6 py-3.5 rounded-xl text-green-700 font-bold hover:bg-green-50 transition" data-outlet-action="restore">Aktifkan Outlet</button>
+                    <button type="submit" form="restore-outlet-form" class="px-6 py-3.5 rounded-xl text-green-700 font-bold hover:bg-green-50 transition">Aktifkan Outlet</button>
                 @endif
                 <div class="flex flex-col sm:flex-row gap-3 sm:ml-auto">
                     <a href="{{ route('owner.outlet.index') }}" class="px-6 py-3.5 rounded-xl border border-gray-200 text-center text-gray-700 font-bold hover:bg-gray-50 transition">Batal</a>
@@ -58,17 +58,26 @@
         </form>
 
         @if ($outlet->deleted_at === null)
-            <form id="delete-outlet-form" action="{{ route('owner.outlet.destroy', $outlet->id) }}" method="POST" class="hidden" data-outlet-action="delete">
+                    <form id="delete-outlet-form" action="{{ route('owner.outlet.destroy', $outlet->id) }}" method="POST" class="hidden"
+                        data-feedback-confirm
+                        data-feedback-confirm-title="Konfirmasi penonaktifan"
+                        data-feedback-confirm-message="Outlet ini akan disembunyikan dari daftar outlet aktif."
+                        data-feedback-confirm-label="Nonaktifkan"
+                        data-feedback-confirm-tone="danger">
                 @csrf
                 @method('DELETE')
             </form>
         @else
-            <form id="restore-outlet-form" action="{{ route('owner.outlet.restore', $outlet->id) }}" method="POST" class="hidden" data-outlet-action="restore">
+                    <form id="restore-outlet-form" action="{{ route('owner.outlet.restore', $outlet->id) }}" method="POST" class="hidden"
+                        data-feedback-confirm
+                        data-feedback-confirm-title="Konfirmasi aktivasi"
+                        data-feedback-confirm-message="Outlet ini akan diaktifkan kembali."
+                        data-feedback-confirm-label="Aktifkan"
+                        data-feedback-confirm-tone="success">
                 @csrf
                 @method('PATCH')
             </form>
         @endif
     </div>
 </main>
-@include('owner.outlet.partials.toast')
 @endsection

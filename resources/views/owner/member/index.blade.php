@@ -68,5 +68,4 @@
         </div>
     </div>
 </main>
-@include('admin.member.partials.toast')
 @endsection

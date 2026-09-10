@@ -296,11 +296,11 @@
         document.getElementById('search-input').value = '';
         document.getElementById('clear-search-btn').classList.add('hidden');
 
-        if(product.stock <= 0) return alert('Stok produk di cabang tersebut kosong!');
+        if(product.stock <= 0) return AppFeedback.warning('Stok produk di cabang tersebut kosong!');
 
         let existing = cart.find(i => i.id === product.id);
         if(existing) {
-            if(existing.qty + 1 > product.stock) return alert('Stok gudang tidak cukup!');
+            if(existing.qty + 1 > product.stock) return AppFeedback.warning('Stok gudang tidak cukup!');
             existing.qty += 1;
             if (existing.discountType === 'percent') updateItemDiscount(product.id, existing.discountInput);
         } else {
@@ -312,7 +312,7 @@
     function updateQty(id, change) {
         let item = cart.find(i => i.id === id);
         if(item) {
-            if(change > 0 && item.qty + change > item.stock) return alert('Stok gudang tidak cukup!');
+            if(change > 0 && item.qty + change > item.stock) return AppFeedback.warning('Stok gudang tidak cukup!');
             item.qty += change;
             if(item.qty <= 0) {
                 cart = cart.filter(i => i.id !== id);
@@ -348,11 +348,11 @@
         let discountNominal = 0;
 
         if (item.discountType === 'percent') {
-            if (discValue > 100) { alert('Diskon maksimal 100%'); discValue = 100; }
+            if (discValue > 100) { AppFeedback.warning('Diskon maksimal 100%'); discValue = 100; }
             item.discountInput = discValue;
             discountNominal = maxVal * (discValue / 100);
         } else {
-            if (discValue > maxVal) { alert('Diskon melebihi harga!'); discValue = maxVal; }
+            if (discValue > maxVal) { AppFeedback.warning('Diskon melebihi harga!'); discValue = maxVal; }
             item.discountInput = discValue;
             discountNominal = discValue;
         }
@@ -457,7 +457,7 @@
 
     function checkMember() {
         const phone = document.getElementById('search-member-input').value;
-        if (phone.length < 6) return alert('Ketik nomor HP member terlebih dahulu.');
+        if (phone.length < 6) return AppFeedback.warning('Ketik nomor HP member terlebih dahulu.');
 
         fetch(`{{ url('kasir/pos/search-member') }}?phone=${phone}`, { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
@@ -466,21 +466,21 @@
                 selectedMemberId = data.member.id;
                 document.getElementById('input_nama').value = data.member.name;
                 document.getElementById('input_telp').value = phone;
-                alert('Member Ditemukan: ' + data.member.name + '\n(Nama dan No HP otomatis terisi)');
+                AppFeedback.success('Member ditemukan: ' + data.member.name + '\n(Nama dan No HP otomatis terisi)');
             } else {
-                alert('Member tidak ditemukan dalam sistem.');
+                AppFeedback.warning('Member tidak ditemukan dalam sistem.');
                 selectedMemberId = null;
             }
-        }).catch(() => alert('Gagal mencari member.'));
+        }).catch(() => AppFeedback.error('Gagal mencari member.'));
     }
 
     function processOrder() {
-        if(cart.length === 0) return alert('Keranjang tidak boleh kosong!');
+        if(cart.length === 0) return AppFeedback.warning('Keranjang tidak boleh kosong!');
         const nama = document.getElementById('input_nama').value;
         const telp = document.getElementById('input_telp').value;
         const alamat = document.getElementById('input_alamat').value;
 
-        if(!nama || !telp || !alamat) return alert('Kolom Nama, No. WhatsApp, dan Alamat Tujuan wajib diisi!');
+        if(!nama || !telp || !alamat) return AppFeedback.warning('Kolom Nama, No. WhatsApp, dan Alamat Tujuan wajib diisi!');
 
         const btn = document.getElementById('btnSubmit');
         const originalText = btn.innerHTML;
@@ -537,13 +537,13 @@
             if(data.success) {
                 window.location.href = data.redirect;
             } else {
-                alert('Gagal: ' + data.message);
+                AppFeedback.error('Gagal: ' + data.message, { duration: 0 });
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         })
         .catch(err => {
-            alert('Kesalahan Server');
+            AppFeedback.error('Kesalahan server.', { duration: 0 });
             btn.innerHTML = originalText;
             btn.disabled = false;
         });

@@ -522,7 +522,7 @@
         /* MEMBER LOGIC */
         function checkMember(btnElement) {
             const phone = document.getElementById('member-phone').value;
-            if (phone.length < 6) return alert('Masukkan nomor HP yang valid.');
+            if (phone.length < 6) return AppFeedback.warning('Masukkan nomor HP yang valid.');
 
             const originalText = btnElement.innerHTML;
             btnElement.innerHTML =
@@ -547,12 +547,12 @@
 
                         document.getElementById('opt-points').classList.remove('hidden');
                     } else {
-                        alert('Member tidak ditemukan. Pastikan nomor HP sudah terdaftar.');
+                        AppFeedback.warning('Member tidak ditemukan. Pastikan nomor HP sudah terdaftar.');
                         removeMember();
                     }
                 })
                 .catch(error => {
-                    alert('Terjadi kesalahan pencarian.');
+                    AppFeedback.error('Terjadi kesalahan pencarian.');
                 })
                 .finally(() => {
                     btnElement.innerHTML = originalText;
@@ -614,14 +614,14 @@
             let discountNominal = 0;
             if (item.discountType === 'percent') {
                 if (discValue > 100) {
-                    alert('Diskon maksimal 100%');
+                    AppFeedback.warning('Diskon maksimal 100%');
                     discValue = 100;
                 }
                 item.discountInput = discValue; // simpan input persen
                 discountNominal = maxVal * (discValue / 100);
             } else {
                 if (discValue > maxVal) {
-                    alert('Diskon melebihi harga!');
+                    AppFeedback.warning('Diskon melebihi harga!');
                     discValue = maxVal;
                 }
                 item.discountInput = discValue; // simpan input rupiah
@@ -702,13 +702,13 @@
 
         /* ADD PCS */
         function addPcsToCart(product) {
-            if (product.stockPcs <= 0) return alert('Stok produk botol (Pcs) habis.');
+            if (product.stockPcs <= 0) return AppFeedback.warning('Stok produk botol (Pcs) habis.');
 
             const cartId = `pcs-${product.variantId}`;
             const existing = cart.find(item => item.cartId === cartId);
 
             if (existing) {
-                if (existing.qty + 1 > product.stockPcs) return alert('Stok tidak mencukupi.');
+                if (existing.qty + 1 > product.stockPcs) return AppFeedback.warning('Stok tidak mencukupi.');
                 existing.qty += 1;
                 // Hitung ulang diskon jika tipe = persen agar menyesuaikan qty baru
                 if (existing.discountType === 'percent') {
@@ -735,7 +735,7 @@
 
         /* REFILL MODAL */
         function openRefillModal(product) {
-            if (product.stockMl <= 0) return alert('Stok biang refill habis.');
+            if (product.stockMl <= 0) return AppFeedback.warning('Stok biang refill habis.');
             selectedRefillProduct = product;
             document.getElementById('refillProductName').innerText = product.name;
             document.getElementById('refillPriceText').innerText =
@@ -781,8 +781,8 @@
             if (!selectedRefillProduct) return;
             const ml = parseFloat(document.getElementById('refillMl').value) || 0;
 
-            if (ml <= 0) return alert('Jumlah refill harus lebih dari 0 ml.');
-            if (ml > selectedRefillProduct.stockMl) return alert('Jumlah refill melebihi stok parfum.');
+            if (ml <= 0) return AppFeedback.warning('Jumlah refill harus lebih dari 0 ml.');
+            if (ml > selectedRefillProduct.stockMl) return AppFeedback.warning('Jumlah refill melebihi stok parfum.');
 
             const cartId = `refill-${selectedRefillProduct.variantId}-${Date.now()}`;
             cart.push({
@@ -809,7 +809,7 @@
         function updateQty(cartId, change) {
             const item = cart.find(item => item.cartId === cartId);
             if (!item || item.type === 'refill') return;
-            if (change > 0 && item.qty + change > item.maxStock) return alert('Stok toko tidak mencukupi.');
+            if (change > 0 && item.qty + change > item.maxStock) return AppFeedback.warning('Stok toko tidak mencukupi.');
 
             item.qty += change;
             if (item.qty <= 0) {
@@ -958,7 +958,7 @@
 
         /* PAYMENT MODAL & SUBMIT TRANSACTION */
         function openPaymentModal() {
-            if (cart.length === 0) return alert('Keranjang masih kosong!');
+            if (cart.length === 0) return AppFeedback.warning('Keranjang masih kosong!');
 
             const totalItems = cart.reduce((sum, item) => sum + (item.type === 'pcs' ? item.qty : 1), 0);
             document.getElementById('modal-item-count').innerText = `${totalItems} Item`;
@@ -1099,15 +1099,15 @@
             const paid = parseFloat(paidInput.value) || 0;
 
             if (method === 'cash' && paid < currentTotal) {
-                return alert('Nominal uang tunai diterima kurang dari total tagihan!');
+                return AppFeedback.warning('Nominal uang tunai diterima kurang dari total tagihan!');
             }
 
             if (method === 'cash_tempo' && paid > currentTotal) {
-                return alert('Pembayaran awal cash tempo tidak boleh melebihi total tagihan!');
+                return AppFeedback.warning('Pembayaran awal cash tempo tidak boleh melebihi total tagihan!');
             }
 
             if (method === 'cash_tempo' && !document.getElementById('tempo-due-date').value) {
-                return alert('Tanggal jatuh tempo wajib diisi.');
+                return AppFeedback.warning('Tanggal jatuh tempo wajib diisi.');
             }
 
             const btn = document.getElementById('btn-process-payment');
@@ -1157,14 +1157,14 @@
                     } else {
                         let errorMsg = data.message;
                         if (data.errors) errorMsg = Object.values(data.errors).flat().join('\n');
-                        alert('Gagal memproses transaksi:\n' + errorMsg);
+                        AppFeedback.error('Gagal memproses transaksi:\n' + errorMsg, { duration: 0 });
                         btn.innerHTML = originalBtnHtml;
                         btn.disabled = false;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan sistem server.');
+                    AppFeedback.error('Terjadi kesalahan sistem server.', { duration: 0 });
                     btn.innerHTML = originalBtnHtml;
                     btn.disabled = false;
                 });

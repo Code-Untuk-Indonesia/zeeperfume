@@ -3,32 +3,6 @@
 
 @section('content')
 <main class="flex-1 min-h-0 overflow-y-auto bg-[#FAFAFA] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-    @if (session('success'))
-        <div id="profile-success-toast" class="fixed right-4 top-4 z-50 w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-green-200 bg-white p-4 shadow-xl shadow-gray-900/10" role="status" aria-live="polite">
-            <div class="flex items-start gap-3">
-                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600" aria-hidden="true">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-sm font-extrabold text-gray-900">Profil diperbarui</p>
-                    <p class="mt-1 text-sm font-semibold text-gray-700">{{ session('success') }}</p>
-                </div>
-                <button type="button" class="text-gray-400 transition hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CC9863]" aria-label="Tutup notifikasi" onclick="document.getElementById('profile-success-toast').remove()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <script>
-            window.setTimeout(function () {
-                document.getElementById('profile-success-toast')?.remove();
-            }, 4500);
-        </script>
-    @endif
-
     <div class="mx-auto w-full max-w-6xl">
         <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

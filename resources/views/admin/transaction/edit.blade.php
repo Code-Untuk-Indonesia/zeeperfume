@@ -26,13 +26,13 @@
         </div>
     </div>
 
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl font-bold text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <form action="{{ route('admin.transaction.update', $transaction->id) }}" method="POST" class="flex flex-col xl:flex-row gap-6">
+    <form id="transaction-edit-form" action="{{ route('admin.transaction.update', $transaction->id) }}" method="POST"
+        class="flex flex-col xl:flex-row gap-6"
+        data-feedback-confirm
+        data-feedback-confirm-title="Konfirmasi penyimpanan"
+        data-feedback-confirm-message="Pastikan data edit sudah benar. Setelah disimpan, transaksi akan dikunci kembali."
+        data-feedback-confirm-label="Simpan & kunci"
+        data-feedback-confirm-tone="danger">
         @csrf
         <!-- Gunakan method POST sesuai definisi route update Anda -->
 
@@ -138,7 +138,7 @@
 
             <!-- Action Buttons -->
             <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3 sticky top-6">
-                <button type="submit" onclick="return confirm('Apakah Anda yakin data edit sudah benar? Transaksi ini akan dikunci kembali setelah disimpan.')" class="w-full bg-[#1C1D21] text-white py-4 rounded-2xl font-extrabold text-sm hover:bg-black transition-all shadow-xl shadow-black/10 flex justify-center items-center gap-2 transform active:scale-95">
+                <button type="submit" form="transaction-edit-form" class="w-full bg-[#1C1D21] text-white py-4 rounded-2xl font-extrabold text-sm hover:bg-black transition-all shadow-xl shadow-black/10 flex justify-center items-center gap-2 transform active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     Simpan & Kunci Transaksi
                 </button>

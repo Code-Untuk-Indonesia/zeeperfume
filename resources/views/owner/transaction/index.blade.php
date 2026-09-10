@@ -18,14 +18,6 @@
         </div>
     </div>
 
-    <!-- ================= SESSION ALERTS ================= -->
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl font-bold text-sm flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            {{ session('success') }}
-        </div>
-    @endif
-
     <!-- ================= ALERT NOTIFIKASI APPROVAL ================= -->
     @if(isset($pendingApprovals) && $pendingApprovals->count() > 0)
     <div class="bg-orange-50 border border-orange-200 rounded-3xl p-5 md:p-6 mb-8 shadow-sm relative overflow-hidden">

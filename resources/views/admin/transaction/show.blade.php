@@ -25,7 +25,7 @@
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
                     <!-- Tombol Ajukan Edit (Hanya jika belum diajukan/diizinkan) -->
                     @if (!in_array($transaction->approval_status, ['pending_edit', 'approved_edit']))
-                        <button onclick="alert('Fitur pengajuan edit dapat dilakukan melalui halaman Riwayat Transaksi.')"
+                        <button onclick="AppFeedback.info('Fitur pengajuan edit dapat dilakukan melalui halaman Riwayat Transaksi.')"
                             class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
