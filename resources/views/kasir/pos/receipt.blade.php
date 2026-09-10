@@ -81,6 +81,7 @@
                     @php
                         $itemDiscount = (float) ($item->diskon_satuan ?? 0);
                         $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+                        $itemDiscountLabel = trim((string) ($item->catatan_diskon ?? ''));
                     @endphp
                     <div class="mb-1">
                         <div class="font-bold">{{ $item->variant->product->nama_produk ?? 'Produk' }} - {{ $item->variant->nama_varian ?? 'Item' }}</div>
@@ -90,7 +91,7 @@
                         </div>
                         @if($itemDiscount > 0)
                         <div class="flex-between" style="font-size: 10px;">
-                            <span>Diskon{{ $itemDiscountPercent > 0 ? ' ('.$itemDiscountPercent.'%)' : '' }}</span>
+                            <span>{{ $itemDiscountLabel !== '' ? $itemDiscountLabel : 'Diskon item' }}{{ $itemDiscountPercent > 0 ? ' ('.rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.').'%)' : '' }}</span>
                             <span>-{{ number_format($itemDiscount, 0, ',', '.') }}</span>
                         </div>
                         @endif

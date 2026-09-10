@@ -208,6 +208,7 @@
                     @php
                         $itemDiscount = (float) ($item->diskon_satuan ?? 0);
                         $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+                        $itemDiscountLabel = trim((string) ($item->catatan_diskon ?? ''));
                     @endphp
                     <div style="margin-bottom: 6px;">
                         <p style="margin: 0; font-weight: bold;">
@@ -220,7 +221,7 @@
                         </div>
                         @if ($itemDiscount > 0)
                             <div style="display: flex; justify-content: space-between; color: #b91c1c;">
-                                <span>Diskon{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}</span>
+                                <span>{{ $itemDiscountLabel !== '' ? $itemDiscountLabel : 'Diskon item' }}{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}</span>
                                 <span>-{{ number_format($itemDiscount, 0, ',', '.') }}</span>
                             </div>
                         @endif

@@ -75,6 +75,10 @@ class AdminTransactionPrintTest extends TestCase
             ->assertSee('print:rounded-none', false)
             ->assertSee('.print-struk-only *', false)
             ->assertSee('Diskon item', false)
-            ->assertSee('Diskon (Diskon Transaksi)', false);
+            ->assertSee('(10%)', false)
+            ->assertSee('- Rp 10.000', false)
+            ->assertSee('Diskon', false)
+            ->assertSee('Diskon Transaksi', false)
+            ->assertSee('5.000', false);
     }
 }
