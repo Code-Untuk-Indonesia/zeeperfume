@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -23,7 +22,7 @@ class TransactionController extends Controller
     {
         $validated = $request->validate([
             'cart'          => 'required|array',
-            'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo', 'tempo'])],
+            'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
             'nominal_bayar' => 'required|numeric|min:0',
             'subtotal'      => 'required|numeric',
             'discount'      => 'required|numeric',
@@ -45,18 +44,13 @@ class TransactionController extends Controller
         $totalBelanja = (float) $validated['total'];
         $nominalBayar = (float) $validated['nominal_bayar'];
 
+        // Validasi Logika Bisnis Pembayaran
         if ($metodeBayar === 'cash' && $nominalBayar < $totalBelanja) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nominal uang tunai kurang dari total tagihan.'
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Nominal uang tunai kurang dari total tagihan.'], 400);
         }
 
         if ($metodeBayar === 'cash_tempo' && $nominalBayar > $totalBelanja) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pembayaran awal cash tempo tidak boleh melebihi total tagihan.'
-            ], 400);
+            return response()->json(['success' => false, 'message' => 'Pembayaran awal cash tempo tidak boleh melebihi total tagihan.'], 400);
         }
 
         DB::beginTransaction();
@@ -73,7 +67,7 @@ class TransactionController extends Controller
             // Hitung kembalian (hanya jika tunai)
             $kembalian = $metodeBayar === 'cash' ? max(0, $nominalBayar - $totalBelanja) : 0;
 
-            // Jika metode non-cash, nominal bayar dianggap pas (sama dengan total tagihan)
+            // Jika metode non-cash, nominal bayar dianggap pas
             $nominalBayarAsli = ! in_array($metodeBayar, ['cash', 'cash_tempo'], true)
                                 ? $totalBelanja
                                 : $nominalBayar;
@@ -95,29 +89,32 @@ class TransactionController extends Controller
                 'cabang_id'        => $cabangId,
             ]);
 
-            // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
+            // 3. Looping Keranjang
             foreach ($validated['cart'] as $item) {
                 $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
                 $hargaSatuan = $item['unit'] === 'ml' ? $item['pricePerMl'] : $item['price'];
 
-                // Hitung Harga Dasar Item
                 $subtotalItemDasar = $item['unit'] === 'ml' ? $item['price'] : ($hargaSatuan * $item['qty']);
                 $diskonItem = $item['itemDiscount'] ?? 0;
                 $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
 
+                $discountType = $item['discountType'] ?? 'rupiah';
+                $discountInput = (float) ($item['discountInput'] ?? 0);
+
                 // Insert Detail Transaksi
                 TransactionDetail::create([
-                    'transaksi_id'  => $transaction->id,
-                    'varian_id'     => $item['variantId'],
-                    'qty'           => $qtyOrMl,
-                    'harga_satuan'  => $hargaSatuan,
-                    'subtotal'      => $subtotalFinalItem,
+                    'transaksi_id'   => $transaction->id,
+                    'varian_id'      => $item['variantId'],
+                    'qty'            => $qtyOrMl,
+                    'harga_satuan'   => $hargaSatuan,
+                    'diskon_persen'  => $discountType === 'percent' ? $discountInput : 0,
+                    'diskon_satuan'  => $diskonItem,
+                    'catatan_diskon' => $diskonItem > 0 ? 'Diskon item' : null,
+                    'subtotal'       => $subtotalFinalItem,
                 ]);
 
                 // Kurangi Stok Cabang
-                $stock = BranchStock::where('cabang_id', $cabangId)
-                                    ->where('varian_id', $item['variantId'])
-                                    ->first();
+                $stock = BranchStock::where('cabang_id', $cabangId)->where('varian_id', $item['variantId'])->first();
                 if ($stock) {
                     $stock->decrement('stok', $qtyOrMl);
                 }
@@ -135,13 +132,12 @@ class TransactionController extends Controller
                 ]);
             }
 
-            // 4. Catatan Piutang jika Metode Kasbon/Tempo
-            if ($metodeBayar === 'cash_tempo' || $metodeBayar === 'tempo') {
+            // 4. Catatan Piutang jika Metode Cash Tempo
+            if ($metodeBayar === 'cash_tempo') {
                 $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
-
                 DB::table('cash_tempo')->insert([
                     'transaksi_id'        => $transaction->id,
-                    'tanggal_jatuh_tempo' => $validated['cash_tempo']['tanggal_jatuh_tempo'] ?? $waktu->addDays(7)->toDateString(), // fallback 7 hari
+                    'tanggal_jatuh_tempo' => $validated['cash_tempo']['tanggal_jatuh_tempo'],
                     'jumlah_piutang'      => $totalBelanja,
                     'sisa_piutang'        => $sisaPiutang,
                     'status_tempo'        => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
@@ -152,7 +148,7 @@ class TransactionController extends Controller
                 ]);
             }
 
-            // 5. Potong Poin Member (Jika menggunakan opsi Tukar Poin)
+            // 5. Potong Poin Member
             if (($validated['member_id'] ?? null) && ($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
                 $member = Member::find($validated['member_id']);
                 if ($member) {
@@ -162,76 +158,21 @@ class TransactionController extends Controller
 
             DB::commit();
 
-            // Load data lengkap untuk dicetak struk di Flutter
-            $transaction->load(['details.variant.product', 'member']);
+            // Load data lengkap untuk di-return
+            $transaction->load(['details.variant.product', 'member', 'cashTempo']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil diproses.',
-                'data'    => $transaction
+                'data'    => $transaction,
+                // Berikan link webview receipt ke flutter
+                'receipt_url' => url("kasir/pos/receipt/{$transaction->id}")
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-    }
-
-    /**
-     * Mencari Member berdasarkan No HP
-     */
-    public function searchMember(Request $request)
-    {
-        $phone = preg_replace('/[^0-9]/', '', $request->phone);
-
-        $member = Member::where('no_telp', $phone)
-                    ->orWhere('no_telp', 'like', "%{$phone}%")
-                    ->first();
-
-        if (!$member) {
-            return response()->json(['success' => true, 'found' => false]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'found'   => true,
-            'data'    => [
-                'id'     => $member->id,
-                'name'   => $member->nama,
-                'points' => $member->poin ?? 0,
-            ]
-        ]);
-    }
-
-    /**
-     * Memproses penyimpanan data member baru dari aplikasi Kasir
-     */
-    public function storeMember(Request $request)
-    {
-        $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:members,no_telp',
-        ], [
-            'phone.unique' => 'Nomor HP ini sudah terdaftar sebagai member.',
-        ]);
-
-        $lastMember = Member::latest('id')->first();
-        $nextId = $lastMember ? $lastMember->id + 1 : 1;
-        $kodeMember = 'MEM-' . date('Ymd') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
-
-        $member = Member::create([
-            'kode_member' => $kodeMember,
-            'nama'        => $request->name,
-            'no_telp'     => $request->phone,
-            'poin'        => 0,
-            'status'      => 'aktif'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Member baru berhasil didaftarkan!',
-            'data'    => $member
-        ], 201);
     }
 
     /**
@@ -271,7 +212,6 @@ class TransactionController extends Controller
             }
         }
 
-        // 3. Ambil data dengan Pagination
         $transactions = $query->orderBy('tanggal_waktu', 'desc')->paginate(10);
 
         return response()->json([
@@ -317,13 +257,8 @@ class TransactionController extends Controller
                 ->whereNull('deleted_at')
                 ->first(['id', 'kode_member', 'nama', 'no_telp']);
 
-        $transaction->cash_tempo = DB::table('cash_tempo')
-            ->where('transaksi_id', $transaction->id)
-            ->first();
-
-        $transaction->shipment = DB::table('shipments')
-            ->where('transaksi_id', $transaction->id)
-            ->first();
+        $transaction->cash_tempo = DB::table('cash_tempo')->where('transaksi_id', $transaction->id)->first();
+        $transaction->shipment = DB::table('shipments')->where('transaksi_id', $transaction->id)->first();
 
         $transaction->details = DB::table('transaction_details')
             ->leftJoin('produk_varian', 'produk_varian.id', '=', 'transaction_details.varian_id')
@@ -344,11 +279,50 @@ class TransactionController extends Controller
                 'produk_varian.satuan',
                 'products.nama_produk',
             ])
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $diskonNominal = (float) ($item->diskon_satuan ?? $item->diskon_item ?? $item->diskon_nominal ?? $item->item_discount ?? 0);
+                $diskonPersen = (float) ($item->diskon_persen ?? $item->diskon_item_persen ?? $item->persen_diskon ?? 0);
+                $qty = (int) ($item->qty ?? 0);
+                $hargaSatuan = (float) ($item->harga_satuan ?? 0);
+                $subtotal = (float) ($item->subtotal ?? max(0, ($hargaSatuan * $qty) - $diskonNominal));
+
+                return [
+                    'id' => $item->id,
+                    'varian_id' => $item->varian_id,
+                    'qty' => $qty,
+                    'harga_satuan' => $hargaSatuan,
+                    'diskon_persen' => $diskonPersen,
+                    'diskon_satuan' => $diskonNominal,
+                    'diskon_item' => $diskonNominal,
+                    'item_discount' => $diskonNominal,
+                    'diskon_item_nominal' => $diskonNominal,
+                    'diskon_nominal' => $diskonNominal,
+                    'diskon_per_item' => $diskonPersen,
+                    'catatan_diskon' => $item->catatan_diskon,
+                    'subtotal' => $subtotal,
+                    'sku' => $item->sku,
+                    'nama_varian' => $item->nama_varian,
+                    'satuan' => $item->satuan,
+                    'nama_produk' => $item->nama_produk,
+                    'variant' => [
+                        'id' => $item->varian_id,
+                        'sku' => $item->sku,
+                        'nama_varian' => $item->nama_varian,
+                        'satuan' => $item->satuan,
+                        'product' => [
+                            'id' => $item->produk_id ?? null,
+                            'nama_produk' => $item->nama_produk,
+                        ],
+                    ],
+                ];
+            })
+            ->values();
 
         return response()->json([
             'success' => true,
             'data' => $transaction,
+            'receipt_url' => url("kasir/pos/receipt/{$transaction->id}")
         ]);
     }
 }
