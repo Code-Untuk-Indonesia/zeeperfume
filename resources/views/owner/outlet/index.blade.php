@@ -94,7 +94,12 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
                                     @if ($isActive)
-                                        <form method="POST" action="{{ route('owner.outlet.destroy', $outlet->id) }}" data-outlet-action="delete">
+                                        <form method="POST" action="{{ route('owner.outlet.destroy', $outlet->id) }}"
+                                            data-feedback-confirm
+                                            data-feedback-confirm-title="Konfirmasi penonaktifan"
+                                            data-feedback-confirm-message="Outlet ini akan disembunyikan dari daftar outlet aktif."
+                                            data-feedback-confirm-label="Nonaktifkan"
+                                            data-feedback-confirm-tone="danger">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50" title="Nonaktifkan">
@@ -102,7 +107,12 @@
                                             </button>
                                         </form>
                                     @else
-                                        <form method="POST" action="{{ route('owner.outlet.restore', $outlet->id) }}" data-outlet-action="restore">
+                                        <form method="POST" action="{{ route('owner.outlet.restore', $outlet->id) }}"
+                                            data-feedback-confirm
+                                            data-feedback-confirm-title="Konfirmasi aktivasi"
+                                            data-feedback-confirm-message="Outlet ini akan diaktifkan kembali."
+                                            data-feedback-confirm-label="Aktifkan"
+                                            data-feedback-confirm-tone="success">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="text-gray-400 hover:text-green-500 transition p-1.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50" title="Aktifkan Kembali">
@@ -122,5 +132,4 @@
         <div class="px-6 py-4 border-t border-gray-100">{{ $outlets->links() }}</div>
     </div>
 </main>
-@include('owner.outlet.partials.toast')
 @endsection

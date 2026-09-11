@@ -15,13 +15,6 @@
         <p class="text-gray-500 text-sm mt-1">Perbarui informasi induk parfum, sesuaikan harga, atau perbarui stok manual.</p>
     </div>
 
-    <!-- Error Alert -->
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl font-semibold text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
     <form action="{{ route('admin.stock.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-col xl:flex-row gap-6">
         @csrf
         <!-- Karena tidak boleh ganti tipe produk setelah dibuat, kita kunci valuenya -->

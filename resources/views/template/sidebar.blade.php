@@ -472,6 +472,8 @@
 
     </div>
 
+    @include('components.feedback')
+
     <!-- Script navigasi sidebar desktop dan mobile -->
     <script>
         const sidebarStorageKey = 'zeeperfume.sidebar.{{ $currentRole }}';

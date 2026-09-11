@@ -150,7 +150,12 @@
                                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
                                 @if ($isActive)
-                                    <form method="POST" action="{{ route('owner.employee.destroy', $emp->id) }}" data-employee-action="delete">
+                                    <form method="POST" action="{{ route('owner.employee.destroy', $emp->id) }}"
+                                        data-feedback-confirm
+                                        data-feedback-confirm-title="Konfirmasi penonaktifan"
+                                        data-feedback-confirm-message="Pegawai ini tidak dapat login setelah dinonaktifkan."
+                                        data-feedback-confirm-label="Nonaktifkan"
+                                        data-feedback-confirm-tone="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1.5 bg-gray-50 hover:bg-red-50 rounded-lg" title="Nonaktifkan Pegawai">
@@ -158,7 +163,12 @@
                                         </button>
                                     </form>
                                 @else
-                                    <form method="POST" action="{{ route('owner.employee.restore', $emp->id) }}" data-employee-action="restore">
+                                    <form method="POST" action="{{ route('owner.employee.restore', $emp->id) }}"
+                                        data-feedback-confirm
+                                        data-feedback-confirm-title="Konfirmasi aktivasi"
+                                        data-feedback-confirm-message="Pegawai ini akan diaktifkan kembali dan dapat login."
+                                        data-feedback-confirm-label="Aktifkan"
+                                        data-feedback-confirm-tone="success">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="text-gray-400 hover:text-green-500 transition p-1.5 bg-gray-50 hover:bg-green-50 rounded-lg" title="Aktifkan Kembali">
@@ -190,7 +200,6 @@
     </div>
 </main>
 
-@include('owner.employee.partials.toast')
 
 <!-- SCRIPT AJAX SEARCH & FILTER (TIDAK BUTUH PARTIAL) -->
 <script>

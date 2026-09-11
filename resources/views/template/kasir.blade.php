@@ -231,6 +231,8 @@
         </nav>
     </div>
 
+    @include('components.feedback')
+
     <!-- Script Waktu Real-time -->
     <script>
         function updateClock() {

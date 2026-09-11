@@ -74,12 +74,16 @@
                     <button type="submit" class="w-full md:w-auto bg-[#CC9863] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#b58555] transition order-1 md:order-2">Simpan Perubahan</button>
                 </div>
             </form>
-            <form id="delete-member-form" action="{{ route('owner.member.destroy', $member->id) }}" method="POST" class="hidden" data-delete-member>
+            <form id="delete-member-form" action="{{ route('owner.member.destroy', $member->id) }}" method="POST" class="hidden"
+                data-feedback-confirm
+                data-feedback-confirm-title="Konfirmasi penghapusan"
+                data-feedback-confirm-message="Member ini akan dihapus dari daftar aktif."
+                data-feedback-confirm-label="Hapus member"
+                data-feedback-confirm-tone="danger">
                 @csrf
                 @method('DELETE')
             </form>
         </div>
     </div>
 </main>
-@include('admin.member.partials.toast')
 @endsection

@@ -133,13 +133,19 @@
                             </a>
                         @endif
 
-                        <!-- TOMBOL EXPORT DIPERBAIKI (TOMBOL COKLAT) -->
-                        <button type="submit" formaction="{{ route('owner.income.export') }}" class="bg-[#CC9863] text-white h-[42px] px-5 rounded-xl font-bold shadow-sm hover:bg-[#b58555] transition flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
+                        <a href="{{ route('owner.income.print', request()->only(['month', 'year', 'start_date', 'end_date', 'branch_id', 'payment_method'])) }}" target="_blank" rel="noopener" class="bg-gray-900 text-white h-[42px] px-5 rounded-xl font-bold shadow-sm hover:bg-black transition flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-2 0v4H8v-4m-2-9h12"></path>
+                            </svg>
+                            Cetak / PDF
+                        </a>
+
+                        <a href="{{ route('owner.income.export', request()->only(['month', 'year', 'start_date', 'end_date', 'branch_id', 'payment_method'])) }}" class="bg-[#CC9863] text-white h-[42px] px-5 rounded-xl font-bold shadow-sm hover:bg-[#b58555] transition flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            Export Laporan
-                        </button>
+                            Export Excel (.xlsx)
+                        </a>
                     </div>
                 </div>
             </div>

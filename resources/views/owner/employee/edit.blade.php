@@ -95,5 +95,4 @@
     </form>
 </main>
 
-@include('owner.employee.partials.toast')
 @endsection

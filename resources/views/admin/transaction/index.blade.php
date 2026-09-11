@@ -107,13 +107,11 @@
                                         strtolower($trx->metode_bayar) === 'cash_tempo';
                                     $belumLunas = $isTempo && $trx->cashTempo && $trx->cashTempo->sisa_piutang > 0;
 
-                                    // Mengecek apakah ini pesanan online (Berdasarkan kode INV-YYYYMMDD-O001 atau relasi shipment)
-                                    $isOnline =
-                                        str_contains($trx->nomor_nota, '-O') ||
-                                        \App\Models\Shipment::where('transaksi_id', $trx->id)->exists();
+                                    // Pesanan online dikenali dari relasi shipment, bukan format nomor invoice.
+                                    $shipment = $trx->shipment;
+                                    $isOnline = $shipment !== null;
 
                                     if ($isOnline) {
-                                        $shipment = \App\Models\Shipment::where('transaksi_id', $trx->id)->first();
                                         // Mengambil nama platform dari catatan_kurir (format: Sumber: SHOPEE | Catatan: xxx)
                                         $platformName = 'Online';
                                         if ($shipment && str_contains($shipment->catatan_kurir, 'Sumber:')) {
@@ -441,8 +439,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Pengajuan berhasil dikirim! Silakan tunggu konfirmasi dari Owner.');
-                        location.reload();
+                        AppFeedback.success('Pengajuan berhasil dikirim! Silakan tunggu konfirmasi dari Owner.');
+                        window.setTimeout(() => location.reload(), 1200);
                     } else {
                         errorMsg.innerText = data.message || "Gagal mengirim pengajuan.";
                         errorMsg.classList.remove('hidden');

@@ -25,7 +25,7 @@
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
                     <!-- Tombol Ajukan Edit (Hanya jika belum diajukan/diizinkan) -->
                     @if (!in_array($transaction->approval_status, ['pending_edit', 'approved_edit']))
-                        <button onclick="alert('Fitur pengajuan edit dapat dilakukan melalui halaman Riwayat Transaksi.')"
+                        <button onclick="AppFeedback.info('Fitur pengajuan edit dapat dilakukan melalui halaman Riwayat Transaksi.')"
                             class="bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -141,13 +141,21 @@
 
                         <div class="space-y-4 mb-6 border-b border-gray-100 pb-6 print:border-black print:space-y-2">
                             @foreach ($transaction->details as $item)
-                                    @php
-                                        $variantName = $item->variant->nama_varian ?? 'Produk Terhapus';
-                                        $productName = $item->variant->product->nama_produk ?? '';
-                                        $satuan = strtolower($item->variant->satuan ?? 'pcs');
-                                        $itemDiscount = (float) ($item->diskon_satuan ?? 0);
-                                        $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
-                                    @endphp
+                                @php
+                                    $variantName = $item->variant->nama_varian ?? 'Produk Terhapus';
+                                    $productName = $item->variant->product->nama_produk ?? '';
+                                    $satuan = strtolower($item->variant->satuan ?? 'pcs');
+                                    $itemDiscount = max(0, (float) ($item->diskon_satuan ?? 0));
+                                    $itemDiscountPercent = max(0, (float) ($item->diskon_persen ?? 0));
+
+                                    // Data transaksi lama bisa hanya menyimpan persentase diskon.
+                                    if ($itemDiscount <= 0 && $itemDiscountPercent > 0) {
+                                        $itemDiscount = (float) ($item->harga_satuan ?? 0) * ($itemDiscountPercent / 100);
+                                    }
+
+                                    $itemDiscountNote = trim((string) ($item->catatan_diskon ?? ''));
+                                    $hasItemDiscount = $itemDiscount > 0 || $itemDiscountPercent > 0;
+                                @endphp
                                 <div class="flex justify-between items-start">
                                     <div class="flex gap-3">
                                         <div
@@ -164,9 +172,12 @@
                                                 Rp {{ number_format($item->harga_satuan, 0, ',', '.') }} <span
                                                     class="print:hidden">x {{ $item->qty }} {{ $satuan }}</span>
                                             </p>
-                                            @if ($itemDiscount > 0)
-                                                <p class="mt-1 text-[11px] font-semibold text-red-600 print:text-xs print:text-black">
-                                                    Diskon item{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}:
+                                            @if ($hasItemDiscount)
+                                                <p class="print-discount-line mt-1 text-[11px] font-semibold text-red-600 print:text-xs print:text-black">
+                                                    {{ $itemDiscountNote !== '' ? $itemDiscountNote : 'Diskon item' }}
+                                                    @if ($itemDiscountPercent > 0)
+                                                        ({{ rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') }}%)
+                                                    @endif:
                                                     - Rp {{ number_format($itemDiscount, 0, ',', '.') }}
                                                 </p>
                                             @endif
@@ -179,6 +190,18 @@
                         </div>
 
                         <!-- Kalkulasi Total -->
+                        @php
+                            $transactionDiscount = max(0, (float) ($transaction->diskon_nominal ?? 0));
+                            $transactionDiscountPercent = max(0, (float) ($transaction->diskon_persen ?? 0));
+
+                            // Fallback untuk nota lama yang hanya menyimpan persentase diskon.
+                            if ($transactionDiscount <= 0 && $transactionDiscountPercent > 0) {
+                                $transactionDiscount = (float) ($transaction->subtotal ?? 0) * ($transactionDiscountPercent / 100);
+                            }
+
+                            $transactionDiscountDescription = trim((string) ($transaction->deskripsi_diskon ?? ''));
+                            $hasTransactionDiscount = $transactionDiscount > 0 || $transactionDiscountPercent > 0;
+                        @endphp
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm text-gray-600 print:text-black">
                                 <p class="font-semibold">Subtotal Produk</p>
@@ -186,11 +209,18 @@
                                     {{ number_format($transaction->subtotal, 0, ',', '.') }}</p>
                             </div>
 
-                            @if ($transaction->diskon_nominal > 0)
+                            @if ($hasTransactionDiscount)
                                 <div class="flex justify-between text-sm text-gray-600 print:text-black">
-                                    <p class="font-semibold">Diskon ({{ $transaction->deskripsi_diskon }})</p>
+                                    <p class="print-discount-line font-semibold">
+                                        Diskon
+                                        @if ($transactionDiscountDescription !== '')
+                                            ({{ $transactionDiscountDescription }})
+                                        @elseif ($transactionDiscountPercent > 0)
+                                            ({{ rtrim(rtrim(number_format($transactionDiscountPercent, 2, '.', ''), '0'), '.') }}%)
+                                        @endif
+                                    </p>
                                     <p class="font-bold text-red-500 print:text-black">- Rp
-                                        {{ number_format($transaction->diskon_nominal, 0, ',', '.') }}</p>
+                                        {{ number_format($transactionDiscount, 0, ',', '.') }}</p>
                                 </div>
                             @endif
 
@@ -392,6 +422,10 @@
             .print-struk-only,
             .print-struk-only * {
                 border-radius: 0 !important;
+            }
+
+            .print-discount-line {
+                visibility: visible !important;
             }
 
             /* Logic toggle: Cetak Resi vs Cetak Struk */

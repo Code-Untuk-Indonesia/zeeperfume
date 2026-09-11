@@ -59,14 +59,6 @@
             </div>
         </div>
 
-        <!-- Session Alerts -->
-        @if(session('success'))
-            <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl font-semibold text-sm flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                {{ session('success') }}
-            </div>
-        @endif
-
         <!-- Filter & Search Bar -->
         <form action="{{ route('admin.stock.index') }}" method="GET" class="bg-white p-5 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col lg:flex-row gap-4 justify-between items-center">
             
@@ -211,7 +203,12 @@
                                         </a>
                                         
                                         <!-- Delete Form & Button -->
-                                        <form action="{{ route('admin.stock.destroy', $product->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini beserta seluruh data varian dan stoknya?');">
+                                        <form action="{{ route('admin.stock.destroy', $product->id) }}" method="POST"
+                                            data-feedback-confirm
+                                            data-feedback-confirm-title="Konfirmasi penghapusan"
+                                            data-feedback-confirm-message="Produk ini beserta seluruh data varian dan stoknya akan dihapus."
+                                            data-feedback-confirm-label="Hapus produk"
+                                            data-feedback-confirm-tone="danger">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
