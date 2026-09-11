@@ -118,7 +118,7 @@
 </head>
 
 <body
-    class="flex {{ $canToggleDesktopSidebar ? 'sidebar-layout' : '' }} bg-gray-50 h-screen w-screen text-gray-800 antialiased overflow-hidden relative">
+    class="flex flex-col lg:flex-row {{ $canToggleDesktopSidebar ? 'sidebar-layout' : '' }} bg-gray-50 h-screen w-screen text-gray-800 antialiased overflow-hidden relative">
 
     <!-- ==============================================
          OVERLAY BACKDROP (MOBILE ONLY)
@@ -152,7 +152,8 @@
         <div class="flex-1 flex flex-col">
 
             <!-- HEADER SIDEBAR: Logo, Text, & Tombol Hamburger -->
-            <div class="relative flex flex-col items-center justify-center mb-8 pb-6 border-b border-gray-800/80 w-full pt-2">
+            <div
+                class="relative flex flex-col items-center justify-center mb-8 pb-6 border-b border-gray-800/80 w-full pt-2">
 
                 <!-- Tombol Sembunyikan Desktop (Ikon Hamburger) -->
                 @if ($canToggleDesktopSidebar)
@@ -177,8 +178,10 @@
 
                 <!-- Logo & Brand Name (Center Vertikal) -->
                 <div class="flex flex-col items-center gap-3 mt-4">
-                    <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center p-2 shadow-inner border border-white/5">
-                        <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo" class="w-full h-full object-contain">
+                    <div
+                        class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center p-2 shadow-inner border border-white/5">
+                        <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo"
+                            class="w-full h-full object-contain">
                     </div>
                     <span class="text-xl font-black text-white tracking-wide">
                         Zee<span class="text-[#CC9863]">Perfume</span>
@@ -220,7 +223,8 @@
                     <a href="{{ route('owner.income.index') }}"
                         class="{{ request()->routeIs('owner.income.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>
                         Laporan Pendapatan
                     </a>
@@ -246,7 +250,8 @@
                     </a>
 
                     <!-- GRUP DATA MASTER (OWNER) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-2">Data Master</p>
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-2">Data Master
+                    </p>
                     <details class="group"
                         {{ request()->is('owner/employee*') || request()->is('owner/member*') || request()->is('owner/outlet*') || request()->is('owner/stock*') ? 'open' : '' }}>
                         <summary
@@ -377,7 +382,8 @@
 
                 <!-- ================= MENU KASIR ================= -->
                 @if ($currentRole === 'kasir')
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Kasir</p>
+                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Kasir
+                    </p>
 
                     <a href="{{ url('kasir/pos') }}"
                         class="{{ request()->is('kasir/pos') ? 'bg-[#CC9863] text-white shadow-md' : 'text-[#CC9863] hover:bg-gray-800 border border-dashed border-[#CC9863]/50' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
@@ -461,7 +467,8 @@
                     </svg>
                 </button>
                 <div class="flex items-center gap-2 font-bold text-xl">
-                    <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo" class="w-6 h-6 object-contain">
+                    <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo"
+                        class="w-6 h-6 object-contain">
                     <span class="text-[#CC9863]">ZeePerfume</span>
                 </div>
             </div>
@@ -471,8 +478,6 @@
         @yield('content')
 
     </div>
-
-    @include('components.feedback')
 
     <!-- Script navigasi sidebar desktop dan mobile -->
     <script>
