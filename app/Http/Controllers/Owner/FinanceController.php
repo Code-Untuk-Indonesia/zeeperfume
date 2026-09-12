@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
-use App\Models\BranchStock; // <-- Tambahan Model
+use App\Models\BranchStock;
 use App\Models\Expense;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -16,19 +16,50 @@ class FinanceController extends Controller
 {
     public function index(Request $request)
     {
-        $month = (int) $request->input('month', now()->month);
-        $year = (int) $request->input('year', now()->year);
+        // 1. Ambil Parameter Filter Cerdas
+        $period = $request->query('period', 'this_month');
+        $startDateInput = $request->query('start_date');
+        $endDateInput = $request->query('end_date');
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
-        $monthName = $startDate->translatedFormat('F Y');
+        // Kalkulasi Rentang Tanggal
+        if ($period === 'custom' && $startDateInput && $endDateInput) {
+            $startDate = Carbon::parse($startDateInput)->startOfDay();
+            $endDate = Carbon::parse($endDateInput)->endOfDay();
+            $periodLabel = $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
+        } elseif ($period === 'today') {
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+            $periodLabel = 'Hari Ini (' . $startDate->translatedFormat('d M Y') . ')';
+        } elseif ($period === 'this_week') {
+            $startDate = Carbon::now()->startOfWeek();
+            $endDate = Carbon::now()->endOfWeek();
+            $periodLabel = 'Minggu Ini (' . $startDate->translatedFormat('d M') . ' - ' . $endDate->translatedFormat('d M Y') . ')';
+        } elseif ($period === 'this_year') {
+            $startDate = Carbon::now()->startOfYear();
+            $endDate = Carbon::now()->endOfDay();
+            $periodLabel = 'Tahun Ini (' . $startDate->translatedFormat('Y') . ')';
+        } elseif ($period === 'all') {
+            $startDate = null;
+            $endDate = Carbon::now()->endOfDay();
+            $periodLabel = 'Keseluruhan Waktu';
+        } else {
+            // Default: this_month
+            $period = 'this_month';
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfDay();
+            $periodLabel = 'Bulan Ini (' . $startDate->translatedFormat('F Y') . ')';
+        }
 
+        // Ambil Data Transaksi
         $transactions = Transaction::with('details.variant')
-            ->whereBetween('tanggal_waktu', [$startDate, $endDate])
+            ->when($startDate, fn($q) => $q->whereBetween('tanggal_waktu', [$startDate, $endDate]))
+            ->when(!$startDate, fn($q) => $q->where('tanggal_waktu', '<=', $endDate))
             ->get();
 
+        // Ambil Data Pengeluaran (Expense)
         $expenses = Expense::with(['branch', 'user'])
-            ->whereBetween('tanggal_pengeluaran', [$startDate, $endDate])
+            ->when($startDate, fn($q) => $q->whereBetween('tanggal_pengeluaran', [$startDate, $endDate]))
+            ->when(!$startDate, fn($q) => $q->where('tanggal_pengeluaran', '<=', $endDate))
             ->orderByDesc('tanggal_pengeluaran')
             ->get();
 
@@ -41,7 +72,7 @@ class FinanceController extends Controller
         // Total Modal Barang Terjual (HPP) ditarik dari 'harga_beli' di tabel produk_varian
         $totalHpp = $transactions->sum(function ($trx) {
             return $trx->details->sum(function ($detail) {
-                return ($detail->variant->harga_beli ?? 0) * $detail->qty; // PERBAIKAN: harga_beli
+                return ($detail->variant->harga_beli ?? 0) * $detail->qty;
             });
         });
 
@@ -53,10 +84,10 @@ class FinanceController extends Controller
         $marginPercentage = $totalOmzet > 0 ? round(($labaBersih / $totalOmzet) * 100, 1) : 0;
 
         // =========================================================
-        // 2. MENGHITUNG TOTAL ASET MODAL BARANG SAAT INI (FITUR BARU)
+        // 2. MENGHITUNG TOTAL ASET MODAL BARANG SAAT INI (REALTIME)
         // =========================================================
         $totalAsetModal = BranchStock::with('variant')->get()->sum(function ($stock) {
-            return $stock->stok * ($stock->variant->harga_beli ?? 0); // PERBAIKAN: harga_beli
+            return $stock->stok * ($stock->variant->harga_beli ?? 0);
         });
 
         // =========================================================
@@ -69,8 +100,7 @@ class FinanceController extends Controller
             ->groupBy('varian_id')
             ->get()
             ->map(function ($item) {
-                // Ambil harga modal dari produk varian
-                $modalSatuan = $item->variant->harga_beli ?? 0; // PERBAIKAN: harga_beli
+                $modalSatuan = $item->variant->harga_beli ?? 0;
                 $item->modal_satuan = $modalSatuan;
                 $item->total_modal = $modalSatuan * $item->total_qty;
                 return $item;
@@ -78,36 +108,78 @@ class FinanceController extends Controller
             ->sortByDesc('total_modal');
 
         // =========================================================
-        // 4. DAILY CHART
+        // 4. PREPARE CHART DATA DYNAMICALLY
         // =========================================================
         $labels = [];
         $income = [];
         $expenseChart = [];
 
-        for ($day = 1; $day <= $startDate->daysInMonth; $day++) {
-            $date = $startDate->copy()->day($day);
-            $dateKey = $date->format('Y-m-d');
+        if ($startDate === null || $startDate->diffInDays($endDate) > 31) {
+            // GRAFIK BULANAN
+            $monthsGroup = collect();
 
-            $dailyTransactions = $transactions->filter(
-                fn($trx) => Carbon::parse($trx->tanggal_waktu)->format('Y-m-d') === $dateKey
-            );
+            // Kelompokkan Transaksi Per Bulan
+            $trxByMonth = $transactions->groupBy(fn($t) => Carbon::parse($t->tanggal_waktu)->format('Y-m'));
+            // Kelompokkan Expense Per Bulan
+            $expByMonth = $expenses->groupBy(fn($e) => Carbon::parse($e->tanggal_pengeluaran)->format('Y-m'));
 
-            $dailyOperational = $expenses->filter(
-                fn($exp) => Carbon::parse($exp->tanggal_pengeluaran)->format('Y-m-d') === $dateKey
-            );
+            // Gabungkan key bulan dari keduanya agar tidak ada yang terlewat
+            $allMonths = $trxByMonth->keys()->merge($expByMonth->keys())->unique()->sort();
 
-            $dailyHpp = $dailyTransactions->sum(function ($trx) {
-                return $trx->details->sum(
-                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty // PERBAIKAN: harga_beli
-                );
-            });
+            foreach ($allMonths as $ym) {
+                $labels[] = Carbon::createFromFormat('Y-m', $ym)->translatedFormat('M Y');
 
-            $labels[] = $date->format('d M');
-            $income[] = (float) $dailyTransactions->sum('total_belanja');
-            $expenseChart[] = (float) ($dailyHpp + $dailyOperational->sum('nominal'));
+                $monthlyTrx = $trxByMonth->get($ym) ?? collect();
+                $monthlyExp = $expByMonth->get($ym) ?? collect();
+
+                $monthlyOmzet = $monthlyTrx->sum('total_belanja');
+                $monthlyHpp = $monthlyTrx->sum(fn($trx) => $trx->details->sum(fn($d) => ($d->variant->harga_beli ?? 0) * $d->qty));
+                $monthlyOps = $monthlyExp->sum('nominal');
+
+                $income[] = (float) $monthlyOmzet;
+                $expenseChart[] = (float) ($monthlyHpp + $monthlyOps);
+            }
+        } elseif ($startDate->diffInDays($endDate) == 0) {
+            // GRAFIK PER JAM
+            for ($i = 8; $i <= 22; $i++) {
+                $labels[] = str_pad($i, 2, '0', STR_PAD_LEFT) . ':00';
+
+                $hourlyTrx = $transactions->filter(fn($t) => (int) Carbon::parse($t->tanggal_waktu)->format('H') === $i);
+                $hourlyExp = $expenses->filter(fn($e) => (int) Carbon::parse($e->tanggal_pengeluaran)->format('H') === $i);
+
+                $hourlyOmzet = $hourlyTrx->sum('total_belanja');
+                $hourlyHpp = $hourlyTrx->sum(fn($trx) => $trx->details->sum(fn($d) => ($d->variant->harga_beli ?? 0) * $d->qty));
+                $hourlyOps = $hourlyExp->sum('nominal');
+
+                $income[] = (float) $hourlyOmzet;
+                $expenseChart[] = (float) ($hourlyHpp + $hourlyOps);
+            }
+        } else {
+            // GRAFIK HARIAN
+            for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+                $dateKey = $date->format('Y-m-d');
+                $labels[] = $date->format('d M');
+
+                $dailyTrx = $transactions->filter(fn($trx) => Carbon::parse($trx->tanggal_waktu)->format('Y-m-d') === $dateKey);
+                $dailyExp = $expenses->filter(fn($exp) => Carbon::parse($exp->tanggal_pengeluaran)->format('Y-m-d') === $dateKey);
+
+                $dailyOmzet = $dailyTrx->sum('total_belanja');
+                $dailyHpp = $dailyTrx->sum(fn($trx) => $trx->details->sum(fn($d) => ($d->variant->harga_beli ?? 0) * $d->qty));
+                $dailyOps = $dailyExp->sum('nominal');
+
+                $income[] = (float) $dailyOmzet;
+                $expenseChart[] = (float) ($dailyHpp + $dailyOps);
+            }
         }
 
-        $chartData = ['labels' => $labels, 'income' => $income, 'expense' => $expenseChart];
+        // Fallback
+        if (empty($labels)) {
+            $labels[] = now()->translatedFormat('d M Y');
+            $income[] = 0;
+            $expenseChart[] = 0;
+        }
+
+        $chartData = ['labels' => array_values($labels), 'income' => array_values($income), 'expense' => array_values($expenseChart)];
 
         // =========================================================
         // 5. REPORT PER CABANG
@@ -117,9 +189,7 @@ class FinanceController extends Controller
 
             $omzet = $branchTransactions->sum('total_belanja');
             $hpp = $branchTransactions->sum(function ($trx) {
-                return $trx->details->sum(
-                    fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty // PERBAIKAN: harga_beli
-                );
+                return $trx->details->sum(fn($detail) => ($detail->variant->harga_beli ?? 0) * $detail->qty);
             });
 
             $labaKotorCabang = $omzet - $hpp;
@@ -137,22 +207,20 @@ class FinanceController extends Controller
             ];
         });
 
-        return view('owner.finance.index', compact(
-            'month',
-            'year',
-            'monthName',
-            'totalOmzet',
-            'totalHpp',
-            'labaKotor',
-            'totalPengeluaran',
-            'totalBeban',
-            'labaBersih',
-            'marginPercentage',
-            'totalAsetModal', // <-- Variabel baru dilempar ke View
-            'branchReports',
-            'chartData',
-            'expenses',
-            'hppDetails'
-        ));
+        $data = compact(
+            'period', 'periodLabel',
+            'totalOmzet', 'totalHpp', 'labaKotor', 'totalPengeluaran',
+            'totalBeban', 'labaBersih', 'marginPercentage', 'totalAsetModal',
+            'branchReports', 'chartData', 'expenses', 'hppDetails'
+        );
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('owner.finance.index', $data)->renderSections()['content'],
+                'chart' => $chartData
+            ]);
+        }
+
+        return view('owner.finance.index', $data);
     }
 }

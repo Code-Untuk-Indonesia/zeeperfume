@@ -28,6 +28,10 @@ use Illuminate\Support\Facades\Route;
 | Root Route & Authentication
 |--------------------------------------------------------------------------
 */
+// Route untuk halaman Landing Page
+Route::get('/landing', function () {
+    return view('landing');
+})->name('landing');
 
 Route::get('/', function (Request $request) {
     if ($request->user() === null) {
