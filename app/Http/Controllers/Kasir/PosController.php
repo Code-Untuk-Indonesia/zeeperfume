@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Support\BranchOperatingHours;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -44,8 +45,18 @@ class PosController extends Controller
     /**
      * Memproses dan menyimpan transaksi ke Database
      */
-    public function store(Request $request)
+    public function store(Request $request, BranchOperatingHours $operatingHours)
     {
+        $cabangId = auth()->user()->cabang_id ?? 1;
+        $closedMessage = $operatingHours->closedMessage($cabangId);
+
+        if ($closedMessage !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $closedMessage,
+            ], 403);
+        }
+
         $validated = $request->validate([
             'cart'          => 'required|array',
             'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
@@ -85,7 +96,6 @@ class PosController extends Controller
         DB::beginTransaction();
         try {
             $kasirId  = auth()->id() ?? 3; // Fallback ke kasir ID 3 jika testing
-            $cabangId = auth()->user()->cabang_id ?? 1;
             $waktu    = Carbon::now();
 
             // 1. Generate Nomor Nota (Format: INV-YYYYMMDD-XXXX)
