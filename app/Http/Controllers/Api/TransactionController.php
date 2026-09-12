@@ -356,6 +356,33 @@ class TransactionController extends Controller
     }
 
     /**
+     * Data Transaksi untuk Cetak Struk (JSON) di Aplikasi Flutter
+     */
+    public function printReceipt(Request $request, int $trx_id)
+    {
+        try {
+            $transaction = Transaction::with([
+                'member',
+                'cashier',
+                'branch',
+                'details.variant.product',
+                'cashTempo',
+            ])->findOrFail($trx_id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data struk berhasil diambil',
+                'data' => $transaction
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data transaksi tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    /**
      * Mencari member berdasarkan nomor telepon
      */
     public function searchMember(Request $request)

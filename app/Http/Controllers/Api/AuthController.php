@@ -71,12 +71,20 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        // 1. Validasi Input
-        $request->validate([
+        // 1. Validasi Input Manual (Agar pasti mereturn JSON)
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'nama_lengkap' => 'required|string|max:255',
             // Password bersifat nullable (boleh kosong) sesuai deskripsi di UI
             'password'     => 'nullable|string|min:6',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
 
         // 2. Update Nama
         $user->nama_lengkap = $request->nama_lengkap;
@@ -95,7 +103,9 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
-            'data'    => $user
+            'data'    => [
+                'user' => $user
+            ]
         ], 200);
     }
 }
