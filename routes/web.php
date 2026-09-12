@@ -190,3 +190,14 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
     Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
 });
+Route::get('/buat-storage-link', function () {
+    $targetFolder = storage_path('app/public');
+    $linkFolder = $_SERVER['DOCUMENT_ROOT'] . '/storage';
+
+    try {
+        symlink($targetFolder, $linkFolder);
+        return 'Storage Link Berhasil Dibuat!';
+    } catch (\Exception $e) {
+        return 'Gagal: ' . $e->getMessage();
+    }
+});

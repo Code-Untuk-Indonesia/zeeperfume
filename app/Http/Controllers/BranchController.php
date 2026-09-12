@@ -39,6 +39,8 @@ class BranchController extends Controller
             'nama_cabang' => ['required', 'string', 'max:150'],
             'alamat' => ['nullable', 'string'],
             'no_telepon' => ['nullable', 'string', 'max:30'],
+            'jam_buka' => ['nullable', 'date_format:H:i,H:i:s'],
+            'jam_tutup' => ['nullable', 'date_format:H:i,H:i:s'],
         ]);
 
         $now = now();
@@ -62,6 +64,8 @@ class BranchController extends Controller
             'nama_cabang' => ['required', 'string', 'max:150'],
             'alamat' => ['nullable', 'string'],
             'no_telepon' => ['nullable', 'string', 'max:30'],
+            'jam_buka' => ['nullable', 'date_format:H:i,H:i:s'],
+            'jam_tutup' => ['nullable', 'date_format:H:i,H:i:s'],
         ]);
 
         DB::table('branches')

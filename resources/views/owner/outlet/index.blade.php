@@ -53,6 +53,7 @@
                     <tr>
                         <th class="px-6 py-4">Informasi Outlet</th>
                         <th class="px-6 py-4">Kontak &amp; Alamat</th>
+                        <th class="px-6 py-4">Jam Operasional</th>
                         <th class="px-6 py-4">Pegawai Aktif</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
@@ -76,6 +77,26 @@
                             <td class="px-6 py-4 {{ $isActive ? '' : 'opacity-60' }}">
                                 <p class="font-semibold text-gray-700">{{ $outlet->no_telepon ?: 'Nomor telepon belum diisi' }}</p>
                                 <p class="text-xs text-gray-500 max-w-[220px] truncate" title="{{ $outlet->alamat }}">{{ $outlet->alamat ?: 'Alamat belum diisi' }}</p>
+                            </td>
+                            <td class="px-6 py-4 {{ $isActive ? '' : 'opacity-60' }}">
+                                <div class="space-y-1">
+                                    <p class="flex items-center gap-2">
+                                        <span class="w-10 shrink-0 text-xs font-medium text-gray-600">Buka</span>
+                                        @if ($outlet->jam_buka)
+                                            <time class="font-semibold text-gray-800" datetime="{{ $outlet->jam_buka }}">{{ substr((string) $outlet->jam_buka, 0, 5) }}</time>
+                                        @else
+                                            <span class="text-gray-600">Belum diatur</span>
+                                        @endif
+                                    </p>
+                                    <p class="flex items-center gap-2">
+                                        <span class="w-10 shrink-0 text-xs font-medium text-gray-600">Tutup</span>
+                                        @if ($outlet->jam_tutup)
+                                            <time class="font-semibold text-gray-800" datetime="{{ $outlet->jam_tutup }}">{{ substr((string) $outlet->jam_tutup, 0, 5) }}</time>
+                                        @else
+                                            <span class="text-gray-600">Belum diatur</span>
+                                        @endif
+                                    </p>
+                                </div>
                             </td>
                             <td class="px-6 py-4 {{ $isActive ? '' : 'opacity-60' }}">
                                 <span class="font-bold text-gray-900">{{ number_format($outlet->users_count, 0, ',', '.') }}</span>
@@ -124,7 +145,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-6 py-10 text-center text-gray-500">Tidak ada data outlet yang ditemukan.</td></tr>
+                        <tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">Tidak ada data outlet yang ditemukan.</td></tr>
                     @endforelse
                 </tbody>
             </table>

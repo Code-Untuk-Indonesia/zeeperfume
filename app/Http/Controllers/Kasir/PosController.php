@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Support\BranchOperatingHours;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -21,10 +22,13 @@ class PosController extends Controller
     /**
      * Menampilkan halaman transaksi (POS) Kasir
      */
-    public function index()
+    public function index(BranchOperatingHours $operatingHours)
     {
         // Ambil ID Cabang dari Kasir yang sedang login (Fallback ke 1 jika null)
         $cabangId = auth()->user()->cabang_id ?? 1;
+
+        // Cek apakah toko buka atau tutup saat halaman dimuat
+        $closedMessage = $operatingHours->closedMessage($cabangId);
 
         // Ambil semua kategori untuk tombol filter
         $categories = Category::all();
@@ -38,14 +42,26 @@ class PosController extends Controller
             ->where('tipe_stok', 'ada_stok')
             ->get();
 
-        return view('kasir.pos.index', compact('categories', 'products'));
+        // Kirimkan $closedMessage ke View
+        return view('kasir.pos.index', compact('categories', 'products', 'closedMessage'));
     }
 
     /**
      * Memproses dan menyimpan transaksi ke Database
      */
-    public function store(Request $request)
+    public function store(Request $request, BranchOperatingHours $operatingHours)
     {
+        $cabangId = auth()->user()->cabang_id ?? 1;
+
+        // Proteksi Backend: Tetap cegah transaksi jika di-bypass
+        $closedMessage = $operatingHours->closedMessage($cabangId);
+        if ($closedMessage !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $closedMessage,
+            ], 403);
+        }
+
         $validated = $request->validate([
             'cart'          => 'required|array',
             'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
@@ -85,7 +101,6 @@ class PosController extends Controller
         DB::beginTransaction();
         try {
             $kasirId  = auth()->id() ?? 3; // Fallback ke kasir ID 3 jika testing
-            $cabangId = auth()->user()->cabang_id ?? 1;
             $waktu    = Carbon::now();
 
             // 1. Generate Nomor Nota (Format: INV-YYYYMMDD-XXXX)
@@ -117,7 +132,6 @@ class PosController extends Controller
                 'kembalian'        => $kembalian,
                 'metode_bayar'     => $metodeBayar,
                 'cabang_id'        => $cabangId,
-                // Status approval (default dari migration adalah 'none')
             ]);
 
             // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
@@ -196,14 +210,10 @@ class PosController extends Controller
 
             DB::commit();
 
-            // Kembalikan response sukses beserta ID transaksi untuk dicetak di halaman success
             return response()->json([
                 'success' => true,
                 'transaction_id' => $transaction->id,
                 'redirect_url' => url('kasir/pos/success?trx_id=' . $transaction->id),
-                // ==========================================
-                // BARIS INI YANG DITAMBAHKAN UNTUK MOBILE API
-                // ==========================================
                 'receipt_url' => route('kasir.pos.receipt', $transaction->id)
             ]);
         } catch (\Exception $e) {
@@ -233,7 +243,7 @@ class PosController extends Controller
             'member'  => [
                 'id'     => $member->id,
                 'name'   => $member->nama,
-                'points' => $member->poin ?? 0, // Pastikan kolom poin ada di tabel members
+                'points' => $member->poin ?? 0,
             ]
         ]);
     }
@@ -251,7 +261,6 @@ class PosController extends Controller
      */
     public function storeMember(Request $request)
     {
-        // 1. Validasi Input
         $request->validate([
             'name'  => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:members,no_telp',
@@ -259,22 +268,19 @@ class PosController extends Controller
             'phone.unique' => 'Nomor HP ini sudah terdaftar sebagai member.',
         ]);
 
-        // 2. Buat ID Member
         $lastMember = Member::latest('id')->first();
         $nextId = $lastMember ? $lastMember->id + 1 : 1;
         $kodeMember = 'MEM-' . date('Ymd') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
 
-        // 3. Simpan ke Database
         Member::create([
             'kode_member'       => $kodeMember,
             'nama'              => $request->name,
             'no_telp'           => $request->phone,
             'poin'              => 0,
-            'tanggal_bergabung' => Carbon::now()->toDateString(), // PERBAIKAN: Isi default tanggal bergabung
+            'tanggal_bergabung' => Carbon::now()->toDateString(),
             'status'            => 'aktif'
         ]);
 
-        // 4. Arahkan kembali ke halaman POS dengan pesan sukses
         return redirect()->route('kasir.pos')->with('success', 'Member baru berhasil didaftarkan!');
     }
 
@@ -283,19 +289,16 @@ class PosController extends Controller
         $kasirId = auth()->id() ?? 3;
         $today = Carbon::today();
 
-        // Query dasar: transaksi oleh kasir ini, pada hari ini
         $baseQuery = Transaction::with('member')
             ->where('kasir_id', $kasirId)
             ->whereDate('tanggal_waktu', $today);
 
-        // 1. Kalkulasi Quick Stats (Dihitung sebelum filter pencarian diterapkan)
         $totalPendapatan = (clone $baseQuery)->sum('total_belanja');
         $totalTransaksi = (clone $baseQuery)->count();
         $tunai = (clone $baseQuery)->where('metode_bayar', 'cash')->sum('total_belanja');
         $qrisTransfer = (clone $baseQuery)->whereIn('metode_bayar', ['qris', 'transfer'])->sum('total_belanja');
         $tempo = (clone $baseQuery)->whereIn('metode_bayar', ['tempo', 'cash_tempo'])->sum('total_belanja');
 
-        // 2. Terapkan Filter Pencarian & Dropdown untuk Tabel
         $query = clone $baseQuery;
 
         if ($request->filled('search')) {
@@ -312,7 +315,6 @@ class PosController extends Controller
             }
         }
 
-        // 3. Ambil data dengan Pagination
         $transactions = $query->orderBy('tanggal_waktu', 'desc')->paginate(10);
 
         return view('kasir.pos.history', compact(
@@ -326,9 +328,6 @@ class PosController extends Controller
         ));
     }
 
-    /**
-     * Mengambil detail satu transaksi milik kasir yang sedang login.
-     */
     public function detail(int $transactionId)
     {
         $kasirId = auth()->id() ?? 3;
@@ -387,19 +386,14 @@ class PosController extends Controller
         ]);
     }
 
-    /**
-     * Menampilkan halaman sukses setelah pembayaran
-     */
     public function success(Request $request)
     {
         $trxId = $request->query('trx_id');
 
-        // Jika tidak ada ID transaksi, kembalikan ke kasir
         if (!$trxId) {
             return redirect()->route('kasir.pos');
         }
 
-        // Ambil data transaksi beserta data member (jika ada)
         $kasirId = auth()->id() ?? 3;
         $transaction = Transaction::with([
             'member',
@@ -422,7 +416,6 @@ class PosController extends Controller
         try {
             $category = Category::create([
                 'nama_kategori' => $request->nama_kategori,
-                // tambahkan field lain jika ada di tabel categories (seperti 'deskripsi' dll)
             ]);
 
             return response()->json([
@@ -438,9 +431,6 @@ class PosController extends Controller
         }
     }
 
-    /**
-     * URL API TAMPILAN RESI WEBVIEW UNTUK MOBILE APP
-     */
     public function receipt($trx_id)
     {
         $transaction = Transaction::with([

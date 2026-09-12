@@ -15,6 +15,7 @@
         <p class="text-gray-500 text-sm mt-1">Stok yang ditambahkan akan masuk ke Gudang Pusat terlebih dahulu secara default.</p>
     </div>
 
+    <!-- PENTING: enctype="multipart/form-data" diperlukan agar file bisa diunggah -->
     <form action="{{ route('admin.stock.store') }}" method="POST" enctype="multipart/form-data" class="flex flex-col xl:flex-row gap-6">
         @csrf
 
@@ -72,24 +73,56 @@
                     </div>
                 </div>
 
-                <!-- Template 1 Varian -->
+                <!-- Template 1 Varian (Index 0) -->
                 <div class="border-2 border-gray-100 rounded-2xl p-5 bg-white relative">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+                        <!-- UPLOAD FOTO KEMASAN -->
+                        <div class="md:col-span-12" x-data="{ imagePreview: null }">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Foto Varian / Produk (Opsional)</label>
+                            <div class="flex items-center gap-4">
+                                <label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-[#CC9863] transition-all relative overflow-hidden group">
+                                    <template x-if="!imagePreview">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-6 h-6 text-gray-400 group-hover:text-[#CC9863] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                            <p class="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-wider">Pilih Foto</p>
+                                        </div>
+                                    </template>
+                                    <template x-if="imagePreview">
+                                        <div class="relative w-full h-full">
+                                            <img :src="imagePreview" class="w-full h-full object-cover">
+                                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <!-- Input name berbentuk array sesuai request->variant_image[0] -->
+                                    <input type="file" name="variant_image[0]" accept="image/png, image/jpeg, image/webp" class="hidden"
+                                        @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => imagePreview = e.target.result; reader.readAsDataURL(file); } else { imagePreview = null; }">
+                                </label>
+                                <div class="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                    <p>Format yang didukung: <span class="font-bold">JPG, PNG, WEBP</span>.</p>
+                                    <p>Maksimal ukuran file: <span class="font-bold">2MB</span>.</p>
+                                    <p>Rekomendasi rasio: <span class="font-bold">1:1 (Kotak)</span>.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Ukuran Botol <span class="text-red-500">*</span></label>
-                            <input type="text" name="variant_name[]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="Contoh: 30ml">
+                            <input type="text" name="variant_name[0]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="Contoh: 30ml">
                         </div>
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 mb-1">SKU Varian</label>
-                            <input type="text" name="variant_sku[]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="PRFM-30">
+                            <input type="text" name="variant_sku[0]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="PRFM-30">
                         </div>
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Harga Modal (Rp)</label>
-                            <input type="number" name="variant_cost[]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="0">
+                            <input type="number" name="variant_cost[0]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="0">
                         </div>
                         <div class="md:col-span-6">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Harga Jual (Rp) <span class="text-red-500">*</span></label>
-                            <input type="number" name="variant_price[]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="0">
+                            <input type="number" name="variant_price[0]" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 font-bold focus:outline-none focus:ring-2 focus:ring-[#CC9863]/30" placeholder="0">
                         </div>
 
                         <!-- STOK AREA -->
@@ -158,6 +191,36 @@
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+                        <!-- UPLOAD FOTO REFILL -->
+                        <div class="md:col-span-12" x-data="{ imagePreview: null }">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Foto Biang / Produk (Opsional)</label>
+                            <div class="flex items-center gap-4">
+                                <label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 cursor-pointer hover:bg-blue-100 hover:border-blue-500 transition-all relative overflow-hidden group">
+                                    <template x-if="!imagePreview">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-6 h-6 text-blue-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                            <p class="text-[9px] text-blue-500 font-bold mt-1 uppercase tracking-wider">Pilih Foto</p>
+                                        </div>
+                                    </template>
+                                    <template x-if="imagePreview">
+                                        <div class="relative w-full h-full">
+                                            <img :src="imagePreview" class="w-full h-full object-cover">
+                                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <input type="file" name="refill_image" accept="image/png, image/jpeg, image/webp" class="hidden"
+                                        @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => imagePreview = e.target.result; reader.readAsDataURL(file); } else { imagePreview = null; }">
+                                </label>
+                                <div class="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                    <p>Format yang didukung: <span class="font-bold">JPG, PNG, WEBP</span>.</p>
+                                    <p>Maksimal ukuran file: <span class="font-bold">2MB</span>.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="md:col-span-4">
                             <label class="block text-xs font-bold text-gray-700 mb-1">SKU Biang</label>
                             <input type="text" name="refill_sku" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/30" placeholder="BGN-001">

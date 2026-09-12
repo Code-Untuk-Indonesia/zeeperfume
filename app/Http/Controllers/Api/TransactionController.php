@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Support\BranchOperatingHours;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +19,19 @@ class TransactionController extends Controller
     /**
      * Memproses dan menyimpan transaksi ke Database (Checkout)
      */
-    public function store(Request $request)
+    public function store(Request $request, BranchOperatingHours $operatingHours)
     {
+        $user = $request->user();
+        $cabangId = $user ? $user->cabang_id : 1;
+        $closedMessage = $operatingHours->closedMessage($cabangId);
+
+        if ($closedMessage !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $closedMessage,
+            ], 403);
+        }
+
         $validated = $request->validate([
             'cart'          => 'required|array',
             'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
@@ -55,9 +67,7 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
-            $user     = $request->user();
             $kasirId  = $user ? $user->id : 3;
-            $cabangId = $user ? $user->cabang_id : 1;
             $waktu    = Carbon::now();
 
             // 1. Generate Nomor Nota

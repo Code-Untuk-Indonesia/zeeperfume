@@ -11,7 +11,13 @@ class Branch extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['nama_cabang', 'alamat', 'no_telepon'];
+    protected $fillable = [
+        'nama_cabang',
+        'alamat',
+        'no_telepon',
+        'jam_buka',
+        'jam_tutup',
+    ];
 
     public function users(): HasMany
     {

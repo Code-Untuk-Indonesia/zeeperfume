@@ -34,6 +34,20 @@
                 <label for="no_telepon" class="block text-sm font-semibold text-gray-700 mb-1.5">Nomor Telepon / WhatsApp</label>
                 <input id="no_telepon" type="text" name="no_telepon" value="{{ old('no_telepon') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#CC9863]/50 focus:border-[#CC9863] transition" placeholder="Contoh: 081234567890">
             </div>
+            <fieldset class="space-y-2">
+                <legend class="text-sm font-semibold text-gray-700">Jam Operasional</legend>
+                <p id="jam-operasional-hint" class="text-sm text-gray-600">Masukkan jam buka dan tutup outlet menurut waktu setempat. Boleh dikosongkan jika belum ditentukan.</p>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="jam_buka" class="block text-sm font-semibold text-gray-700 mb-1.5">Jam buka</label>
+                        <input id="jam_buka" type="time" name="jam_buka" value="{{ old('jam_buka') }}" aria-describedby="jam-operasional-hint" class="w-full min-h-12 px-4 py-3 border border-gray-500 rounded-xl bg-gray-50 text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-[#CC9863] transition">
+                    </div>
+                    <div>
+                        <label for="jam_tutup" class="block text-sm font-semibold text-gray-700 mb-1.5">Jam tutup</label>
+                        <input id="jam_tutup" type="time" name="jam_tutup" value="{{ old('jam_tutup') }}" aria-describedby="jam-operasional-hint" class="w-full min-h-12 px-4 py-3 border border-gray-500 rounded-xl bg-gray-50 text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-[#CC9863] transition">
+                    </div>
+                </div>
+            </fieldset>
             <div>
                 <label for="alamat" class="block text-sm font-semibold text-gray-700 mb-1.5">Alamat Lengkap</label>
                 <textarea id="alamat" name="alamat" rows="4" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#CC9863]/50 focus:border-[#CC9863] transition" placeholder="Tuliskan alamat lengkap cabang...">{{ old('alamat') }}</textarea>
