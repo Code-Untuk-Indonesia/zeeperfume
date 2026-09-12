@@ -101,6 +101,12 @@ class StockController extends Controller
             'product_type' => 'required|in:kemasan,refill',
             'category_id'  => 'required|exists:categories,id',
             'status'       => 'required|in:ada_stok,draft',
+
+            // Validasi gambar kemasan
+            'variant_image.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+
+            // Validasi gambar refill
+            'refill_image'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -118,18 +124,26 @@ class StockController extends Controller
             // ================= MODE 1: PRODUK KEMASAN / BOTOL =================
             if ($request->product_type === 'kemasan') {
                 $request->validate([
-                    'variant_name'   => 'required|array',
-                    'variant_price'  => 'required|array',
+                    'variant_name'  => 'required|array',
+                    'variant_price' => 'required|array',
                 ]);
 
                 foreach ($request->variant_name as $index => $varName) {
+
+                    // Proses Upload Gambar Kemasan
+                    $imagePath = null;
+                    if ($request->hasFile("variant_image.$index")) {
+                        $imagePath = $request->file("variant_image.$index")->store('variants', 'public');
+                    }
+
                     $variant = \App\Models\ProductVariant::create([
                         'produk_id'   => $product->id,
                         'nama_varian' => $varName,
                         'sku'         => $request->variant_sku[$index] ?? null,
-                        'harga_beli'  => $request->variant_cost[$index] ?? 0, // PERBAIKAN: Gunakan harga_beli
+                        'harga_beli'  => $request->variant_cost[$index] ?? 0,
                         'harga_jual'  => $request->variant_price[$index] ?? 0,
                         'satuan'      => 'pcs',
+                        'image'       => $imagePath, // Simpan path gambar
                     ]);
 
                     // Simpan Stok Pusat (Wajib)
@@ -204,13 +218,20 @@ class StockController extends Controller
             if ($request->product_type === 'refill') {
                 $request->validate(['refill_price_per_ml' => 'required|numeric|min:0']);
 
+                // Proses Upload Gambar Refill
+                $imagePathRefill = null;
+                if ($request->hasFile('refill_image')) {
+                    $imagePathRefill = $request->file('refill_image')->store('variants', 'public');
+                }
+
                 $variant = \App\Models\ProductVariant::create([
                     'produk_id'   => $product->id,
                     'nama_varian' => $request->name . ' (Biang)',
                     'sku'         => $request->refill_sku ?? null,
-                    'harga_beli'  => $request->refill_cost_per_ml ?? 0, // PERBAIKAN: Gunakan harga_beli
+                    'harga_beli'  => $request->refill_cost_per_ml ?? 0,
                     'harga_jual'  => $request->refill_price_per_ml,
                     'satuan'      => 'ml',
+                    'image'       => $imagePathRefill, // Simpan path gambar
                 ]);
 
                 // Simpan Stok Pusat Biang
@@ -253,7 +274,7 @@ class StockController extends Controller
                                     'varian_id' => $variant->id,
                                     'user_id' => $userId,
                                     'jenis_riwayat' => 'keluar',
-                                    'qty' => $stokCabang,
+                                    'qty' => -$stokCabang,
                                     'keterangan' => "Transfer biang ke Cabang ID: $branchId",
                                     'waktu' => now()
                                 ]);

@@ -1170,4 +1170,53 @@
                 });
         }
     </script>
+    {{-- ========================================================= --}}
+    {{-- TOKO TUTUP MODAL (BLOCKER) --}}
+    {{-- ========================================================= --}}
+    @if(isset($closedMessage) && $closedMessage)
+        <div id="storeClosedModal" class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" style="pointer-events: auto;">
+            <div class="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden text-center p-8 animate-[scaleIn_0.3s_ease-out]">
+
+                <!-- Ikon Gembok / Tutup -->
+                <div class="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border-[6px] border-red-100">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+
+                <h2 class="text-2xl font-black text-gray-900 mb-2">Outlet Masih Tutup!</h2>
+
+                <!-- Menampilkan Pesan Dinamis dari BranchOperatingHours -->
+                <p class="text-gray-500 font-medium mb-8 text-sm leading-relaxed">
+                    {{ $closedMessage }}<br>
+                    Silakan buka shift kasir atau ubah jam operasional agar Anda dapat melakukan transaksi.
+                </p>
+
+                <div class="space-y-3">
+                    <!-- Tombol Kembali ke Riwayat Transaksi -->
+                    <a href="{{ route('kasir.transaction.index') }}" class="block w-full py-3.5 bg-[#1C1D21] text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-md">
+                        Lihat Riwayat Transaksi
+                    </a>
+
+                    <!-- Tombol Refresh (Jika owner baru saja membuka toko) -->
+                    <button onclick="window.location.reload()" class="block w-full py-3.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-2xl font-bold hover:bg-gray-100 transition-colors">
+                        Refresh Halaman
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Script Otomatis Mendisable Semua Input di Background agar tidak bisa diakali -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                document.querySelectorAll('button, input, select').forEach(el => {
+                    // Hindari mendisable tombol di dalam modal itu sendiri
+                    if(!el.closest('#storeClosedModal')) {
+                        el.disabled = true;
+                    }
+                });
+            });
+        </script>
+    @endif
 @endsection

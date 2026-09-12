@@ -17,13 +17,7 @@
     {{-- Product Image / Icon --}}
     <div
         class="relative mb-4 flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-2xl sm:h-40 {{ $isRefill ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-500' : 'bg-gradient-to-br from-orange-50 to-orange-100/50 text-orange-500' }}">
-        <svg class="h-12 w-12 transform drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
-            </path>
-        </svg>
-
+        <img src="{{ asset('storage/' . $variant->image) }}" alt="Foto Produk">
         <div
             class="absolute right-2 top-2 rounded-lg bg-white/80 px-2 py-1 text-[10px] font-extrabold uppercase text-gray-600 shadow-sm backdrop-blur-sm">
             {{ $product->category->nama_kategori ?? 'Umum' }}
