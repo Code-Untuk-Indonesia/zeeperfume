@@ -130,10 +130,13 @@ class StockController extends Controller
 
                 foreach ($request->variant_name as $index => $varName) {
 
-                    // Proses Upload Gambar Kemasan
+                    // Proses Upload Gambar Kemasan menggunakan move public_path
                     $imagePath = null;
                     if ($request->hasFile("variant_image.$index")) {
-                        $imagePath = $request->file("variant_image.$index")->store('variants', 'public');
+                        $image = $request->file("variant_image.$index");
+                        $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                        $image->move(public_path('uploads/variants'), $imageName);
+                        $imagePath = 'uploads/variants/' . $imageName;
                     }
 
                     $variant = \App\Models\ProductVariant::create([
@@ -218,10 +221,13 @@ class StockController extends Controller
             if ($request->product_type === 'refill') {
                 $request->validate(['refill_price_per_ml' => 'required|numeric|min:0']);
 
-                // Proses Upload Gambar Refill
+                // Proses Upload Gambar Refill menggunakan move public_path
                 $imagePathRefill = null;
                 if ($request->hasFile('refill_image')) {
-                    $imagePathRefill = $request->file('refill_image')->store('variants', 'public');
+                    $image = $request->file('refill_image');
+                    $imageName = time() . '_refill_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('uploads/variants'), $imageName);
+                    $imagePathRefill = 'uploads/variants/' . $imageName;
                 }
 
                 $variant = \App\Models\ProductVariant::create([
@@ -339,6 +345,12 @@ class StockController extends Controller
             'name'        => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'status'      => 'required|in:ada_stok,draft',
+
+            // Validasi gambar kemasan
+            'variant_image.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+
+            // Validasi gambar refill
+            'refill_image'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -359,12 +371,23 @@ class StockController extends Controller
                 foreach ($request->variant_id as $index => $varId) {
                     $variant = \App\Models\ProductVariant::find($varId);
                     if ($variant) {
-                        $variant->update([
+
+                        $updateData = [
                             'nama_varian' => $request->variant_name[$index],
                             'sku'         => $request->variant_sku[$index],
-                            'harga_beli'  => $request->variant_cost[$index], // PERBAIKAN: Gunakan harga_beli
+                            'harga_beli'  => $request->variant_cost[$index],
                             'harga_jual'  => $request->variant_price[$index],
-                        ]);
+                        ];
+
+                        // Proses Update Gambar Kemasan jika ada file baru diunggah
+                        if ($request->hasFile("variant_image.$index")) {
+                            $image = $request->file("variant_image.$index");
+                            $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                            $image->move(public_path('uploads/variants'), $imageName);
+                            $updateData['image'] = 'uploads/variants/' . $imageName;
+                        }
+
+                        $variant->update($updateData);
 
                         // --- UPDATE STOK PUSAT ---
                         $stokPusatBaru = $request->stock_pusat[$index] ?? 0;
@@ -461,11 +484,22 @@ class StockController extends Controller
             if ($request->product_type === 'refill' && $request->has('refill_variant_id')) {
                 $variant = \App\Models\ProductVariant::find($request->refill_variant_id);
                 if ($variant) {
-                    $variant->update([
+
+                    $updateData = [
                         'sku'         => $request->refill_sku,
-                        'harga_beli'  => $request->refill_cost_per_ml, // PERBAIKAN: Gunakan harga_beli
+                        'harga_beli'  => $request->refill_cost_per_ml,
                         'harga_jual'  => $request->refill_price_per_ml,
-                    ]);
+                    ];
+
+                    // Proses Update Gambar Refill menggunakan move public_path
+                    if ($request->hasFile('refill_image')) {
+                        $image = $request->file('refill_image');
+                        $imageName = time() . '_refill_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                        $image->move(public_path('uploads/variants'), $imageName);
+                        $updateData['image'] = 'uploads/variants/' . $imageName;
+                    }
+
+                    $variant->update($updateData);
 
                     // --- UPDATE STOK BIANG PUSAT ---
                     $stokPusatBaru = $request->refill_stock_pusat ?? 0;
@@ -538,9 +572,19 @@ class StockController extends Controller
                                         'waktu'         => now(),
                                     ]);
                                 }
-
-                                \App\Models\BranchStock::create(['varian_id' => $variant->id, 'cabang_id' => $branchId, 'stok' => $stokCabang]);
+                            } elseif ($diffCabang < 0) {
+                                \App\Models\StockHistory::create([
+                                    'cabang_id'     => $branchId,
+                                    'varian_id'     => $variant->id,
+                                    'user_id'       => $userId,
+                                    'jenis_riwayat' => 'keluar',
+                                    'qty'           => $diffCabang,
+                                    'keterangan'    => 'Penyesuaian pengurangan stok',
+                                    'waktu'         => now(),
+                                ]);
                             }
+
+                            $cabangRecord->update(['stok' => $stokCabangBaru]);
                         }
                     }
                 }

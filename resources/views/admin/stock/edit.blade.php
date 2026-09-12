@@ -15,6 +15,7 @@
         <p class="text-gray-500 text-sm mt-1">Perbarui informasi induk parfum, sesuaikan harga, atau perbarui stok manual.</p>
     </div>
 
+    <!-- PENTING: enctype="multipart/form-data" diperlukan agar file bisa diunggah -->
     <form action="{{ route('admin.stock.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-col xl:flex-row gap-6">
         @csrf
         <!-- Karena tidak boleh ganti tipe produk setelah dibuat, kita kunci valuenya -->
@@ -61,6 +62,44 @@
                         <input type="hidden" name="variant_id[{{ $index }}]" value="{{ $variant->id }}">
 
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+                            <!-- UPLOAD FOTO KEMASAN -->
+                            <!-- Jika ada image di DB, kirim url-nya sebagai state awal AlpineJS -->
+                            <div class="md:col-span-12" x-data="{ imagePreview: '{{ !empty(trim($variant->image)) ? asset(trim($variant->image)) : '' }}' }">
+                                <label class="block text-xs font-bold text-gray-700 mb-2">Foto Varian / Produk (Opsional)</label>
+                                <div class="flex items-center gap-4">
+                                    <label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-[#CC9863] transition-all relative overflow-hidden group">
+
+                                        <!-- Template jika foto Kosong -->
+                                        <template x-if="!imagePreview">
+                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <svg class="w-6 h-6 text-gray-400 group-hover:text-[#CC9863] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                                <p class="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-wider">Pilih Foto</p>
+                                            </div>
+                                        </template>
+
+                                        <!-- Template jika foto Ada (Dari DB / Baru Pilih) -->
+                                        <template x-if="imagePreview">
+                                            <div class="relative w-full h-full">
+                                                <img :src="imagePreview" class="w-full h-full object-cover">
+                                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <span class="text-white text-[9px] font-bold uppercase tracking-wider">Ubah Foto</span>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Input file upload -->
+                                        <input type="file" name="variant_image[{{ $index }}]" accept="image/png, image/jpeg, image/webp" class="hidden"
+                                            @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => imagePreview = e.target.result; reader.readAsDataURL(file); }">
+                                    </label>
+                                    <div class="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                        <p>Format yang didukung: <span class="font-bold">JPG, PNG, WEBP</span>.</p>
+                                        <p>Maksimal ukuran file: <span class="font-bold">2MB</span>.</p>
+                                        <p>Biarkan kosong jika tidak ingin mengubah foto lama.</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="md:col-span-6">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Ukuran / Nama Varian <span class="text-red-500">*</span></label>
                                 <input type="text" name="variant_name[{{ $index }}]" value="{{ $variant->nama_varian }}" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white font-bold focus:outline-none focus:ring-1 focus:ring-[#CC9863]" required>
@@ -82,7 +121,7 @@
                             <div class="md:col-span-12 border-t border-gray-200 pt-3 mt-1">
                                 <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Update Stok Tersedia (Pcs)</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    
+
                                     <!-- Ambil stok pusat -->
                                     @php $stokPusat = $variant->branchStocks->where('cabang_id', 1)->first()->stok ?? 0; @endphp
                                     <div class="flex flex-col gap-1.5 p-2.5 bg-orange-50 rounded-xl border border-orange-200">
@@ -123,7 +162,7 @@
             @php $refillVariant = $product->variants->first(); @endphp
             <div class="bg-white p-6 rounded-3xl border-2 border-blue-100 bg-blue-50/10 shadow-sm transition-all duration-300">
                 <input type="hidden" name="refill_variant_id" value="{{ $refillVariant->id }}">
-                
+
                 <div class="mb-6 border-b border-blue-100 pb-4 flex items-start gap-3">
                     <div class="bg-blue-100 text-blue-600 p-2.5 rounded-xl mt-1 shadow-inner">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -136,6 +175,37 @@
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+                        <!-- UPLOAD FOTO REFILL -->
+                        <div class="md:col-span-12" x-data="{ imagePreview: '{{ !empty(trim($refillVariant->image)) ? asset(trim($refillVariant->image)) : '' }}' }">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Foto Biang / Produk (Opsional)</label>
+                            <div class="flex items-center gap-4">
+                                <label class="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 cursor-pointer hover:bg-blue-100 hover:border-blue-500 transition-all relative overflow-hidden group">
+                                    <template x-if="!imagePreview">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-6 h-6 text-blue-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                            <p class="text-[9px] text-blue-500 font-bold mt-1 uppercase tracking-wider">Pilih Foto</p>
+                                        </div>
+                                    </template>
+                                    <template x-if="imagePreview">
+                                        <div class="relative w-full h-full">
+                                            <img :src="imagePreview" class="w-full h-full object-cover">
+                                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span class="text-white text-[9px] font-bold uppercase tracking-wider">Ubah Foto</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <input type="file" name="refill_image" accept="image/png, image/jpeg, image/webp" class="hidden"
+                                        @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => imagePreview = e.target.result; reader.readAsDataURL(file); }">
+                                </label>
+                                <div class="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                    <p>Format yang didukung: <span class="font-bold">JPG, PNG, WEBP</span>.</p>
+                                    <p>Maksimal ukuran file: <span class="font-bold">2MB</span>.</p>
+                                    <p>Biarkan kosong jika tidak ingin mengubah foto lama.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="md:col-span-4">
                             <label class="block text-xs font-bold text-gray-700 mb-1">SKU Biang</label>
                             <input type="text" name="refill_sku" value="{{ $refillVariant->sku }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/30">
@@ -153,7 +223,7 @@
                     <!-- STOK AREA REFILL -->
                     <div class="mt-2 pt-4 border-t border-dashed border-gray-200">
                         @php $refillPusat = $refillVariant->branchStocks->where('cabang_id', 1)->first()->stok ?? 0; @endphp
-                        
+
                         <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4">
                             <div class="flex-1">
                                 <label class="block text-xs font-extrabold text-blue-900 uppercase tracking-wide">Stok Biang Pusat (ml)</label>

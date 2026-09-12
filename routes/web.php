@@ -190,14 +190,22 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
     Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
 });
-Route::get('/buat-storage-link', function () {
+Route::get('/perbaiki-storage', function () {
+    // Target: Tempat foto aslinya berada (storage/app/public)
     $targetFolder = storage_path('app/public');
-    $linkFolder = $_SERVER['DOCUMENT_ROOT'] . '/storage';
+
+    // Link: Tempat foto harusnya dipanggil (public/storage)
+    $linkFolder = public_path('storage');
+
+    // Jika symlink lama sudah ada tapi rusak, kita hapus dulu
+    if (file_exists($linkFolder) || is_link($linkFolder)) {
+        @unlink($linkFolder);
+    }
 
     try {
         symlink($targetFolder, $linkFolder);
-        return 'Storage Link Berhasil Dibuat!';
+        return 'SUKSES! Symlink berhasil dibuat menghubungkan: <br>' . $targetFolder . ' <br> <b>KE</b> <br> ' . $linkFolder;
     } catch (\Exception $e) {
-        return 'Gagal: ' . $e->getMessage();
+        return 'GAGAL: ' . $e->getMessage();
     }
 });

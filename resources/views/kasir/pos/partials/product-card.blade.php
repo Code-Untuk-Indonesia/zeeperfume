@@ -1,6 +1,7 @@
 @php
     $variantId = $variant->varian_id ?? $variant->id;
     $variantName = addslashes($variant->nama_varian);
+    $imageUrl = !empty(trim($variant->image)) ? asset('storage/app/public/' . trim($variant->image)) : '';
 @endphp
 
 <div class="product-card {{ $isOutOfStock ? 'pointer-events-none cursor-not-allowed opacity-60 grayscale-[0.2]' : 'cursor-pointer hover:-translate-y-1 hover:border-[#CC9863]/30 hover:shadow-xl hover:shadow-[#CC9863]/10' }} group flex h-full flex-col rounded-3xl border border-gray-100 bg-white p-4 shadow-sm transition-all"
@@ -11,15 +12,15 @@
     role="button"
     aria-disabled="{{ $isOutOfStock ? 'true' : 'false' }}"
     @if (!$isOutOfStock)
-        onclick="@if ($isRefill) openRefillModal({variantId: '{{ $variantId }}', name: '{{ $variantName }}', mlPrice: {{ $price }}, stockMl: {{ $stock }}}) @else addPcsToCart({variantId: '{{ $variantId }}', name: '{{ $variantName }}', pcsPrice: {{ $price }}, stockPcs: {{ $stock }}}) @endif"
+        onclick="@if ($isRefill) openRefillModal({variantId: '{{ $variantId }}', name: '{{ $variantName }}', mlPrice: {{ $price }}, stockMl: {{ $stock }}, image: '{{ $imageUrl }}'}) @else addPcsToCart({variantId: '{{ $variantId }}', name: '{{ $variantName }}', pcsPrice: {{ $price }}, stockPcs: {{ $stock }}, image: '{{ $imageUrl }}'}) @endif"
     @endif>
 
     {{-- Product Image / Icon --}}
     <div class="relative mb-4 flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-2xl sm:h-40 {{ $isRefill ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-500' : 'bg-gradient-to-br from-orange-50 to-orange-100/50 text-orange-500' }}">
 
-        <!-- CEK APAKAH FOTO ADA ATAU TIDAK -->
-        @if(!empty($variant->image))
-            <img src="{{ asset('storage/' . $variant->image) }}" alt="{{ $variant->nama_varian }}" class="h-full w-full object-cover" loading="lazy">
+        <!-- CEK APAKAH FOTO ADA ATAU TIDAK (Menggunakan trim agar anti-gagal) -->
+        @if(!empty(trim($variant->image)))
+            <img src="{{ asset( trim($variant->image)) }}" alt="{{ $variant->nama_varian }}" class="h-full w-full object-cover" loading="lazy">
         @else
             <!-- Icon Default Jika Tidak Ada Foto -->
             @if ($isRefill)
@@ -41,7 +42,6 @@
         </div>
 
         @if ($isOutOfStock)
-            <!-- Overlay Blur Hitam/Putih tipis agar tulisan Stok Habis terbaca jelas -->
             <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
             <span class="absolute inset-x-3 bottom-3 rounded-lg bg-gray-900/80 px-2 py-1.5 text-center text-[10px] font-extrabold uppercase tracking-wide text-white shadow-sm">
                 Stok Habis

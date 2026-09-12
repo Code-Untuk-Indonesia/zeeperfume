@@ -84,7 +84,8 @@
                     @endforeach
 
                     @if ($outOfStockCards->isNotEmpty())
-                        <div id="outOfStockHeading" class="out-of-stock-heading col-span-full mt-2 border-t border-dashed border-gray-200 pt-4 text-xs font-extrabold uppercase tracking-wider text-gray-400">
+                        <div id="outOfStockHeading"
+                            class="out-of-stock-heading col-span-full mt-2 border-t border-dashed border-gray-200 pt-4 text-xs font-extrabold uppercase tracking-wider text-gray-400">
                             Stok Habis
                         </div>
                         @foreach ($outOfStockCards as $card)
@@ -267,11 +268,29 @@
         class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
         <div
             class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
+
             <div class="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
-                <div>
-                    <p class="text-[10px] uppercase font-extrabold text-blue-500 tracking-wider mb-1">Input Refill (ml)</p>
-                    <h3 id="refillProductName" class="text-lg font-extrabold text-gray-900 leading-tight">-</h3>
-                    <p id="refillPriceText" class="text-sm font-semibold text-gray-500 mt-1">-</p>
+                <div class="flex gap-3">
+                    <!-- Thumbnail di Dalam Modal -->
+                    <div id="refillProductImageWrapper"
+                        class="w-12 h-12 rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden shrink-0 hidden">
+                        <img id="refillProductImage" src="" class="w-full h-full object-cover" alt="Thumb">
+                    </div>
+                    <div id="refillProductIcon"
+                        class="w-12 h-12 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center shrink-0 hidden">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase font-extrabold text-blue-500 tracking-wider mb-0.5">Input Refill
+                            (ml)</p>
+                        <h3 id="refillProductName"
+                            class="text-sm font-extrabold text-gray-900 leading-tight line-clamp-1">-</h3>
+                        <p id="refillPriceText" class="text-[11px] font-semibold text-gray-500 mt-0.5">-</p>
+                    </div>
                 </div>
                 <button type="button" onclick="closeRefillModal()"
                     class="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-500 font-bold hover:bg-red-50 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors">×</button>
@@ -378,23 +397,28 @@
                         </div>
                     </div>
 
-                    <div id="tempo-input-area" class="hidden space-y-4 rounded-2xl border border-red-100 bg-red-50/60 p-4">
+                    <div id="tempo-input-area"
+                        class="hidden space-y-4 rounded-2xl border border-red-100 bg-red-50/60 p-4">
                         <div>
-                            <label for="tempo-paid-amount" class="block text-sm font-extrabold text-gray-900 mb-2">Pembayaran Awal (Rp)</label>
+                            <label for="tempo-paid-amount"
+                                class="block text-sm font-extrabold text-gray-900 mb-2">Pembayaran Awal (Rp)</label>
                             <input type="number" id="tempo-paid-amount" min="0" step="1000"
                                 class="w-full border-2 border-red-100 rounded-xl p-4 text-2xl font-black focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all placeholder-gray-300"
                                 placeholder="0" oninput="updateTempoBalance()">
-                            <p id="tempo-balance-hint" class="mt-2 text-xs font-semibold text-red-600">Sisa piutang akan dihitung dari total tagihan.</p>
+                            <p id="tempo-balance-hint" class="mt-2 text-xs font-semibold text-red-600">Sisa piutang akan
+                                dihitung dari total tagihan.</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <label for="tempo-due-date" class="block text-sm font-extrabold text-gray-900 mb-2">Tanggal Jatuh Tempo</label>
+                                <label for="tempo-due-date"
+                                    class="block text-sm font-extrabold text-gray-900 mb-2">Tanggal Jatuh Tempo</label>
                                 <input type="date" id="tempo-due-date"
                                     class="w-full border-2 border-red-100 rounded-xl p-3.5 font-bold focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all">
                             </div>
                             <div>
-                                <label for="tempo-note" class="block text-sm font-extrabold text-gray-900 mb-2">Catatan Penagihan</label>
+                                <label for="tempo-note" class="block text-sm font-extrabold text-gray-900 mb-2">Catatan
+                                    Penagihan</label>
                                 <textarea id="tempo-note" rows="1" maxlength="1000"
                                     class="w-full resize-none border-2 border-red-100 rounded-xl p-3.5 font-medium focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-white text-gray-900 transition-all placeholder-gray-400"
                                     placeholder="Contoh: ditagih saat pengambilan"></textarea>
@@ -403,7 +427,8 @@
                     </div>
 
                     <div class="flex justify-between items-center pt-5 border-t border-dashed border-gray-200">
-                        <span id="payment-result-label" class="font-extrabold text-gray-500 uppercase text-xs tracking-wider">Kembalian</span>
+                        <span id="payment-result-label"
+                            class="font-extrabold text-gray-500 uppercase text-xs tracking-wider">Kembalian</span>
                         <span id="modal-change-val"
                             class="text-2xl font-black text-green-500 bg-green-50 px-3 py-1 rounded-lg border border-green-100">Rp
                             0</span>
@@ -499,7 +524,8 @@
 
             const outOfStockHeading = document.getElementById('outOfStockHeading');
             if (outOfStockHeading) {
-                const visibleOutOfStock = Array.from(document.querySelectorAll('.product-card[data-stock-status="out-of-stock"]'))
+                const visibleOutOfStock = Array.from(document.querySelectorAll(
+                        '.product-card[data-stock-status="out-of-stock"]'))
                     .some(card => !card.classList.contains('hidden'));
                 outOfStockHeading.classList.toggle('hidden', !visibleOutOfStock);
             }
@@ -719,6 +745,7 @@
                     cartId,
                     variantId: product.variantId,
                     name: product.name,
+                    image: product.image || null, // Tangkap image url
                     type: 'pcs',
                     unit: 'pcs',
                     price: product.pcsPrice,
@@ -737,10 +764,28 @@
         function openRefillModal(product) {
             if (product.stockMl <= 0) return AppFeedback.warning('Stok biang refill habis.');
             selectedRefillProduct = product;
+
+            // Set data ke dalam modal
             document.getElementById('refillProductName').innerText = product.name;
             document.getElementById('refillPriceText').innerText =
                 `${formatRupiah(product.mlPrice)} / ml • Stok Sisa: ${product.stockMl} ml`;
             document.getElementById('refillMl').value = 10;
+
+            // Set gambar ke modal
+            const imgEl = document.getElementById('refillProductImage');
+            const wrapEl = document.getElementById('refillProductImageWrapper');
+            const iconEl = document.getElementById('refillProductIcon');
+
+            if (product.image && product.image.trim() !== '') {
+                imgEl.src = product.image;
+                wrapEl.classList.remove('hidden');
+                iconEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                wrapEl.classList.add('hidden');
+                iconEl.classList.remove('hidden');
+            }
+
             calculateRefill();
 
             const modal = document.getElementById('refillModal');
@@ -789,6 +834,7 @@
                 cartId,
                 variantId: selectedRefillProduct.variantId,
                 name: selectedRefillProduct.name,
+                image: selectedRefillProduct.image || null, // Tangkap image url
                 type: 'refill',
                 unit: 'ml',
                 ml: ml,
@@ -851,6 +897,20 @@
                     let discToggleClass = item.discountType === 'percent' ? 'bg-[#CC9863] text-white' :
                         'bg-orange-100 text-orange-700';
 
+                    // Siapkan Thumbnail Image / Icon
+                    let thumbnailHtml = '';
+                    if (item.image && item.image.trim() !== '') {
+                        thumbnailHtml = `<img src="${item.image}" class="w-full h-full object-cover">`;
+                    } else {
+                        if (item.type === 'refill') {
+                            thumbnailHtml =
+                                `<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>`;
+                        } else {
+                            thumbnailHtml =
+                                `<svg class="w-5 h-5 text-[#CC9863]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>`;
+                        }
+                    }
+
                     if (item.type === 'pcs') {
                         itemTotal = (item.price * item.qty) - (item.itemDiscount || 0);
                         totalItems += item.qty;
@@ -858,6 +918,9 @@
                         <div class="py-4 border-b border-gray-100/70 group">
                             <div class="flex flex-col gap-2">
                                 <div class="flex justify-between gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200/50">
+                                        ${thumbnailHtml}
+                                    </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-[#CC9863] text-white tracking-wide">PCS</span>
@@ -879,7 +942,7 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
-                                <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded-lg border border-orange-100/50 mt-1">
+                                <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded-lg border border-orange-100/50 mt-1 ml-13">
                                     <label class="text-[10px] font-bold text-orange-700 ml-1">Diskon Item</label>
                                     <div class="flex items-center">
                                         <button onclick="toggleItemDiscountType('${item.cartId}')" class="px-2.5 py-1.5 text-[10px] font-black rounded-l border border-r-0 border-orange-200 transition-colors ${discToggleClass}">
@@ -897,6 +960,9 @@
                         <div class="py-4 border-b border-gray-100/70 group">
                             <div class="flex flex-col gap-2">
                                 <div class="flex justify-between gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 overflow-hidden border border-blue-100/50">
+                                        ${thumbnailHtml}
+                                    </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-blue-500 text-white tracking-wide">REFILL</span>
@@ -914,7 +980,7 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
-                                <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded-lg border border-orange-100/50 mt-1">
+                                <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded-lg border border-orange-100/50 mt-1 ml-13">
                                     <label class="text-[10px] font-bold text-orange-700 ml-1">Diskon Item</label>
                                     <div class="flex items-center">
                                         <button onclick="toggleItemDiscountType('${item.cartId}')" class="px-2.5 py-1.5 text-[10px] font-black rounded-l border border-r-0 border-orange-200 transition-colors ${discToggleClass}">
@@ -934,178 +1000,21 @@
             calculateTotal(); // Hitung total setelah update view keranjang
         }
 
-        /* MOBILE CART TOGGLE */
-        function toggleMobileCart() {
-            const cartPanel = document.getElementById('cart-sidebar');
-            const overlay = document.getElementById('cart-overlay');
+        /* AUTO-SYNC LOGIC KETIKA OFFLINE/ONLINE */
+        let offlineQueue = JSON.parse(localStorage.getItem('zeeperfume_offline_queue')) || [];
 
-            if (cartPanel.classList.contains('translate-x-full')) {
-                cartPanel.classList.remove('translate-x-full');
-                cartPanel.classList.add('translate-x-0');
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            } else {
-                cartPanel.classList.remove('translate-x-0');
-                cartPanel.classList.add('translate-x-full');
-                overlay.classList.add('opacity-0');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
-        }
-
-        function openSidebarCartOnDesktop() {
-            if (window.innerWidth >= 1024) {}
-        }
-
-        /* PAYMENT MODAL & SUBMIT TRANSACTION */
-        function openPaymentModal() {
-            if (cart.length === 0) return AppFeedback.warning('Keranjang masih kosong!');
-
-            const totalItems = cart.reduce((sum, item) => sum + (item.type === 'pcs' ? item.qty : 1), 0);
-            document.getElementById('modal-item-count').innerText = `${totalItems} Item`;
-            document.getElementById('modal-total-val').innerText = formatRupiah(currentTotal);
-            document.getElementById('pay-amount').value = '';
-            document.getElementById('tempo-paid-amount').value = '';
-            document.getElementById('tempo-due-date').value = getDefaultTempoDate();
-            document.getElementById('tempo-due-date').min = getTodayDate();
-            document.getElementById('tempo-note').value = '';
-            document.getElementById('modal-change-val').innerText = 'Rp 0';
-            document.getElementById('pay-method').value = 'cash';
-
-            setupQuickCash(currentTotal);
-            toggleCashInput();
-
-            const modal = document.getElementById('paymentModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closePaymentModal() {
-            const modal = document.getElementById('paymentModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-    function toggleCashInput() {
-        const method = document.getElementById('pay-method').value;
-        const cashArea = document.getElementById('cash-input-area');
-        const tempoArea = document.getElementById('tempo-input-area');
-        const payInput = document.getElementById('pay-amount');
-        const tempoPaidInput = document.getElementById('tempo-paid-amount');
-        const resultLabel = document.getElementById('payment-result-label');
-        const changeVal = document.getElementById('modal-change-val');
-
-        if (method === 'cash') {
-            cashArea.classList.remove('hidden');
-            tempoArea.classList.add('hidden');
-            payInput.value = '';
-            resultLabel.innerText = 'Kembalian';
-            changeVal.innerText = 'Rp 0';
-            changeVal.classList.replace('text-red-500', 'text-green-500');
-            changeVal.classList.replace('bg-red-50', 'bg-green-50');
-            changeVal.classList.replace('border-red-100', 'border-green-100');
-        } else if (method === 'cash_tempo') {
-            cashArea.classList.add('hidden');
-            tempoArea.classList.remove('hidden');
-            payInput.value = '';
-            tempoPaidInput.value = '';
-            resultLabel.innerText = 'Sisa Piutang';
-            updateTempoBalance();
-        } else {
-            cashArea.classList.add('hidden');
-            tempoArea.classList.add('hidden');
-            payInput.value = currentTotal;
-            resultLabel.innerText = 'Kembalian';
-            changeVal.innerText = 'LUNAS (Otomatis)';
-            changeVal.classList.replace('text-red-500', 'text-green-500');
-            changeVal.classList.replace('bg-red-50', 'bg-green-50');
-            changeVal.classList.replace('border-red-100', 'border-green-100');
-        }
-        if (method === 'cash') calculateChange();
-    }
-
-    function getTodayDate() {
-        const date = new Date();
-        const offset = date.getTimezoneOffset() * 60000;
-        return new Date(date.getTime() - offset).toISOString().split('T')[0];
-    }
-
-    function getDefaultTempoDate() {
-        const date = new Date();
-        date.setDate(date.getDate() + 7);
-        const offset = date.getTimezoneOffset() * 60000;
-        return new Date(date.getTime() - offset).toISOString().split('T')[0];
-    }
-
-    function updateTempoBalance() {
-        const paid = parseFloat(document.getElementById('tempo-paid-amount').value) || 0;
-        const remaining = Math.max(0, currentTotal - paid);
-        const changeVal = document.getElementById('modal-change-val');
-        const hint = document.getElementById('tempo-balance-hint');
-
-        changeVal.innerText = formatRupiah(remaining);
-        hint.innerText = paid > currentTotal
-            ? 'Pembayaran awal tidak boleh melebihi total tagihan.'
-            : `Sisa piutang: ${formatRupiah(remaining)}`;
-        hint.classList.toggle('text-red-600', paid > currentTotal);
-        hint.classList.toggle('text-gray-500', paid <= currentTotal);
-        changeVal.classList.toggle('text-red-500', paid > currentTotal);
-        changeVal.classList.toggle('text-green-500', paid <= currentTotal);
-        changeVal.classList.toggle('bg-red-50', paid > currentTotal);
-        changeVal.classList.toggle('bg-green-50', paid <= currentTotal);
-        changeVal.classList.toggle('border-red-100', paid > currentTotal);
-        changeVal.classList.toggle('border-green-100', paid <= currentTotal);
-    }
-
-        function setupQuickCash(total) {
-            const btns = document.getElementById('quick-cash-btns');
-            btns.innerHTML = `
-                <button type="button" onclick="setCashAmount(${total})" class="py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-extrabold text-gray-700 hover:bg-[#CC9863] hover:text-white hover:border-[#CC9863] transition-colors shadow-sm">Uang Pas</button>
-                <button type="button" onclick="setCashAmount(${Math.ceil(total/50000)*50000})" class="py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-extrabold text-gray-700 hover:bg-[#CC9863] hover:text-white hover:border-[#CC9863] transition-colors shadow-sm">${formatRupiah(Math.ceil(total/50000)*50000)}</button>
-                <button type="button" onclick="setCashAmount(${Math.ceil(total/100000)*100000})" class="py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-extrabold text-gray-700 hover:bg-[#CC9863] hover:text-white hover:border-[#CC9863] transition-colors shadow-sm">${formatRupiah(Math.ceil(total/100000)*100000)}</button>
-            `;
-        }
-
-        function setCashAmount(amount) {
-            document.getElementById('pay-amount').value = amount;
-            calculateChange();
-        }
-
-        function calculateChange() {
+        function submitTransaction() {
             const method = document.getElementById('pay-method').value;
-            if (method !== 'cash') return;
-
-            const paid = parseFloat(document.getElementById('pay-amount').value) || 0;
-            const change = Math.max(0, paid - currentTotal);
-
-            const changeEl = document.getElementById('modal-change-val');
-            changeEl.innerText = formatRupiah(change);
-
-            if (paid < currentTotal) {
-                changeEl.classList.replace('text-green-500', 'text-red-500');
-                changeEl.classList.replace('bg-green-50', 'bg-red-50');
-                changeEl.classList.replace('border-green-100', 'border-red-100');
-                changeEl.innerText = 'Kurang ' + formatRupiah(currentTotal - paid);
-            } else {
-                changeEl.classList.replace('text-red-500', 'text-green-500');
-                changeEl.classList.replace('bg-red-50', 'bg-green-50');
-                changeEl.classList.replace('border-red-100', 'border-green-100');
-            }
-        }
-
-        /* FUNGSI SUBMIT TRANSAKSI KE DATABASE */
-    function submitTransaction() {
-            const method = document.getElementById('pay-method').value;
-            const paidInput = method === 'cash_tempo' ? document.getElementById('tempo-paid-amount') : document.getElementById('pay-amount');
+            const paidInput = method === 'cash_tempo' ? document.getElementById('tempo-paid-amount') : document
+                .getElementById('pay-amount');
             const paid = parseFloat(paidInput.value) || 0;
 
             if (method === 'cash' && paid < currentTotal) {
                 return AppFeedback.warning('Nominal uang tunai diterima kurang dari total tagihan!');
             }
-
             if (method === 'cash_tempo' && paid > currentTotal) {
                 return AppFeedback.warning('Pembayaran awal cash tempo tidak boleh melebihi total tagihan!');
             }
-
             if (method === 'cash_tempo' && !document.getElementById('tempo-due-date').value) {
                 return AppFeedback.warning('Tanggal jatuh tempo wajib diisi.');
             }
@@ -1117,6 +1026,8 @@
             btn.disabled = true;
 
             const payload = {
+                offline_id: 'TRX-' + Date.now(),
+                waktu_lokal: new Date().toISOString(),
                 cart: cart,
                 metode_bayar: method,
                 nominal_bayar: paid,
@@ -1124,13 +1035,10 @@
                 discount: currentDiscount,
                 total: currentTotal,
                 member_id: memberId,
-
-                // Tambahan metadata diskon untuk Controller
                 is_point_used: document.getElementById('discount-type-select').value === 'points',
                 used_points: usedPointsAmount,
                 diskon_persen: document.getElementById('discount-type-select').value === 'percent' ? parseFloat(document
                     .getElementById('discount-val-input').value) || 0 : 0,
-
                 _token: '{{ csrf_token() }}'
             };
 
@@ -1139,6 +1047,22 @@
                     tanggal_jatuh_tempo: document.getElementById('tempo-due-date').value,
                     catatan_penagihan: document.getElementById('tempo-note').value.trim() || null
                 };
+            }
+
+            if (!navigator.onLine) {
+                offlineQueue.push(payload);
+                localStorage.setItem('zeeperfume_offline_queue', JSON.stringify(offlineQueue));
+
+                AppFeedback.success('Mode Offline: Transaksi disimpan sementara di perangkat.', {
+                    duration: 4000
+                });
+
+                cart = [];
+                closePaymentModal();
+                renderCart();
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+                return;
             }
 
             fetch('{{ route('kasir.pos.store') }}', {
@@ -1157,66 +1081,27 @@
                     } else {
                         let errorMsg = data.message;
                         if (data.errors) errorMsg = Object.values(data.errors).flat().join('\n');
-                        AppFeedback.error('Gagal memproses transaksi:\n' + errorMsg, { duration: 0 });
+                        AppFeedback.error('Gagal memproses transaksi:\n' + errorMsg, {
+                            duration: 0
+                        });
                         btn.innerHTML = originalBtnHtml;
                         btn.disabled = false;
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    AppFeedback.error('Terjadi kesalahan sistem server.', { duration: 0 });
+                    offlineQueue.push(payload);
+                    localStorage.setItem('zeeperfume_offline_queue', JSON.stringify(offlineQueue));
+
+                    AppFeedback.warning('Koneksi terputus tiba-tiba. Transaksi disimpan di perangkat (Offline Mode).', {
+                        duration: 4000
+                    });
+                    cart = [];
+                    closePaymentModal();
+                    renderCart();
+
                     btn.innerHTML = originalBtnHtml;
                     btn.disabled = false;
                 });
         }
     </script>
-    {{-- ========================================================= --}}
-    {{-- TOKO TUTUP MODAL (BLOCKER) --}}
-    {{-- ========================================================= --}}
-    @if(isset($closedMessage) && $closedMessage)
-        <div id="storeClosedModal" class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" style="pointer-events: auto;">
-            <div class="bg-white max-w-md w-full rounded-3xl shadow-2xl overflow-hidden text-center p-8 animate-[scaleIn_0.3s_ease-out]">
-
-                <!-- Ikon Gembok / Tutup -->
-                <div class="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border-[6px] border-red-100">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                </div>
-
-                <h2 class="text-2xl font-black text-gray-900 mb-2">Outlet Masih Tutup!</h2>
-
-                <!-- Menampilkan Pesan Dinamis dari BranchOperatingHours -->
-                <p class="text-gray-500 font-medium mb-8 text-sm leading-relaxed">
-                    {{ $closedMessage }}<br>
-                    Silakan buka shift kasir atau ubah jam operasional agar Anda dapat melakukan transaksi.
-                </p>
-
-                <div class="space-y-3">
-                    <!-- Tombol Kembali ke Riwayat Transaksi -->
-                    <a href="{{ route('kasir.transaction.index') }}" class="block w-full py-3.5 bg-[#1C1D21] text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-md">
-                        Lihat Riwayat Transaksi
-                    </a>
-
-                    <!-- Tombol Refresh (Jika owner baru saja membuka toko) -->
-                    <button onclick="window.location.reload()" class="block w-full py-3.5 bg-gray-50 text-gray-600 border border-gray-200 rounded-2xl font-bold hover:bg-gray-100 transition-colors">
-                        Refresh Halaman
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Script Otomatis Mendisable Semua Input di Background agar tidak bisa diakali -->
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                document.querySelectorAll('button, input, select').forEach(el => {
-                    // Hindari mendisable tombol di dalam modal itu sendiri
-                    if(!el.closest('#storeClosedModal')) {
-                        el.disabled = true;
-                    }
-                });
-            });
-        </script>
-    @endif
 @endsection
