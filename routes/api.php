@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MemberController;
 
 // Rute Publik (Tidak butuh login)
 Route::post('login', [AuthController::class, 'login']);
+Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt']);
 
 // Rute Terproteksi (Wajib login / menyertakan Token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -24,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('checkout', [TransactionController::class, 'store']); // Ganti method ke store() sesuai controller baru
     Route::get('transactions/history', [TransactionController::class, 'history']); // Menampilkan riwayat hari ini
     Route::get('transactions/{id}', [TransactionController::class, 'show']); // Menampilkan detail transaksi spesifik
-    Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt']);
 
     // Endpoint Member
     Route::post('members/search', [TransactionController::class, 'searchMember']); // Mencari member berdasarkan no HP

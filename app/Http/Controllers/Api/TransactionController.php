@@ -354,4 +354,32 @@ class TransactionController extends Controller
         // Mengembalikan HTML langsung, bukan JSON
         return view('kasir.pos.receipt', compact('transaction'));
     }
+
+    /**
+     * Mencari member berdasarkan nomor telepon
+     */
+    public function searchMember(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $member = Member::where('no_telp', $request->phone)->first();
+
+        if ($member) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $member->id,
+                    'name' => $member->nama,
+                    'points' => $member->poin,
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Member tidak ditemukan',
+        ]);
+    }
 }
