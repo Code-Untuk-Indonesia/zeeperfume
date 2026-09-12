@@ -66,4 +66,36 @@ class AuthController extends Controller
             'message' => 'Logout berhasil'
         ], 200);
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        // 1. Validasi Input
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            // Password bersifat nullable (boleh kosong) sesuai deskripsi di UI
+            'password'     => 'nullable|string|min:6',
+        ]);
+
+        // 2. Update Nama
+        $user->nama_lengkap = $request->nama_lengkap;
+
+        // 3. Update Password hanya jika diisi (tidak kosong)
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // 4. Simpan perubahan ke database
+        $user->save();
+
+        // Load relasi branch agar response tetap konsisten dengan data saat login
+        $user->load('branch');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'data'    => $user
+        ], 200);
+    }
 }

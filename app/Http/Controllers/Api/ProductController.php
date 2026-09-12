@@ -29,10 +29,13 @@ class ProductController extends Controller
         ->where('tipe_stok', 'ada_stok')
         ->get();
 
+        $closedMessage = app(\App\Support\BranchOperatingHours::class)->closedMessage($cabangId);
+
         // Kembalikan respons dalam format JSON
         return response()->json([
             'success' => true,
             'message' => 'Data produk berhasil diambil.',
+            'closed_message' => $closedMessage,
             'data'    => [
                 'categories' => $categories,
                 'products'   => $products

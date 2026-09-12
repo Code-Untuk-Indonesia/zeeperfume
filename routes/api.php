@@ -8,12 +8,14 @@ use App\Http\Controllers\Api\MemberController;
 
 // Rute Publik (Tidak butuh login)
 Route::post('login', [AuthController::class, 'login']);
+Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt']);
 
 // Rute Terproteksi (Wajib login / menyertakan Token)
 Route::middleware('auth:sanctum')->group(function () {
 
     // Endpoint Auth
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('profile/update', [AuthController::class, 'updateProfile']);
 
     // Endpoint Produk
     // apiResource otomatis mengarahkan method GET /products ke fungsi index()
