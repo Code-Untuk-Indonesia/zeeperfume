@@ -10,7 +10,7 @@
                 <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Kelola Stok Barang</h1>
                 <p class="text-gray-500 text-sm mt-1 font-medium">Pantau dan kelola persediaan produk parfum di semua cabang outlet Anda.</p>
             </div>
-            <a href="{{ route('admin.stock.create') }}"
+            <a href="{{ route('owner.stock.create') }}"
                 class="bg-[#CC9863] text-white px-5 py-3 rounded-xl font-bold shadow-lg shadow-[#CC9863]/20 hover:bg-[#b58555] transition-all transform active:scale-95 flex items-center justify-center gap-2 text-sm shrink-0 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
@@ -60,8 +60,8 @@
         </div>
 
         <!-- Filter & Search Bar -->
-        <form action="{{ route('admin.stock.index') }}" method="GET" class="bg-white p-5 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col lg:flex-row gap-4 justify-between items-center">
-            
+        <form action="{{ route('owner.stock.index') }}" method="GET" class="bg-white p-5 rounded-t-3xl border border-gray-100 border-b-0 flex flex-col lg:flex-row gap-4 justify-between items-center">
+
             <!-- Search -->
             <div class="relative w-full lg:w-96">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -87,7 +87,7 @@
 
                 {{-- Reset Button --}}
                 @if (request('search') || request('kategori') && request('kategori') !== 'all')
-                    <a href="{{ route('admin.stock.index') }}" class="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold transition flex items-center justify-center shrink-0">
+                    <a href="{{ route('owner.stock.index') }}" class="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold transition flex items-center justify-center shrink-0">
                         Reset Filter
                     </a>
                 @endif
@@ -110,7 +110,7 @@
 
                         @forelse($products as $product)
                             <tr class="hover:bg-gray-50/50 transition-colors group">
-                                
+
                                 <!-- Kolom 1: Info Produk Induk -->
                                 <td class="px-6 py-5 align-top">
                                     <div class="flex items-start gap-4">
@@ -142,7 +142,7 @@
                                         <div class="flex flex-col gap-3">
                                             @foreach ($product->variants as $variant)
                                                 <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:border-[#CC9863]/40 transition-colors">
-                                                    
+
                                                     {{-- Varian Header: Nama & Harga --}}
                                                     <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
                                                         <div class="flex items-center gap-2">
@@ -194,16 +194,16 @@
                                 <td class="px-6 py-5 text-center align-top pt-6">
                                     <div class="flex justify-center gap-2">
                                         <!-- Edit Button -->
-                                        <a href="{{ route('admin.stock.edit', $product->id) }}"
+                                        <a href="{{ route('owner.stock.edit', $product->id) }}"
                                             class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 text-gray-500 hover:text-white hover:bg-[#CC9863] transition-colors border border-gray-200 hover:border-[#CC9863]"
                                             title="Edit Produk">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                             </svg>
                                         </a>
-                                        
+
                                         <!-- Delete Form & Button -->
-                                        <form action="{{ route('admin.stock.destroy', $product->id) }}" method="POST"
+                                        <form action="{{ route('owner.stock.destroy', $product->id) }}" method="POST"
                                             data-feedback-confirm
                                             data-feedback-confirm-title="Konfirmasi penghapusan"
                                             data-feedback-confirm-message="Produk ini beserta seluruh data varian dan stoknya akan dihapus."
