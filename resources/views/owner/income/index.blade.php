@@ -1,463 +1,1031 @@
 @extends('template.sidebar')
-@section('title', 'Laporan Pendapatan (Income)')
+@section('title', 'Laporan Pendapatan')
 
 @section('content')
-<main class="flex-1 bg-gray-50/50 overflow-y-auto px-4 lg:px-8 py-6 lg:py-8 w-full relative min-h-screen">
 
-    <!-- ================= HEADER SECTION ================= -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-        <div>
-            <div class="flex items-center gap-3 mb-2">
-                <div class="bg-[#CC9863]/10 p-2 rounded-xl text-[#CC9863]">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    @php
+        $activeFilter = request('filter_type', $filterType ?? 'month');
+
+        $activeFilters = collect([
+            $branchId ? $branches->firstWhere('id', $branchId)?->nama_cabang : null,
+            $paymentMethod ? strtoupper(str_replace('_', ' ', $paymentMethod)) : null,
+        ])->filter();
+    @endphp
+
+    <main class="flex-1 bg-[#F5F6F8] overflow-y-auto px-4 lg:px-8 py-6 lg:py-8 w-full min-h-screen">
+
+        <!-- ================= HEADER ================= -->
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-5 mb-7">
+
+            <div>
+                <div class="flex items-center gap-3">
+
+                    <div class="w-11 h-11 rounded-2xl bg-[#CC9863]/10 text-[#CC9863] flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                            Income Report
+                        </h1>
+
+                        <p class="text-sm text-gray-500 font-medium mt-1">
+                            Pantau pendapatan, transaksi dan performa setiap outlet.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="grid grid-cols-2 sm:flex gap-2 w-full xl:w-auto">
+
+                <a href="{{ route('owner.income.print', request()->query()) }}" target="_blank"
+                    class="h-11 px-4 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition">
+
+                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-2 0v4H8v-4m-2-9h12" />
                     </svg>
-                </div>
-                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                    Income Report
-                </h1>
+
+                    Print
+                </a>
+
+
+                <a href="{{ route('owner.income.export', request()->query()) }}"
+                    class="h-11 px-4 rounded-xl bg-[#CC9863] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-[#b78658] transition">
+
+                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" />
+                    </svg>
+
+                    Export Excel
+                </a>
+
             </div>
-            <p class="text-gray-500 text-sm font-medium flex items-center gap-2">
-                Analisis pendapatan, transaksi, dan performa outlet.
-                <span class="inline-flex items-center bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                    {{ $monthName }}
+
+        </div>
+
+
+
+        <!-- ================= FILTER ================= -->
+        <div class="bg-white rounded-[22px] border border-gray-100 shadow-sm mb-7 overflow-hidden">
+
+            <form action="{{ route('owner.income.index') }}" method="GET" id="incomeFilter">
+
+                <input type="hidden" name="filter_type" id="filterType" value="{{ $activeFilter }}">
+
+                <!-- Filter Header -->
+                <div
+                    class="px-5 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+
+                    <div>
+                        <h2 class="text-sm font-black text-gray-900">
+                            Filter Laporan
+                        </h2>
+
+                        <p class="text-[11px] text-gray-400 font-medium mt-0.5">
+                            Atur periode, outlet dan metode pembayaran.
+                        </p>
+                    </div>
+
+
+                    <div class="inline-flex bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+
+                        <button type="button" id="btnMonthMode" onclick="changeFilterMode('month')"
+                            class="filter-mode flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition">
+                            Bulanan
+                        </button>
+
+                        <button type="button" id="btnCustomMode" onclick="changeFilterMode('custom')"
+                            class="filter-mode flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition">
+                            Rentang Tanggal
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Filter Body -->
+                <div class="p-5 sm:p-6">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+                        <!-- MONTH -->
+                        <div id="monthFilterGroup">
+
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                                Bulan & Tahun
+                            </label>
+
+                            <div class="grid grid-cols-2 gap-2">
+
+                                <select name="month" id="monthInput"
+                                    class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}" @selected((int) $month === $i)>
+                                            {{ \Carbon\Carbon::create(null, $i)->translatedFormat('F') }}
+                                        </option>
+                                    @endfor
+
+                                </select>
+
+
+                                <select name="year" id="yearInput"
+                                    class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+                                    @for ($y = now()->year; $y >= now()->year - 5; $y--)
+                                        <option value="{{ $y }}" @selected((int) $year === $y)>
+                                            {{ $y }}
+                                        </option>
+                                    @endfor
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CUSTOM DATE -->
+                        <div id="customFilterGroup" class="hidden">
+
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                                Rentang Tanggal
+                            </label>
+
+                            <div class="grid grid-cols-2 gap-2">
+
+                                <input type="date" name="start_date" id="startDateInput"
+                                    value="{{ request('start_date') }}"
+                                    class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+
+                                <input type="date" name="end_date" id="endDateInput" value="{{ request('end_date') }}"
+                                    class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- OUTLET -->
+                        <div>
+
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                                Outlet
+                            </label>
+
+                            <select name="branch_id"
+                                class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+                                <option value="">Semua Outlet</option>
+
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch->id }}" @selected((string) $branchId === (string) $branch->id)>
+                                        {{ $branch->nama_cabang }}
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- PAYMENT -->
+                        <div>
+
+                            <label class="block text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                                Metode Pembayaran
+                            </label>
+
+                            <select name="payment_method"
+                                class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863]">
+
+                                <option value="">Semua Metode</option>
+                                <option value="cash" @selected($paymentMethod === 'cash')>Cash</option>
+                                <option value="qris" @selected($paymentMethod === 'qris')>QRIS</option>
+                                <option value="transfer" @selected($paymentMethod === 'transfer')>Transfer</option>
+                                <option value="cash_tempo" @selected($paymentMethod === 'cash_tempo')>Cash Tempo</option>
+                                <option value="tempo" @selected($paymentMethod === 'tempo')>Tempo</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- ACTION -->
+                        <div class="md:col-span-2 xl:col-span-1 flex items-end gap-2">
+
+                            <button type="submit"
+                                class="flex-1 h-11 rounded-xl bg-gray-900 text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-black transition shadow-sm">
+
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 7v6l-4 2v-8L3 6V4z" />
+                                </svg>
+
+                                Terapkan Filter
+
+                            </button>
+
+
+                            <a href="{{ route('owner.income.index') }}" title="Reset Filter"
+                                class="w-11 h-11 shrink-0 rounded-xl bg-red-50 border border-red-100 text-red-500 flex items-center justify-center hover:bg-red-100 transition">
+
+                                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+
+        <!-- ================= ACTIVE PERIOD ================= -->
+        <div class="flex flex-wrap items-center gap-2 mb-5">
+
+            <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                Periode Aktif
+            </span>
+
+            <span class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-bold">
+                {{ $monthName }}
+            </span>
+
+            @foreach ($activeFilters as $filter)
+                <span class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 text-xs font-bold">
+                    {{ $filter }}
                 </span>
-            </p>
+            @endforeach
+
         </div>
 
-        <div class="flex items-center gap-3 self-end lg:self-auto">
-            <a href="{{ route('owner.income.print', request()->only(['month', 'year', 'start_date', 'end_date', 'branch_id', 'payment_method'])) }}" target="_blank" rel="noopener" class="bg-white border border-gray-200 text-gray-700 h-10 px-4 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-2 0v4H8v-4m-2-9h12"></path>
-                </svg>
-                <span class="hidden sm:inline">Cetak PDF</span>
-            </a>
-            <a href="{{ route('owner.income.export', request()->only(['month', 'year', 'start_date', 'end_date', 'branch_id', 'payment_method'])) }}" class="bg-[#CC9863] text-white h-10 px-4 rounded-xl font-bold shadow-sm hover:bg-[#b58555] hover:shadow-md transition flex items-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <span class="hidden sm:inline">Export Excel</span>
-            </a>
-        </div>
-    </div>
 
-    <!-- ================= FILTER SECTION ================= -->
-    <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-5 mb-8 relative z-20">
-        <form action="{{ route('owner.income.index') }}" method="GET" id="incomeFilter">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
 
-                <!-- Period Filter Group -->
-                <div class="lg:col-span-2 grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Bulan</label>
-                        <select name="month" id="monthFilter" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                            @for ($i = 1; $i <= 12; $i++)
-                                <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ (int) request('month', $month) === $i ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::create(null, $i)->translatedFormat('F') }}
-                                </option>
-                            @endfor
-                        </select>
+        <!-- ================= METRIC CARDS ================= -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-7">
+
+            <!-- OMZET -->
+            <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
+
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+
+                <div class="relative">
+
+                    <div class="flex justify-between items-start">
+
+                        <div>
+
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                Total Omzet
+                            </p>
+
+                            <p class="text-2xl lg:text-3xl font-black text-gray-900 mt-2">
+                                Rp {{ number_format($totalIncome, 0, ',', '.') }}
+                            </p>
+
+                        </div>
+
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2" />
+                            </svg>
+
+                        </div>
+
                     </div>
-                    <div>
-                        <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Tahun</label>
-                        <select name="year" id="yearFilter" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                            @php $currentYear = now()->year; @endphp
-                            @for ($y = $currentYear; $y >= $currentYear - 5; $y--)
-                                <option value="{{ $y }}" {{ (int) request('year', $year) === $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endfor
-                        </select>
-                    </div>
+
+
+                    <p class="text-[11px] text-gray-400 font-medium mt-4">
+                        Total nilai seluruh transaksi pada periode aktif.
+                    </p>
+
                 </div>
 
-                <!-- Custom Date Range -->
-                <div class="lg:col-span-2 grid grid-cols-2 gap-3 relative">
-                    <div class="absolute -left-3 top-1/2 -translate-y-1/2 hidden lg:flex h-full items-center">
-                        <div class="w-px h-8 bg-gray-200"></div>
-                        <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-1 text-[8px] font-black text-gray-300">OR</span>
-                    </div>
-                    <div>
-                        <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Dari Tanggal</label>
-                        <input type="date" name="start_date" id="startDate" value="{{ request('start_date') }}" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                    </div>
-                    <div>
-                        <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Sampai Tanggal</label>
-                        <input type="date" name="end_date" id="endDate" value="{{ request('end_date') }}" min="{{ request('start_date') }}" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                    </div>
-                </div>
-
-                <!-- Entity Filters -->
-                <div>
-                    <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Outlet</label>
-                    <select name="branch_id" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                        <option value="">Semua Outlet</option>
-                        @foreach ($branches as $branch)
-                            <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>
-                                {{ $branch->nama_cabang }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex gap-2">
-                    <div class="flex-1">
-                        <label class="block mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Metode</label>
-                        <select name="payment_method" class="w-full h-[40px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC9863]/20 focus:border-[#CC9863] transition-all">
-                            <option value="">Semua</option>
-                            <option value="cash" {{ request('payment_method') === 'cash' ? 'selected' : '' }}>Cash</option>
-                            <option value="qris" {{ request('payment_method') === 'qris' ? 'selected' : '' }}>QRIS</option>
-                            <option value="transfer" {{ request('payment_method') === 'transfer' ? 'selected' : '' }}>Transfer</option>
-                            <option value="cash_tempo" {{ request('payment_method') === 'cash_tempo' ? 'selected' : '' }}>Cash Tempo</option>
-                            <option value="tempo" {{ request('payment_method') === 'tempo' ? 'selected' : '' }}>Tempo</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="h-[40px] w-[40px] shrink-0 bg-gray-900 text-white rounded-xl flex items-center justify-center hover:bg-black transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </button>
-                </div>
             </div>
 
-            @if(request()->anyFilled(['start_date', 'end_date', 'branch_id', 'payment_method', 'month', 'year']))
-                <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Filter Aktif:</span>
-                        @if(request('branch_id'))
-                            <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[10px] font-bold border border-blue-100">
-                                Outlet: {{ $branches->firstWhere('id', request('branch_id'))?->nama_cabang }}
-                            </span>
-                        @endif
-                        @if(request('payment_method'))
-                            <span class="inline-flex items-center gap-1 bg-purple-50 text-purple-600 px-2 py-1 rounded-md text-[10px] font-bold border border-purple-100 uppercase">
-                                Pembayaran: {{ str_replace('_', ' ', request('payment_method')) }}
-                            </span>
-                        @endif
-                        @if(request('start_date') && request('end_date'))
-                            <span class="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded-md text-[10px] font-bold border border-green-100">
-                                {{ \Carbon\Carbon::parse(request('start_date'))->format('d/m') }} - {{ \Carbon\Carbon::parse(request('end_date'))->format('d/m') }}
-                            </span>
-                        @endif
+
+            <!-- TRANSACTION -->
+            <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-purple-100 rounded-full blur-3xl opacity-50"></div>
+
+                <div class="relative">
+
+                    <div class="flex justify-between">
+
+                        <div>
+
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                Total Transaksi
+                            </p>
+
+                            <p class="text-2xl lg:text-3xl font-black text-gray-900 mt-2">
+                                {{ number_format($totalTrx, 0, ',', '.') }}
+                                <span class="text-sm text-gray-400 font-bold">Trx</span>
+                            </p>
+
+                        </div>
+
+
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                            </svg>
+
+                        </div>
+
                     </div>
 
-                    <a href="{{ route('owner.income.index') }}" class="text-[11px] font-bold text-red-500 hover:text-red-600 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Clear Filter
-                    </a>
-                </div>
-            @endif
-        </form>
-    </div>
 
-    <!-- ================= TOP METRICS CARDS ================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <!-- TOTAL INCOME -->
-        <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full blur-2xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
-                <div>
-                    <h3 class="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1">Total Omzet</h3>
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Rp {{ number_format($totalIncome, 0, ',', '.') }}</h2>
+                    <p class="text-[11px] text-gray-400 font-medium mt-4">
+                        Jumlah transaksi berhasil yang masuk ke laporan.
+                    </p>
+
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-blue-600 shadow-inner border border-blue-100/50">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
+
             </div>
-            <p class="text-[11px] font-medium text-gray-400 relative z-10">Total pendapatan kotor pada periode aktif.</p>
+
+
+            <!-- AVERAGE -->
+            <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-orange-100 rounded-full blur-3xl opacity-50"></div>
+
+                <div class="relative">
+
+                    <div class="flex justify-between">
+
+                        <div>
+
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                Rata-Rata Order
+                            </p>
+
+                            <p class="text-2xl lg:text-3xl font-black text-gray-900 mt-2">
+                                Rp {{ number_format($avgTransaction, 0, ',', '.') }}
+                            </p>
+
+                        </div>
+
+
+                        <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
+
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 9h14l1 12H4L5 9z" />
+                            </svg>
+
+                        </div>
+
+                    </div>
+
+
+                    <p class="text-[11px] text-gray-400 font-medium mt-4">
+                        Nilai rata-rata omzet pada setiap transaksi.
+                    </p>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <!-- TOTAL TRANSACTIONS -->
-        <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-full blur-2xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
+
+
+        <!-- ================= CHART ================= -->
+        <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-5 sm:p-6 mb-7">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+
                 <div>
-                    <h3 class="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1">Total Transaksi</h3>
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">
-                        {{ number_format($totalTrx, 0, ',', '.') }} <span class="text-base text-gray-400 font-bold">Trx</span>
+
+                    <p class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider">
+                        Revenue Performance
+                    </p>
+
+                    <h2 class="text-lg font-black text-gray-900 mt-1">
+                        Tren Pendapatan
                     </h2>
+
+                    <p class="text-[11px] text-gray-400 font-medium mt-1">
+                        Pergerakan omzet selama {{ $monthName }}.
+                    </p>
+
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-50 to-fuchsia-50 flex items-center justify-center text-purple-600 shadow-inner border border-purple-100/50">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+
+
+                <div class="flex items-center gap-2 text-[10px] font-bold text-gray-500">
+
+                    <span class="w-2.5 h-2.5 bg-indigo-500 rounded-full"></span>
+
+                    Total Omzet
+
                 </div>
+
             </div>
-            <p class="text-[11px] font-medium text-gray-400 relative z-10">Jumlah struk/nota yang diterbitkan.</p>
+
+
+            <div class="relative h-[280px] sm:h-[330px] w-full">
+
+                <canvas id="incomeChart"></canvas>
+
+            </div>
+
         </div>
 
-        <!-- AVERAGE TRANSACTION -->
-        <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full blur-2xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
+
+
+        <!-- ================= OUTLET SUMMARY ================= -->
+        <section class="mb-7">
+
+            <div class="flex justify-between items-end mb-4">
+
                 <div>
-                    <h3 class="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-1">Rata-Rata Order</h3>
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Rp {{ number_format($avgTransaction, 0, ',', '.') }}</h2>
+                    <h2 class="text-lg font-black text-gray-900">
+                        Rekap Pendapatan Outlet
+                    </h2>
+
+                    <p class="text-[11px] text-gray-400 mt-1">
+                        Omzet, kas diterima dan nilai piutang.
+                    </p>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center text-orange-500 shadow-inner border border-orange-100/50">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+
+            </div>
+
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 border-l-4 border-l-[#CC9863]">
+
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                        Total Omzet
+                    </p>
+
+                    <p class="text-xl font-black text-gray-900 mt-1">
+                        Rp {{ number_format($dailySummary['total_pendapatan'], 0, ',', '.') }}
+                    </p>
+
                 </div>
-            </div>
-            <p class="text-[11px] font-medium text-gray-400 relative z-10">Nilai rata-rata keranjang per pelanggan.</p>
-        </div>
-    </div>
 
-    <!-- ================= TREND CHART ================= -->
-    <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm p-6 mb-8 flex flex-col">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h2 class="text-lg font-black text-gray-900">Grafik Omzet Pemasukan</h2>
-                <p class="text-xs font-medium text-gray-500 mt-1">Performa harian untuk periode saat ini</p>
-            </div>
-            <div class="hidden sm:flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
-                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Pendapatan</span>
-            </div>
-        </div>
-        <div class="relative w-full h-[280px]">
-            <canvas id="incomeChart"></canvas>
-        </div>
-    </div>
 
-    <!-- ================= DAILY OUTLET REPORT ================= -->
-    <section class="mb-8" aria-labelledby="daily-outlet-report-title">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-5">
-            <div>
-                <h2 id="daily-outlet-report-title" class="text-lg font-black text-gray-900">Rekap Pendapatan per Outlet</h2>
-                <p class="text-xs font-medium text-gray-500 mt-1">Berdasarkan filter periode saat ini.</p>
-            </div>
-        </div>
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 border-l-4 border-l-emerald-500">
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-            <div class="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#CC9863]"></div>
-                <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Total Omzet</p>
-                <p class="text-xl font-black text-gray-900">Rp {{ number_format($dailySummary['total_pendapatan'], 0, ',', '.') }}</p>
-            </div>
-            <div class="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
-                <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Kas Tunai Masuk</p>
-                <p class="text-xl font-black text-emerald-600">Rp {{ number_format($dailySummary['total_diterima'], 0, ',', '.') }}</p>
-            </div>
-            <div class="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-rose-500"></div>
-                <p class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">Total Piutang / Tempo</p>
-                <p class="text-xl font-black text-rose-600">Rp {{ number_format($dailySummary['total_piutang'], 0, ',', '.') }}</p>
-            </div>
-        </div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                        Kas Diterima
+                    </p>
 
-        <div class="overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[700px] text-left">
-                    <thead class="border-b border-gray-100 bg-gray-50 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">
-                        <tr>
-                            <th class="px-6 py-4">Outlet</th>
-                            <th class="px-6 py-4 text-center">Transaksi</th>
-                            <th class="px-6 py-4 text-right">Omzet</th>
-                            <th class="px-6 py-4 text-right">Kas Diterima</th>
-                            <th class="px-6 py-4 text-right">Piutang Tempo</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50 text-sm text-gray-700">
-                        @forelse ($dailyOutletReports as $report)
-                            <tr class="transition hover:bg-gray-50/50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 font-bold">
-                                            {{ substr($report->nama_cabang, 0, 1) }}
-                                        </div>
-                                        <p class="font-bold text-gray-900">{{ $report->nama_cabang }}</p>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-700 font-bold text-xs">
-                                        {{ number_format($report->total_transaksi, 0, ',', '.') }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right font-black text-gray-900">Rp {{ number_format($report->total_pendapatan, 0, ',', '.') }}</td>
-                                <td class="px-6 py-4 text-right font-black text-emerald-600">Rp {{ number_format($report->total_diterima, 0, ',', '.') }}</td>
-                                <td class="px-6 py-4 text-right font-black text-rose-600">Rp {{ number_format($report->total_piutang, 0, ',', '.') }}</td>
-                            </tr>
-                        @empty
+                    <p class="text-xl font-black text-emerald-600 mt-1">
+                        Rp {{ number_format($dailySummary['total_diterima'], 0, ',', '.') }}
+                    </p>
+
+                </div>
+
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 border-l-4 border-l-rose-500">
+
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                        Piutang / Tempo
+                    </p>
+
+                    <p class="text-xl font-black text-rose-600 mt-1">
+                        Rp {{ number_format($dailySummary['total_piutang'], 0, ',', '.') }}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden">
+
+                <div class="overflow-x-auto">
+
+                    <table class="w-full min-w-[720px] text-left">
+
+                        <thead
+                            class="bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                        <p class="font-bold text-gray-500">Belum ada transaksi</p>
-                                        <p class="text-xs text-gray-400 mt-1">Tidak ada data untuk rentang waktu ini.</p>
-                                    </div>
+
+                                <th class="px-6 py-4">Outlet</th>
+                                <th class="px-6 py-4 text-center">Transaksi</th>
+                                <th class="px-6 py-4 text-right">Omzet</th>
+                                <th class="px-6 py-4 text-right">Kas Diterima</th>
+                                <th class="px-6 py-4 text-right">Piutang</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody class="divide-y divide-gray-50 text-sm">
+
+                            @forelse($dailyOutletReports as $report)
+                                <tr class="hover:bg-gray-50/70 transition">
+
+                                    <td class="px-6 py-4">
+
+                                        <div class="flex items-center gap-3">
+
+                                            <div
+                                                class="w-9 h-9 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center font-black text-xs">
+                                                {{ strtoupper(substr($report->nama_cabang, 0, 1)) }}
+                                            </div>
+
+                                            <span class="font-bold text-gray-900">
+                                                {{ $report->nama_cabang }}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <td class="px-6 py-4 text-center">
+
+                                        <span class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 font-bold text-xs">
+                                            {{ number_format($report->total_transaksi, 0, ',', '.') }}
+                                        </span>
+
+                                    </td>
+
+
+                                    <td class="px-6 py-4 text-right font-black text-gray-900">
+                                        Rp {{ number_format($report->total_pendapatan, 0, ',', '.') }}
+                                    </td>
+
+
+                                    <td class="px-6 py-4 text-right font-black text-emerald-600">
+                                        Rp {{ number_format($report->total_diterima, 0, ',', '.') }}
+                                    </td>
+
+
+                                    <td class="px-6 py-4 text-right font-black text-rose-600">
+                                        Rp {{ number_format($report->total_piutang, 0, ',', '.') }}
+                                    </td>
+
+                                </tr>
+
+
+                            @empty
+
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-400 font-medium">
+                                        Belum ada data outlet pada periode ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= TRANSACTION TABLE ================= -->
+        <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-7">
+
+            <div class="px-5 sm:px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+
+                <div>
+
+                    <h2 class="text-lg font-black text-gray-900">
+                        Rincian Transaksi
+                    </h2>
+
+                    <p class="text-[11px] text-gray-400 mt-1">
+                        Transaksi berdasarkan filter laporan aktif.
+                    </p>
+
+                </div>
+
+
+                <span class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold">
+                    {{ number_format($totalTrx) }} Transaksi
+                </span>
+
+            </div>
+
+
+            <div class="overflow-x-auto">
+
+                <table class="w-full min-w-[850px] text-left">
+
+                    <thead
+                        class="bg-gray-50 border-b border-gray-100 text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+
+                        <tr>
+
+                            <th class="px-6 py-4">Waktu</th>
+                            <th class="px-6 py-4">Invoice & Pelanggan</th>
+                            <th class="px-6 py-4">Outlet & Kasir</th>
+                            <th class="px-6 py-4 text-center">Metode</th>
+                            <th class="px-6 py-4 text-right">Nominal</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody class="divide-y divide-gray-50 text-sm">
+
+                        @forelse($incomeTransactions as $trx)
+                            @php
+                                $methodColors = [
+                                    'cash' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                    'qris' => 'bg-blue-50 text-blue-600 border-blue-100',
+                                    'transfer' => 'bg-indigo-50 text-indigo-600 border-indigo-100',
+                                    'tempo' => 'bg-rose-50 text-rose-600 border-rose-100',
+                                    'cash_tempo' => 'bg-orange-50 text-orange-600 border-orange-100',
+                                ];
+
+                                $colorClass =
+                                    $methodColors[strtolower($trx->metode_bayar)] ??
+                                    'bg-gray-100 text-gray-600 border-gray-200';
+                            @endphp
+
+
+                            <tr class="hover:bg-gray-50/60 transition">
+
+                                <td class="px-6 py-4">
+
+                                    <p class="font-bold text-gray-900">
+                                        {{ \Carbon\Carbon::parse($trx->tanggal_waktu)->format('d M Y') }}
+                                    </p>
+
+                                    <p class="text-[11px] text-gray-400 mt-1">
+                                        {{ \Carbon\Carbon::parse($trx->tanggal_waktu)->format('H:i') }}
+                                    </p>
+
                                 </td>
+
+
+                                <td class="px-6 py-4">
+
+                                    <p class="font-black text-[#CC9863]">
+                                        {{ $trx->nomor_nota }}
+                                    </p>
+
+                                    <p class="text-[11px] text-gray-400 mt-1">
+                                        {{ $trx->member->nama ?? 'Pelanggan Umum' }}
+                                    </p>
+
+                                </td>
+
+
+                                <td class="px-6 py-4">
+
+                                    <p class="font-bold text-gray-900">
+                                        {{ $trx->branch->nama_cabang ?? 'Pusat' }}
+                                    </p>
+
+                                    <p class="text-[11px] text-gray-400 mt-1">
+                                        {{ $trx->cashier->nama_lengkap ?? 'Kasir' }}
+                                    </p>
+
+                                </td>
+
+
+                                <td class="px-6 py-4 text-center">
+
+                                    <span
+                                        class="inline-flex px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase border {{ $colorClass }}">
+                                        {{ str_replace('_', ' ', $trx->metode_bayar) }}
+                                    </span>
+
+                                </td>
+
+
+                                <td class="px-6 py-4 text-right text-base font-black text-gray-900">
+                                    Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}
+                                </td>
+
+                            </tr>
+
+
+                        @empty
+
+                            <tr>
+
+                                <td colspan="5" class="px-6 py-12 text-center">
+
+                                    <div
+                                        class="w-12 h-12 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 mb-3">
+
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+
+                                    </div>
+
+                                    <p class="font-bold text-gray-500">
+                                        Tidak ada transaksi
+                                    </p>
+
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        Coba ubah periode atau filter laporan.
+                                    </p>
+
+                                </td>
+
                             </tr>
                         @endforelse
+
                     </tbody>
+
                 </table>
+
             </div>
+
+
+            @if ($incomeTransactions->hasPages())
+                <div class="p-4 sm:px-6 border-t border-gray-100">
+                    {{ $incomeTransactions->links('pagination::tailwind') }}
+                </div>
+            @endif
+
         </div>
-    </section>
 
-    <!-- ================= BOTTOM SECTION: INCOME TRANSACTIONS ================= -->
-    <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div class="p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-black text-gray-900">Rincian Transaksi Pendapatan</h2>
-                <p class="text-xs text-gray-500 font-medium mt-1">Daftar semua struk/pemasukan pada filter tanggal saat ini.</p>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap min-w-[800px]">
-                <thead class="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4">Waktu</th>
-                        <th class="px-6 py-4">Invoice & Pelanggan</th>
-                        <th class="px-6 py-4">Lokasi & Kasir</th>
-                        <th class="px-6 py-4 text-center">Metode</th>
-                        <th class="px-6 py-4 text-right">Nominal</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm text-gray-700 divide-y divide-gray-50">
-                    @forelse($incomeTransactions as $trx)
-                        <tr class="hover:bg-gray-50/50 transition">
-                            <td class="px-6 py-4">
-                                <p class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($trx->tanggal_waktu)->format('d M Y') }}</p>
-                                <p class="text-[11px] text-gray-500 font-medium mt-0.5">{{ \Carbon\Carbon::parse($trx->tanggal_waktu)->format('H:i') }} WIB</p>
-                            </td>
-                            <td class="px-6 py-4">
-                                <p class="font-black text-[#CC9863] hover:text-[#b58555] transition-colors cursor-pointer">{{ $trx->nomor_nota }}</p>
-                                <div class="flex items-center gap-1 mt-1">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    <p class="text-[11px] text-gray-500 font-medium">{{ $trx->member->nama ?? 'Pelanggan Umum' }}</p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <p class="font-bold text-gray-900">{{ $trx->branch->nama_cabang ?? 'Pusat' }}</p>
-                                <div class="flex items-center gap-1 mt-1">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                    <p class="text-[11px] text-gray-500 font-medium">{{ explode(' ', $trx->cashier->nama_lengkap ?? 'Kasir')[0] }}</p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                @php
-                                    $methodColors = [
-                                        'cash'       => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                        'qris'       => 'bg-blue-50 text-blue-600 border-blue-100',
-                                        'transfer'   => 'bg-indigo-50 text-indigo-600 border-indigo-100',
-                                        'tempo'      => 'bg-rose-50 text-rose-600 border-rose-100',
-                                        'cash_tempo' => 'bg-orange-50 text-orange-600 border-orange-100',
-                                    ];
-                                    $colorClass = $methodColors[strtolower($trx->metode_bayar)] ?? 'bg-gray-100 text-gray-600 border-gray-200';
-                                @endphp
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-extrabold border uppercase tracking-wider {{ $colorClass }}">
-                                    {{ str_replace('_', ' ', $trx->metode_bayar) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right font-black text-gray-900 text-base">
-                                Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    <p class="font-bold text-gray-500">Tidak ada catatan transaksi</p>
-                                    <p class="text-xs text-gray-400 mt-1">Belum ada pemasukan di rentang waktu ini.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if ($incomeTransactions->hasPages())
-            <div class="p-4 border-t border-gray-100 bg-white">
-                {{ $incomeTransactions->appends(request()->query())->links('pagination::tailwind') }}
-            </div>
-        @endif
-    </div>
+    </main>
 
-</main>
 
-<!-- ================= CHART.JS ================= -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof Chart === 'undefined') return;
 
-    const ctx = document.getElementById('incomeChart');
-    if (!ctx) return;
+    <!-- ================= CHART JS ================= -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
-    const chartData = {
-        labels: @json($chartData['labels'] ?? []),
-        data: @json($chartData['income'] ?? [])
-    };
+    <script>
+        (function() {
 
-    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+            const chartData = @json($chartData);
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Total Omzet (Rp)',
-                data: chartData.data,
-                borderColor: '#6366F1',
-                backgroundColor: gradient,
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#ffffff',
-                pointHoverBorderColor: '#6366F1',
-                pointHoverBorderWidth: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#111827',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff',
-                    padding: 12,
-                    cornerRadius: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Rp ' + Number(context.raw).toLocaleString('id-ID');
-                        },
-                        title: function(context) {
-                            return 'Tanggal: ' + context[0].label;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    border: { display: false },
-                    ticks: { color: '#9CA3AF', font: { size: 11, weight: '600' } }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#F3F4F6', drawBorder: false },
-                    border: { display: false },
-                    ticks: {
-                        color: '#9CA3AF',
-                        font: { size: 11, weight: '600' },
-                        callback: function(value) {
-                            if (value >= 1000000) return (value / 1000000) + ' Jt';
-                            if (value >= 1000) return (value / 1000) + ' K';
-                            return value;
-                        }
-                    }
-                }
+            function formatRupiah(value) {
+                return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
             }
-        }
-    });
-});
-</script>
+
+            function compactNumber(value) {
+                value = Number(value || 0);
+
+                if (value >= 1000000000) {
+                    return 'Rp ' + (value / 1000000000).toLocaleString('id-ID', {
+                        maximumFractionDigits: 1
+                    }) + ' M';
+                }
+
+                if (value >= 1000000) {
+                    return 'Rp ' + (value / 1000000).toLocaleString('id-ID', {
+                        maximumFractionDigits: 1
+                    }) + ' jt';
+                }
+
+                if (value >= 1000) {
+                    return 'Rp ' + (value / 1000).toLocaleString('id-ID', {
+                        maximumFractionDigits: 0
+                    }) + ' rb';
+                }
+
+                return 'Rp ' + value.toLocaleString('id-ID');
+            }
+
+
+            function renderChart() {
+
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js tidak berhasil dimuat.');
+                    return;
+                }
+
+                const canvas = document.getElementById('incomeChart');
+
+                if (!canvas) {
+                    return;
+                }
+
+                const oldChart = Chart.getChart(canvas);
+
+                if (oldChart) {
+                    oldChart.destroy();
+                }
+
+                const ctx = canvas.getContext('2d');
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, 330);
+
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+                gradient.addColorStop(0.55, 'rgba(99, 102, 241, 0.08)');
+                gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+                new Chart(ctx, {
+                    type: 'line',
+
+                    data: {
+                        labels: chartData.labels,
+
+                        datasets: [{
+                            label: 'Total Omzet',
+                            data: chartData.income,
+                            borderColor: '#6366F1',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            tension: 0.38,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointHoverBorderWidth: 3,
+                            pointHoverBackgroundColor: '#ffffff',
+                            pointHoverBorderColor: '#6366F1'
+                        }]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+
+                            tooltip: {
+                                backgroundColor: '#111827',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                padding: 12,
+                                cornerRadius: 10,
+
+                                callbacks: {
+                                    label(context) {
+                                        return ' Omzet: ' + formatRupiah(context.raw);
+                                    }
+                                }
+                            }
+                        },
+
+                        scales: {
+                            x: {
+                                border: {
+                                    display: false
+                                },
+
+                                grid: {
+                                    display: false
+                                },
+
+                                ticks: {
+                                    color: '#9CA3AF',
+                                    font: {
+                                        size: 10,
+                                        weight: '600'
+                                    },
+                                    maxTicksLimit: 12,
+                                    maxRotation: 0
+                                }
+                            },
+
+                            y: {
+                                beginAtZero: true,
+
+                                border: {
+                                    display: false
+                                },
+
+                                grid: {
+                                    color: '#F3F4F6'
+                                },
+
+                                ticks: {
+                                    color: '#9CA3AF',
+                                    padding: 8,
+                                    font: {
+                                        size: 10,
+                                        weight: '600'
+                                    },
+
+                                    callback(value) {
+                                        return compactNumber(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            window.changeFilterMode = function(mode) {
+
+                const filterType = document.getElementById('filterType');
+                const monthGroup = document.getElementById('monthFilterGroup');
+                const customGroup = document.getElementById('customFilterGroup');
+
+                const monthInput = document.getElementById('monthInput');
+                const yearInput = document.getElementById('yearInput');
+                const startDateInput = document.getElementById('startDateInput');
+                const endDateInput = document.getElementById('endDateInput');
+
+                const monthButton = document.getElementById('btnMonthMode');
+                const customButton = document.getElementById('btnCustomMode');
+
+                filterType.value = mode;
+
+                const activeClass = [
+                    'bg-white',
+                    'text-gray-900',
+                    'shadow-sm'
+                ];
+
+                const inactiveClass = [
+                    'text-gray-500'
+                ];
+
+                monthButton.classList.remove(...activeClass, ...inactiveClass);
+                customButton.classList.remove(...activeClass, ...inactiveClass);
+
+                if (mode === 'custom') {
+
+                    monthGroup.classList.add('hidden');
+                    customGroup.classList.remove('hidden');
+
+                    monthInput.disabled = true;
+                    yearInput.disabled = true;
+
+                    startDateInput.disabled = false;
+                    endDateInput.disabled = false;
+
+                    customButton.classList.add(...activeClass);
+                    monthButton.classList.add(...inactiveClass);
+
+                } else {
+
+                    monthGroup.classList.remove('hidden');
+                    customGroup.classList.add('hidden');
+
+                    monthInput.disabled = false;
+                    yearInput.disabled = false;
+
+                    startDateInput.disabled = true;
+                    endDateInput.disabled = true;
+
+                    monthButton.classList.add(...activeClass);
+                    customButton.classList.add(...inactiveClass);
+                }
+
+            };
+
+
+            function init() {
+
+                changeFilterMode(
+                    document.getElementById('filterType').value || 'month'
+                );
+
+                renderChart();
+
+            }
+
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
 @endsection

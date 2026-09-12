@@ -14,28 +14,22 @@ class IncomeController extends Controller
 {
     public function index(Request $request)
     {
-        $validated = $request->validate([
-            'month'         => ['nullable', 'integer', 'between:1,12'],
-            'year'          => ['nullable', 'integer', 'between:2000,2100'],
-            'start_date'    => ['nullable', 'date'],
-            'end_date'      => [
-                'nullable',
-                'date',
-                'required_with:start_date',
-                'after_or_equal:start_date'
-            ],
-            'branch_id'      => ['nullable', 'integer', 'exists:branches,id'],
-            'payment_method' => ['nullable', 'string', 'in:cash,qris,transfer,tempo,cash_tempo'],
-        ]);
+        $validated = $this->validateFilter($request);
 
+        $filterType = $validated['filter_type'] ?? 'month';
         $month = (int) ($validated['month'] ?? now()->month);
         $year = (int) ($validated['year'] ?? now()->year);
 
-        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+        if (
+            $filterType === 'custom' &&
+            !empty($validated['start_date']) &&
+            !empty($validated['end_date'])
+        ) {
             $startDate = Carbon::parse($validated['start_date'])->startOfDay();
             $endDate = Carbon::parse($validated['end_date'])->endOfDay();
             $monthName = $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
         } else {
+            $filterType = 'month';
             $startDate = Carbon::create($year, $month, 1)->startOfMonth();
             $endDate = $startDate->copy()->endOfMonth();
             $monthName = $startDate->translatedFormat('F Y');
@@ -44,18 +38,41 @@ class IncomeController extends Controller
         $branchId = $validated['branch_id'] ?? null;
         $paymentMethod = $validated['payment_method'] ?? null;
 
+        $branches = Branch::whereNull('deleted_at')
+            ->orderBy('nama_cabang')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | BASE QUERY
+        |--------------------------------------------------------------------------
+        */
+
         $baseQuery = Transaction::query()
             ->whereBetween('tanggal_waktu', [$startDate, $endDate])
-            ->when($branchId, fn ($query) => $query->where('cabang_id', $branchId))
-            ->when($paymentMethod, fn ($query) => $query->where('metode_bayar', $paymentMethod));
+            ->when($branchId, fn($query) => $query->where('cabang_id', $branchId))
+            ->when($paymentMethod, fn($query) => $query->where('metode_bayar', $paymentMethod));
 
-        // 1. Metrik Utama
-        $totalIncome = (clone $baseQuery)->sum('total_belanja');
+        /*
+        |--------------------------------------------------------------------------
+        | METRIC
+        |--------------------------------------------------------------------------
+        */
+
+        $totalIncome = (float) (clone $baseQuery)->sum('total_belanja');
         $totalTrx = (clone $baseQuery)->count();
         $avgTransaction = $totalTrx > 0 ? $totalIncome / $totalTrx : 0;
 
-        // 2. Grafik Pendapatan
-        $diffDays = $startDate->diffInDays($endDate) + 1;
+        /*
+        |--------------------------------------------------------------------------
+        | CHART
+        |--------------------------------------------------------------------------
+        */
+
+        $diffDays = (int) $startDate->diffInDays($endDate) + 1;
+        $labels = [];
+        $dailyIncome = [];
+
         if ($diffDays <= 31) {
             $chartResults = (clone $baseQuery)
                 ->selectRaw('DATE(tanggal_waktu) as periode')
@@ -64,13 +81,11 @@ class IncomeController extends Controller
                 ->orderBy('periode')
                 ->pluck('total', 'periode');
 
-            $labels = [];
-            $dailyIncome = [];
-
             for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-                $dateKey = $date->format('Y-m-d');
+                $key = $date->format('Y-m-d');
+
                 $labels[] = $date->format('d M');
-                $dailyIncome[] = (float) ($chartResults[$dateKey] ?? 0);
+                $dailyIncome[] = (float) ($chartResults[$key] ?? 0);
             }
         } else {
             $chartResults = (clone $baseQuery)
@@ -80,48 +95,112 @@ class IncomeController extends Controller
                 ->orderBy('periode')
                 ->get();
 
-            $labels = $chartResults->map(fn ($item) => Carbon::createFromFormat('Y-m', $item->periode)->translatedFormat('M Y'))->values()->toArray();
-            $dailyIncome = $chartResults->pluck('total')->map(fn ($value) => (float) $value)->toArray();
-        }
-        $chartData = ['labels' => $labels, 'income' => $dailyIncome];
+            $labels = $chartResults
+                ->map(fn($item) => Carbon::createFromFormat('Y-m', $item->periode)->translatedFormat('M Y'))
+                ->values()
+                ->toArray();
 
-        // 3. Distribusi Metode Pembayaran
+            $dailyIncome = $chartResults
+                ->pluck('total')
+                ->map(fn($value) => (float) $value)
+                ->toArray();
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'income' => $dailyIncome
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT METHODS
+        |--------------------------------------------------------------------------
+        */
+
         $paymentMethods = (clone $baseQuery)
-            ->select('metode_bayar', DB::raw('COUNT(*) as total_transaksi'), DB::raw('SUM(total_belanja) as total_nominal'))
+            ->select(
+                'metode_bayar',
+                DB::raw('COUNT(*) as total_transaksi'),
+                DB::raw('SUM(total_belanja) as total_nominal')
+            )
             ->groupBy('metode_bayar')
             ->orderByDesc('total_nominal')
             ->get();
 
-        // 4. Pendapatan per Cabang
+        /*
+        |--------------------------------------------------------------------------
+        | INCOME PER BRANCH
+        |--------------------------------------------------------------------------
+        */
+
         $branchIncomes = Transaction::query()
             ->join('branches', 'branches.id', '=', 'transactions.cabang_id')
             ->whereBetween('transactions.tanggal_waktu', [$startDate, $endDate])
-            ->when($branchId, fn ($query) => $query->where('transactions.cabang_id', $branchId))
-            ->when($paymentMethod, fn ($query) => $query->where('transactions.metode_bayar', $paymentMethod))
-            ->select('branches.id', 'branches.nama_cabang', DB::raw('COUNT(transactions.id) as total_trx'), DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_income'))
+            ->when($branchId, fn($query) => $query->where('transactions.cabang_id', $branchId))
+            ->when($paymentMethod, fn($query) => $query->where('transactions.metode_bayar', $paymentMethod))
+            ->select(
+                'branches.id',
+                'branches.nama_cabang',
+                DB::raw('COUNT(transactions.id) as total_trx'),
+                DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_income')
+            )
             ->groupBy('branches.id', 'branches.nama_cabang')
             ->orderByDesc('total_income')
             ->get();
 
-        // 5. Rekap Outlet
+        /*
+        |--------------------------------------------------------------------------
+        | OUTLET REPORT
+        |--------------------------------------------------------------------------
+        */
+
         $dailyOutletReports = DB::table('branches')
             ->leftJoin('transactions', function ($join) use ($startDate, $endDate, $paymentMethod) {
                 $join->on('transactions.cabang_id', '=', 'branches.id')
                     ->whereBetween('transactions.tanggal_waktu', [$startDate, $endDate]);
+
                 if ($paymentMethod) {
                     $join->where('transactions.metode_bayar', $paymentMethod);
                 }
             })
             ->leftJoin('cash_tempo', 'cash_tempo.transaksi_id', '=', 'transactions.id')
             ->whereNull('branches.deleted_at')
-            ->when($branchId, fn ($query) => $query->where('branches.id', $branchId))
+            ->when($branchId, fn($query) => $query->where('branches.id', $branchId))
             ->select([
                 'branches.id as cabang_id',
                 'branches.nama_cabang',
+
                 DB::raw('COUNT(transactions.id) as total_transaksi'),
-                DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_pendapatan'),
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN transactions.total_belanja - COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE transactions.total_belanja END), 0) as total_diterima"),
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE 0 END), 0) as total_piutang"),
+
+                DB::raw(
+                    'COALESCE(SUM(transactions.total_belanja), 0) as total_pendapatan'
+                ),
+
+                DB::raw("
+                    COALESCE(SUM(
+                        CASE
+                            WHEN transactions.metode_bayar = 'cash_tempo'
+                            THEN transactions.total_belanja - COALESCE(
+                                cash_tempo.sisa_piutang,
+                                transactions.total_belanja
+                            )
+                            ELSE transactions.total_belanja
+                        END
+                    ), 0) as total_diterima
+                "),
+
+                DB::raw("
+                    COALESCE(SUM(
+                        CASE
+                            WHEN transactions.metode_bayar = 'cash_tempo'
+                            THEN COALESCE(
+                                cash_tempo.sisa_piutang,
+                                transactions.total_belanja
+                            )
+                            ELSE 0
+                        END
+                    ), 0) as total_piutang
+                ")
             ])
             ->groupBy('branches.id', 'branches.nama_cabang')
             ->orderByDesc('total_pendapatan')
@@ -129,25 +208,38 @@ class IncomeController extends Controller
             ->get();
 
         $dailySummary = [
-            'total_transaksi'  => (int) $dailyOutletReports->sum('total_transaksi'),
+            'total_transaksi' => (int) $dailyOutletReports->sum('total_transaksi'),
             'total_pendapatan' => (float) $dailyOutletReports->sum('total_pendapatan'),
-            'total_diterima'   => (float) $dailyOutletReports->sum('total_diterima'),
-            'total_piutang'    => (float) $dailyOutletReports->sum('total_piutang'),
+            'total_diterima' => (float) $dailyOutletReports->sum('total_diterima'),
+            'total_piutang' => (float) $dailyOutletReports->sum('total_piutang')
         ];
 
-        // 6. Produk Terlaris
+        /*
+        |--------------------------------------------------------------------------
+        | TOP PRODUCTS
+        |--------------------------------------------------------------------------
+        */
+
         $trxIds = (clone $baseQuery)->pluck('id');
+
         $topProducts = TransactionDetail::with('variant.product')
             ->whereIn('transaksi_id', $trxIds)
-            ->select('varian_id', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(subtotal) as total_revenue'))
+            ->select(
+                'varian_id',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(subtotal) as total_revenue')
+            )
             ->groupBy('varian_id')
             ->orderByDesc('total_revenue')
             ->limit(5)
             ->get();
 
-        $branches = Branch::query()->orderBy('nama_cabang')->get();
+        /*
+        |--------------------------------------------------------------------------
+        | TRANSACTION TABLE
+        |--------------------------------------------------------------------------
+        */
 
-        // 7. Tabel Transaksi
         $incomeTransactions = (clone $baseQuery)
             ->with(['branch', 'cashier', 'member'])
             ->orderByDesc('tanggal_waktu')
@@ -155,37 +247,42 @@ class IncomeController extends Controller
             ->withQueryString();
 
         return view('owner.income.index', compact(
-            'month', 'year', 'monthName', 'startDate', 'endDate',
-            'branchId', 'paymentMethod', 'branches',
-            'totalIncome', 'totalTrx', 'avgTransaction',
-            'chartData', 'paymentMethods', 'branchIncomes', 'topProducts',
-            'incomeTransactions', 'dailyOutletReports', 'dailySummary'
+            'filterType',
+            'month',
+            'year',
+            'monthName',
+            'startDate',
+            'endDate',
+            'branchId',
+            'paymentMethod',
+            'branches',
+            'totalIncome',
+            'totalTrx',
+            'avgTransaction',
+            'chartData',
+            'paymentMethods',
+            'branchIncomes',
+            'topProducts',
+            'incomeTransactions',
+            'dailyOutletReports',
+            'dailySummary'
         ));
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | EXPORT
+    |--------------------------------------------------------------------------
+    */
+
     public function export(Request $request)
     {
-        $validated = $request->validate([
-            'month'          => ['nullable', 'integer', 'between:1,12'],
-            'year'           => ['nullable', 'integer', 'between:2000,2100'],
-            'start_date'     => ['nullable', 'date'],
-            'end_date'       => ['nullable', 'date', 'required_with:start_date', 'after_or_equal:start_date'],
-            'branch_id'      => ['nullable', 'integer', 'exists:branches,id'],
-            'payment_method' => ['nullable', 'string', 'in:cash,qris,transfer,tempo,cash_tempo'],
-        ]);
+        $validated = $this->validateFilter($request);
 
-        $month = (int) ($validated['month'] ?? now()->month);
-        $year = (int) ($validated['year'] ?? now()->year);
-
-        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $startDate = Carbon::parse($validated['start_date'])->startOfDay();
-            $endDate = Carbon::parse($validated['end_date'])->endOfDay();
-            $periodName = $startDate->format('d-m-Y') . '_sampai_' . $endDate->format('d-m-Y');
-        } else {
-            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-            $endDate = $startDate->copy()->endOfMonth();
-            $periodName = $startDate->format('F_Y');
-        }
+        [$startDate, $endDate, $periodName] = $this->resolvePeriod(
+            $validated,
+            true
+        );
 
         $branchId = $validated['branch_id'] ?? null;
         $paymentMethod = $validated['payment_method'] ?? null;
@@ -193,8 +290,8 @@ class IncomeController extends Controller
         $query = Transaction::query()
             ->with(['branch', 'cashier', 'member'])
             ->whereBetween('tanggal_waktu', [$startDate, $endDate])
-            ->when($branchId, fn ($q) => $q->where('cabang_id', $branchId))
-            ->when($paymentMethod, fn ($q) => $q->where('metode_bayar', $paymentMethod))
+            ->when($branchId, fn($query) => $query->where('cabang_id', $branchId))
+            ->when($paymentMethod, fn($query) => $query->where('metode_bayar', $paymentMethod))
             ->orderBy('tanggal_waktu');
 
         $rows = [[
@@ -204,7 +301,7 @@ class IncomeController extends Controller
             'Cabang',
             'Kasir',
             'Metode Pembayaran',
-            'Total Belanja (Rp)',
+            'Total Belanja (Rp)'
         ]];
 
         $totalIncome = 0;
@@ -220,7 +317,7 @@ class IncomeController extends Controller
                 $trx->branch->nama_cabang ?? 'Pusat',
                 $trx->cashier->nama_lengkap ?? 'Unknown',
                 strtoupper(str_replace('_', ' ', $trx->metode_bayar)),
-                $amount,
+                $amount
             ];
 
             $totalIncome += $amount;
@@ -231,24 +328,229 @@ class IncomeController extends Controller
         $rows[] = ['TOTAL TRANSAKSI', $totalTransaction];
         $rows[] = ['TOTAL PENDAPATAN', '', '', '', '', '', $totalIncome];
 
-        return $this->downloadXlsx(
+        /*
+         * Jika ZipArchive tersedia, export XLSX.
+         * Kalau hosting tidak memiliki extension ZIP,
+         * otomatis fallback ke CSV.
+         */
+        if (class_exists(\ZipArchive::class)) {
+            return $this->downloadXlsx(
+                $rows,
+                'Laporan_Pendapatan_' . $periodName . '.xlsx'
+            );
+        }
+
+        return $this->downloadCsv(
             $rows,
-            'Laporan_Pendapatan_' . $periodName . '.xlsx'
+            'Laporan_Pendapatan_' . $periodName . '.csv'
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PRINT
+    |--------------------------------------------------------------------------
+    */
+
+    public function print(Request $request)
+    {
+        $validated = $this->validateFilter($request);
+
+        [$startDate, $endDate, $periodLabel] = $this->resolvePeriod(
+            $validated,
+            false
+        );
+
+        $branchId = $validated['branch_id'] ?? null;
+        $paymentMethod = $validated['payment_method'] ?? null;
+
+        $transactions = Transaction::query()
+            ->with(['branch', 'cashier', 'member'])
+            ->whereBetween('tanggal_waktu', [$startDate, $endDate])
+            ->when($branchId, fn($query) => $query->where('cabang_id', $branchId))
+            ->when($paymentMethod, fn($query) => $query->where('metode_bayar', $paymentMethod))
+            ->orderBy('tanggal_waktu')
+            ->get();
+
+        $totalIncome = (float) $transactions->sum('total_belanja');
+        $totalTransaction = $transactions->count();
+        $averageTransaction = $totalTransaction > 0
+            ? $totalIncome / $totalTransaction
+            : 0;
+
+        $outletReports = DB::table('branches')
+            ->leftJoin('transactions', function ($join) use ($startDate, $endDate, $paymentMethod) {
+                $join->on('transactions.cabang_id', '=', 'branches.id')
+                    ->whereBetween('transactions.tanggal_waktu', [$startDate, $endDate]);
+
+                if ($paymentMethod) {
+                    $join->where('transactions.metode_bayar', $paymentMethod);
+                }
+            })
+            ->leftJoin('cash_tempo', 'cash_tempo.transaksi_id', '=', 'transactions.id')
+            ->whereNull('branches.deleted_at')
+            ->when($branchId, fn($query) => $query->where('branches.id', $branchId))
+            ->select([
+                'branches.nama_cabang',
+                DB::raw('COUNT(transactions.id) as total_transaksi'),
+                DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_pendapatan'),
+
+                DB::raw("
+                    COALESCE(SUM(
+                        CASE
+                            WHEN transactions.metode_bayar = 'cash_tempo'
+                            THEN transactions.total_belanja - COALESCE(
+                                cash_tempo.sisa_piutang,
+                                transactions.total_belanja
+                            )
+                            ELSE transactions.total_belanja
+                        END
+                    ), 0) as total_diterima
+                "),
+
+                DB::raw("
+                    COALESCE(SUM(
+                        CASE
+                            WHEN transactions.metode_bayar = 'cash_tempo'
+                            THEN COALESCE(
+                                cash_tempo.sisa_piutang,
+                                transactions.total_belanja
+                            )
+                            ELSE 0
+                        END
+                    ), 0) as total_piutang
+                ")
+            ])
+            ->groupBy('branches.id', 'branches.nama_cabang')
+            ->orderByDesc('total_pendapatan')
+            ->get();
+
+        return view('owner.income.print', compact(
+            'periodLabel',
+            'startDate',
+            'endDate',
+            'branchId',
+            'paymentMethod',
+            'transactions',
+            'totalIncome',
+            'totalTransaction',
+            'averageTransaction',
+            'outletReports'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILTER HELPERS
+    |--------------------------------------------------------------------------
+    */
+
+    private function validateFilter(Request $request): array
+    {
+        return $request->validate([
+            'filter_type' => ['nullable', 'in:month,custom'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => [
+                'nullable',
+                'date',
+                'required_with:start_date',
+                'after_or_equal:start_date'
+            ],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            'payment_method' => [
+                'nullable',
+                'string',
+                'in:cash,qris,transfer,tempo,cash_tempo'
+            ]
+        ]);
+    }
+
+    private function resolvePeriod(array $validated, bool $fileName = false): array
+    {
+        $filterType = $validated['filter_type'] ?? 'month';
+        $month = (int) ($validated['month'] ?? now()->month);
+        $year = (int) ($validated['year'] ?? now()->year);
+
+        if (
+            $filterType === 'custom' &&
+            !empty($validated['start_date']) &&
+            !empty($validated['end_date'])
+        ) {
+            $startDate = Carbon::parse($validated['start_date'])->startOfDay();
+            $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+            $label = $fileName
+                ? $startDate->format('d-m-Y') . '_sampai_' . $endDate->format('d-m-Y')
+                : $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
+
+            return [$startDate, $endDate, $label];
+        }
+
+        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        $label = $fileName
+            ? $startDate->format('F_Y')
+            : $startDate->translatedFormat('F Y');
+
+        return [$startDate, $endDate, $label];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CSV FALLBACK
+    |--------------------------------------------------------------------------
+    */
+
+    private function downloadCsv(array $rows, string $fileName)
+    {
+        return response()->streamDownload(function () use ($rows) {
+            $output = fopen('php://output', 'w');
+
+            // BOM supaya karakter Indonesia terbaca Excel.
+            fwrite($output, "\xEF\xBB\xBF");
+
+            foreach ($rows as $row) {
+                fputcsv($output, $row, ';');
+            }
+
+            fclose($output);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | XLSX
+    |--------------------------------------------------------------------------
+    */
+
     private function downloadXlsx(array $rows, string $fileName)
     {
-        $temporaryFile = tempnam(storage_path('app'), 'income_export_');
+        $directory = storage_path('app');
+
+        if (!is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+
+        $temporaryFile = tempnam($directory, 'income_export_');
 
         if ($temporaryFile === false) {
             abort(500, 'File sementara untuk export tidak dapat dibuat.');
         }
 
         $zip = new \ZipArchive();
-        $opened = $zip->open($temporaryFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
-        if ($opened !== true) {
+        if (
+            $zip->open(
+                $temporaryFile,
+                \ZipArchive::CREATE | \ZipArchive::OVERWRITE
+            ) !== true
+        ) {
             @unlink($temporaryFile);
             abort(500, 'File Excel tidak dapat dibuat.');
         }
@@ -264,14 +566,10 @@ class IncomeController extends Controller
         $zip->close();
 
         return response()
-            ->download(
-                $temporaryFile,
-                $fileName,
-                [
-                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Cache-Control' => 'no-store, no-cache, must-revalidate',
-                ]
-            )
+            ->download($temporaryFile, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'no-store, no-cache'
+            ])
             ->deleteFileAfterSend(true);
     }
 
@@ -296,16 +594,18 @@ class IncomeController extends Controller
                     continue;
                 }
 
-                $cellReference = $this->xlsxColumnName($columnNumber + 1) . $excelRow;
+                $cell = $this->xlsxColumnName($columnNumber + 1) . $excelRow;
                 $isNumeric = is_int($value) || is_float($value);
-                $style = $rowNumber === 0 ? ' s="1"' : ($columnNumber === 6 && $isNumeric ? ' s="2"' : '');
+                $style = $rowNumber === 0
+                    ? ' s="1"'
+                    : ($columnNumber === 6 && $isNumeric ? ' s="2"' : '');
 
                 if ($isNumeric) {
-                    $xml .= '<c r="' . $cellReference . '"' . $style . '><v>' . $value . '</v></c>';
+                    $xml .= '<c r="' . $cell . '"' . $style . '><v>' . $value . '</v></c>';
                     continue;
                 }
 
-                $xml .= '<c r="' . $cellReference . '" t="inlineStr"' . $style . '><is><t xml:space="preserve">'
+                $xml .= '<c r="' . $cell . '" t="inlineStr"' . $style . '><is><t xml:space="preserve">'
                     . htmlspecialchars((string) $value, ENT_XML1 | ENT_COMPAT, 'UTF-8')
                     . '</t></is></c>';
             }
@@ -320,15 +620,15 @@ class IncomeController extends Controller
 
     private function xlsxColumnName(int $columnNumber): string
     {
-        $columnName = '';
+        $name = '';
 
         while ($columnNumber > 0) {
             $remainder = ($columnNumber - 1) % 26;
-            $columnName = chr(65 + $remainder) . $columnName;
+            $name = chr(65 + $remainder) . $name;
             $columnNumber = intdiv($columnNumber - 1, 26);
         }
 
-        return $columnName;
+        return $name;
     }
 
     private function xlsxContentTypes(): string
@@ -339,7 +639,7 @@ class IncomeController extends Controller
             . '<Default Extension="xml" ContentType="application/xml"/>'
             . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
             . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-            . '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+            . '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-spreadsheetml.styles+xml"/>'
             . '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
             . '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'
             . '</Types>';
@@ -360,7 +660,8 @@ class IncomeController extends Controller
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" '
             . 'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
-            . '<Application>Laravel</Application><AppVersion>1.0</AppVersion>'
+            . '<Application>ZeePerfume POS</Application>'
+            . '<AppVersion>1.0</AppVersion>'
             . '</Properties>';
     }
 
@@ -374,7 +675,9 @@ class IncomeController extends Controller
             . 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
             . '<dc:title>Laporan Pendapatan</dc:title>'
             . '<dc:creator>ZeePerfume</dc:creator>'
-            . '<dcterms:created xsi:type="dcterms:W3CDTF">' . now()->toIso8601String() . '</dcterms:created>'
+            . '<dcterms:created xsi:type="dcterms:W3CDTF">'
+            . now()->toIso8601String()
+            . '</dcterms:created>'
             . '</cp:coreProperties>';
     }
 
@@ -401,8 +704,14 @@ class IncomeController extends Controller
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             . '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0"/></numFmts>'
-            . '<fonts count="2"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/></font></fonts>'
-            . '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEFEFEF"/><bgColor indexed="64"/></patternFill></fill></fills>'
+            . '<fonts count="2">'
+            . '<font><sz val="11"/><name val="Arial"/></font>'
+            . '<font><b/><sz val="11"/><name val="Arial"/></font>'
+            . '</fonts>'
+            . '<fills count="2">'
+            . '<fill><patternFill patternType="none"/></fill>'
+            . '<fill><patternFill patternType="solid"><fgColor rgb="FFEFEFEF"/><bgColor indexed="64"/></patternFill></fill>'
+            . '</fills>'
             . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
             . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
             . '<cellXfs count="3">'
@@ -412,82 +721,5 @@ class IncomeController extends Controller
             . '</cellXfs>'
             . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
             . '</styleSheet>';
-    }
-
-    public function print(Request $request)
-    {
-        $validated = $request->validate([
-            'month'          => ['nullable', 'integer', 'between:1,12'],
-            'year'           => ['nullable', 'integer', 'between:2000,2100'],
-            'start_date'     => ['nullable', 'date'],
-            'end_date'       => ['nullable', 'date', 'required_with:start_date', 'after_or_equal:start_date'],
-            'branch_id'      => ['nullable', 'integer', 'exists:branches,id'],
-            'payment_method' => ['nullable', 'string', 'in:cash,qris,transfer,tempo,cash_tempo'],
-        ]);
-
-        $month = (int) ($validated['month'] ?? now()->month);
-        $year = (int) ($validated['year'] ?? now()->year);
-
-        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $startDate = Carbon::parse($validated['start_date'])->startOfDay();
-            $endDate = Carbon::parse($validated['end_date'])->endOfDay();
-            $periodLabel = $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
-        } else {
-            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-            $endDate = $startDate->copy()->endOfMonth();
-            $periodLabel = $startDate->translatedFormat('F Y');
-        }
-
-        $branchId = $validated['branch_id'] ?? null;
-        $paymentMethod = $validated['payment_method'] ?? null;
-
-        $transactions = Transaction::query()
-            ->with(['branch', 'cashier', 'member'])
-            ->whereBetween('tanggal_waktu', [$startDate, $endDate])
-            ->when($branchId, fn ($query) => $query->where('cabang_id', $branchId))
-            ->when($paymentMethod, fn ($query) => $query->where('metode_bayar', $paymentMethod))
-            ->orderBy('tanggal_waktu')
-            ->get();
-
-        $totalIncome = (float) $transactions->sum('total_belanja');
-        $totalTransaction = $transactions->count();
-        $averageTransaction = $totalTransaction > 0 ? $totalIncome / $totalTransaction : 0;
-
-        $outletReports = DB::table('branches')
-            ->leftJoin('transactions', function ($join) use ($startDate, $endDate, $paymentMethod) {
-                $join->on('transactions.cabang_id', '=', 'branches.id')
-                    ->whereBetween('transactions.tanggal_waktu', [$startDate, $endDate]);
-
-                if ($paymentMethod) {
-                    $join->where('transactions.metode_bayar', $paymentMethod);
-                }
-            })
-            ->leftJoin('cash_tempo', 'cash_tempo.transaksi_id', '=', 'transactions.id')
-            ->whereNull('branches.deleted_at')
-            ->when($branchId, fn ($query) => $query->where('branches.id', $branchId))
-            ->select([
-                'branches.nama_cabang',
-                DB::raw('COUNT(transactions.id) as total_transaksi'),
-                DB::raw('COALESCE(SUM(transactions.total_belanja), 0) as total_pendapatan'),
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN transactions.total_belanja - COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE transactions.total_belanja END), 0) as total_diterima"),
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.metode_bayar = 'cash_tempo' THEN COALESCE(cash_tempo.sisa_piutang, transactions.total_belanja) ELSE 0 END), 0) as total_piutang"),
-            ])
-            ->groupBy('branches.id', 'branches.nama_cabang')
-            ->orderByDesc('total_pendapatan')
-            ->orderBy('branches.nama_cabang')
-            ->get();
-
-        return view('owner.income.print', compact(
-            'periodLabel',
-            'startDate',
-            'endDate',
-            'branchId',
-            'paymentMethod',
-            'transactions',
-            'totalIncome',
-            'totalTransaction',
-            'averageTransaction',
-            'outletReports'
-        ));
     }
 }

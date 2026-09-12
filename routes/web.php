@@ -145,7 +145,8 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::get('income/print', [OwnerIncomeController::class, 'print'])->name('income.print');
     Route::get('income/export', [OwnerIncomeController::class, 'export'])->name('income.export');
     Route::get('expense', [OwnerExpenseController::class, 'index'])->name('expense.index');
-
+    Route::get('income/export', [OwnerIncomeController::class, 'export'])->name('income.export');
+    Route::get('income/print', [OwnerIncomeController::class, 'print'])->name('income.print');
     // -- PEGAWAI --
     Route::get('employee', [EmployeeController::class, 'index'])->name('employee.index');
     Route::get('employee/create', [EmployeeController::class, 'create'])->name('employee.create');
