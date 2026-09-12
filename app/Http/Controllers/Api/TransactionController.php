@@ -69,8 +69,8 @@ class TransactionController extends Controller
 
             // Jika metode non-cash, nominal bayar dianggap pas
             $nominalBayarAsli = ! in_array($metodeBayar, ['cash', 'cash_tempo'], true)
-                                ? $totalBelanja
-                                : $nominalBayar;
+                ? $totalBelanja
+                : $nominalBayar;
 
             // 2. Buat Data Transaksi Induk
             $transaction = Transaction::create([
@@ -165,10 +165,9 @@ class TransactionController extends Controller
                 'success' => true,
                 'message' => 'Transaksi berhasil diproses.',
                 'data'    => $transaction,
-                // Berikan link webview receipt ke flutter
-                'receipt_url' => url("kasir/pos/receipt/{$transaction->id}")
+                // Arahkan ke endpoint API yang baru
+                'receipt_url' => url("api/transactions/{$transaction->id}/receipt")
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -218,11 +217,11 @@ class TransactionController extends Controller
             'success' => true,
             'data' => [
                 'stats' => [
-                    'total_pendapatan' => (double) $totalPendapatan,
+                    'total_pendapatan' => (float) $totalPendapatan,
                     'total_transaksi'  => $totalTransaksi,
-                    'tunai'            => (double) $tunai,
-                    'qris_transfer'    => (double) $qrisTransfer,
-                    'tempo'            => (double) $tempo,
+                    'tunai'            => (float) $tunai,
+                    'qris_transfer'    => (float) $qrisTransfer,
+                    'tempo'            => (float) $tempo,
                     'today_date'       => $today->toDateString(),
                 ],
                 'transactions' => $transactions
@@ -253,9 +252,9 @@ class TransactionController extends Controller
         $transaction->member = $transaction->member_id === null
             ? null
             : DB::table('members')
-                ->where('id', $transaction->member_id)
-                ->whereNull('deleted_at')
-                ->first(['id', 'kode_member', 'nama', 'no_telp']);
+            ->where('id', $transaction->member_id)
+            ->whereNull('deleted_at')
+            ->first(['id', 'kode_member', 'nama', 'no_telp']);
 
         $transaction->cash_tempo = DB::table('cash_tempo')->where('transaksi_id', $transaction->id)->first();
         $transaction->shipment = DB::table('shipments')->where('transaksi_id', $transaction->id)->first();
@@ -324,5 +323,25 @@ class TransactionController extends Controller
             'data' => $transaction,
             'receipt_url' => url("kasir/pos/receipt/{$transaction->id}")
         ]);
+    }
+
+    /**
+     * Tampilan Resi HTML untuk Webview Mobile
+     */
+    public function receipt(Request $request, int $trx_id)
+    {
+        // Anda bisa menambahkan proteksi tambahan (opsional)
+        // $kasirId = $request->user()->id;
+
+        $transaction = Transaction::with([
+            'member',
+            'cashier',
+            'branch',
+            'details.variant.product',
+            'cashTempo',
+        ])->findOrFail($trx_id);
+
+        // Mengembalikan HTML langsung, bukan JSON
+        return view('kasir.pos.receipt', compact('transaction'));
     }
 }
