@@ -247,6 +247,7 @@ class TransactionController extends Controller
         $user = $request->user();
         $kasirId = $user ? $user->id : 3;
 
+        // 1. Ambil Data Transaksi Induk
         $transaction = DB::table('transactions')
             ->where('transactions.id', $transactionId)
             ->where('transactions.kasir_id', $kasirId)
@@ -259,6 +260,7 @@ class TransactionController extends Controller
             ], 404);
         }
 
+        // 2. Ambil Relasi Terkait (Member, Cash Tempo, Shipment)
         $transaction->member = $transaction->member_id === null
             ? null
             : DB::table('members')
@@ -269,6 +271,7 @@ class TransactionController extends Controller
         $transaction->cash_tempo = DB::table('cash_tempo')->where('transaksi_id', $transaction->id)->first();
         $transaction->shipment = DB::table('shipments')->where('transaksi_id', $transaction->id)->first();
 
+        // 3. Ambil Detail Transaksi dan Format ke JSON yang Sesuai
         $transaction->details = DB::table('transaction_details')
             ->leftJoin('produk_varian', 'produk_varian.id', '=', 'transaction_details.varian_id')
             ->leftJoin('products', 'products.id', '=', 'produk_varian.produk_id')
@@ -283,6 +286,7 @@ class TransactionController extends Controller
                 'transaction_details.diskon_satuan',
                 'transaction_details.catatan_diskon',
                 'transaction_details.subtotal',
+                'produk_varian.produk_id', // PERBAIKAN: Tambahkan kolom ini agar $item->produk_id terbaca
                 'produk_varian.sku',
                 'produk_varian.nama_varian',
                 'produk_varian.satuan',
@@ -290,8 +294,9 @@ class TransactionController extends Controller
             ])
             ->get()
             ->map(function ($item) {
-                $diskonNominal = (float) ($item->diskon_satuan ?? $item->diskon_item ?? $item->diskon_nominal ?? $item->item_discount ?? 0);
-                $diskonPersen = (float) ($item->diskon_persen ?? $item->diskon_item_persen ?? $item->persen_diskon ?? 0);
+                // Parsing nilai agar tipe datanya konsisten untuk Flutter (double/int)
+                $diskonNominal = (float) ($item->diskon_satuan ?? 0);
+                $diskonPersen = (float) ($item->diskon_persen ?? 0);
                 $qty = (int) ($item->qty ?? 0);
                 $hargaSatuan = (float) ($item->harga_satuan ?? 0);
                 $subtotal = (float) ($item->subtotal ?? max(0, ($hargaSatuan * $qty) - $diskonNominal));
@@ -303,6 +308,7 @@ class TransactionController extends Controller
                     'harga_satuan' => $hargaSatuan,
                     'diskon_persen' => $diskonPersen,
                     'diskon_satuan' => $diskonNominal,
+                    // Alias redundan dipertahankan jika frontend Flutter Anda membutuhkannya
                     'diskon_item' => $diskonNominal,
                     'item_discount' => $diskonNominal,
                     'diskon_item_nominal' => $diskonNominal,
@@ -320,7 +326,7 @@ class TransactionController extends Controller
                         'nama_varian' => $item->nama_varian,
                         'satuan' => $item->satuan,
                         'product' => [
-                            'id' => $item->produk_id ?? null,
+                            'id' => $item->produk_id, // Sekarang ini akan berisi angka ID, bukan null
                             'nama_produk' => $item->nama_produk,
                         ],
                     ],
@@ -331,6 +337,7 @@ class TransactionController extends Controller
         return response()->json([
             'success' => true,
             'data' => $transaction,
+            // URL resi mengarah ke route webview
             'receipt_url' => url("kasir/pos/receipt/{$transaction->id}")
         ]);
     }
@@ -338,7 +345,7 @@ class TransactionController extends Controller
     /**
      * Tampilan Resi HTML untuk Webview Mobile
      */
-    public function receipt(Request $request, int $trx_id)
+    public function printThermal(Request $request, int $trx_id)
     {
         // Anda bisa menambahkan proteksi tambahan (opsional)
         // $kasirId = $request->user()->id;

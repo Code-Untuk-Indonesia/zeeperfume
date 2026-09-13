@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('transactions/history', [TransactionController::class, 'history']); // Menampilkan riwayat hari ini
     Route::get('transactions/{id}', [TransactionController::class, 'show']); // Menampilkan detail transaksi spesifik
     Route::get('transactions/{id}/print-receipt', [TransactionController::class, 'printReceipt']); // Data JSON untuk cetak struk
+    Route::get('transactions/{id}/print-thermal', [TransactionController::class, 'printThermal']); // Data webview untuk cetak struk thermal
 
     // Endpoint Member
     Route::post('members/search', [TransactionController::class, 'searchMember']); // Mencari member berdasarkan no HP
