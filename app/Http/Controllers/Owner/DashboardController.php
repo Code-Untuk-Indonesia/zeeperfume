@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\BranchStock;
+use App\Models\Expense;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Carbon\Carbon;
@@ -50,13 +51,13 @@ class DashboardController extends Controller
         }
 
         // Query Dasar Transaksi dengan Filter Waktu
-        $trxQuery = Transaction::with(['cashTempo', 'details.variant.product', 'branch', 'member', 'kasir'])
+        $trxQuery = Transaction::with(['cashTempo', 'details.variant.product', 'branch', 'member', 'cashier'])
             ->when($startDate, fn($q) => $q->whereBetween('tanggal_waktu', [$startDate, $endDate]))
             ->when(!$startDate, fn($q) => $q->where('tanggal_waktu', '<=', $endDate));
 
         $allTransactions = $trxQuery->get();
 
-        // 2. Kalkulasi Kas & Piutang
+        // 2. Kalkulasi Kas, Piutang & Profit (Laba)
         $totalOmzet = $allTransactions->sum('total_belanja');
         $totalPiutang = 0;
 
@@ -73,6 +74,20 @@ class DashboardController extends Controller
         $kasDiterima = $totalOmzet - $totalPiutang;
         $totalTransactions = $allTransactions->count();
 
+        // Hitung HPP (Modal Barang Terjual)
+        $totalHpp = $allTransactions->sum(function ($trx) {
+            return $trx->details->sum(fn($d) => ($d->variant->harga_modal ?? 0) * $d->qty);
+        });
+
+        // Hitung Pengeluaran Operasional / Beban
+        $expenseQuery = Expense::when($startDate, fn($q) => $q->whereBetween('tanggal_pengeluaran', [$startDate, $endDate]))
+            ->when(!$startDate, fn($q) => $q->where('tanggal_pengeluaran', '<=', $endDate));
+        $totalBebanOp = $expenseQuery->sum('nominal');
+
+        $labaKotor = $totalOmzet - $totalHpp;
+        $labaBersih = $labaKotor - $totalBebanOp;
+        $marginPercentage = $totalOmzet > 0 ? round(($labaBersih / $totalOmzet) * 100, 1) : 0;
+
         // 3. Metrik Lainnya & Aset Modal
         $paymentMethods = $allTransactions->groupBy('metode_bayar')->map(function ($group) {
             return (object) [
@@ -87,7 +102,7 @@ class DashboardController extends Controller
 
         $recentTransactions = $allTransactions->sortByDesc('tanggal_waktu')->take(5);
 
-        // ASET MODAL (Tidak terpengaruh filter waktu, karena ini sisa stok di gudang riil saat ini)
+        // ASET MODAL (Stok gudang riil saat ini)
         $totalAsetModal = BranchStock::with('variant')->get()->sum(function ($stock) {
             return $stock->stok * ($stock->variant->harga_modal ?? 0);
         });
@@ -98,7 +113,6 @@ class DashboardController extends Controller
         $chartHpp = [];
 
         if ($startDate === null || $startDate->diffInDays($endDate) > 31) {
-            // GRAFIK BULANAN (Untuk "Keseluruhan" atau "Tahun Ini")
             $monthsGroup = $allTransactions->groupBy(fn($t) => Carbon::parse($t->tanggal_waktu)->format('Y-m'))->sortKeys();
             foreach ($monthsGroup as $ym => $monthlyTrx) {
                 $chartLabels[] = Carbon::createFromFormat('Y-m', $ym)->translatedFormat('M Y');
@@ -108,7 +122,6 @@ class DashboardController extends Controller
                 });
             }
         } elseif ($startDate->diffInDays($endDate) == 0) {
-            // GRAFIK JAM (Untuk "Hari Ini") - Jam buka toko asumsikan 08:00 - 22:00
             for ($i = 8; $i <= 22; $i++) {
                 $chartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT) . ':00';
                 $hourlyTrx = $allTransactions->filter(fn($t) => (int) Carbon::parse($t->tanggal_waktu)->format('H') === $i);
@@ -119,7 +132,6 @@ class DashboardController extends Controller
                 });
             }
         } else {
-            // GRAFIK HARIAN (Untuk "Minggu Ini", "Bulan Ini", atau Custom <= 31 Hari)
             for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
                 $chartLabels[] = $date->format('d M');
                 $dailyTrx = $allTransactions->filter(fn($t) => Carbon::parse($t->tanggal_waktu)->format('Y-m-d') === $date->format('Y-m-d'));
@@ -131,7 +143,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Fallback jika tidak ada data
         if (empty($chartLabels)) {
             $chartLabels[] = now()->translatedFormat('d M Y');
             $chartOmzet[] = 0;
@@ -166,11 +177,11 @@ class DashboardController extends Controller
         $data = compact(
             'period', 'periodLabel',
             'kasDiterima', 'totalPiutang', 'totalTransactions', 'totalAsetModal',
+            'labaKotor', 'labaBersih', 'totalBebanOp', 'marginPercentage',
             'paymentMethods', 'lowStocks', 'recentTransactions',
             'chartData', 'topProducts', 'branchIncomes'
         );
 
-        // Jika Request dari AJAX, Return JSON HTML
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('owner.dashboard', $data)->renderSections()['content'],

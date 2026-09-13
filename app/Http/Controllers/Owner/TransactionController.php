@@ -219,4 +219,16 @@ class TransactionController extends Controller
 
         return back()->with('success', 'Pengajuan berhasil ditolak.');
     }
+    public function show($id)
+    {
+        $transaction = Transaction::with([
+            'cashier',
+            'branch',
+            'member',
+            'details.variant.product', // Ensure product details are loaded
+            'cashTempo'
+        ])->findOrFail($id);
+
+        return view('owner.transaction.detail', compact('transaction'));
+    }
 }
