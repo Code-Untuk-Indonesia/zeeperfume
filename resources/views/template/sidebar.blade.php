@@ -9,11 +9,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS System - @yield('title', 'Dashboard')</title>
+
+    <!-- Mengganti Logo (Favicon) Website dari Laravel ke ZeePerfume -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('asset/zeeperfume_logo.svg') }}">
+    <link rel="shortcut icon" href="{{ asset('asset/zeeperfume_logo.svg') }}">
+
+    <title>ZeePerfume - @yield('title', 'Dashboard')</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -32,7 +43,7 @@
         @media (min-width: 1024px) {
             body.sidebar-layout {
                 display: grid;
-                grid-template-columns: 260px minmax(0, 1fr);
+                grid-template-columns: 270px minmax(0, 1fr);
                 transition: grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1);
                 will-change: grid-template-columns;
             }
@@ -43,7 +54,6 @@
                 flex-basis: auto !important;
             }
 
-            /* Saat Disembunyikan (Hidden) */
             html.sidebar-hidden body.sidebar-layout {
                 grid-template-columns: 0 minmax(0, 1fr);
             }
@@ -56,7 +66,6 @@
                 overflow: hidden;
             }
 
-            /* Tampilkan Hamburger di Kiri Atas Konten saat Sidebar Disembunyikan */
             html.sidebar-hidden #sidebar-open-button {
                 display: flex !important;
                 pointer-events: auto;
@@ -73,37 +82,29 @@
 
         @media (max-width: 1023px) {
             #sidebar {
-                width: min(260px, calc(100vw - 2rem));
-                padding-left: max(1.25rem, env(safe-area-inset-left));
-                padding-right: max(1.25rem, env(safe-area-inset-right));
+                width: min(280px, calc(100vw - 2rem));
             }
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        /* Custom Scrollbar untuk Menu Sidebar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
         }
 
-        ::-webkit-scrollbar-track {
+        .custom-scroll::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #374151;
             border-radius: 10px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #d1d5db;
-        }
-
-        details>summary {
-            list-style: none;
-        }
-
-        details>summary::-webkit-details-marker {
-            display: none;
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #4B5563;
         }
     </style>
+
     @if ($canToggleDesktopSidebar)
         <script>
             (() => {
@@ -118,24 +119,20 @@
 </head>
 
 <body
-    class="flex flex-col lg:flex-row {{ $canToggleDesktopSidebar ? 'sidebar-layout' : '' }} bg-gray-50 h-screen w-screen text-gray-800 antialiased overflow-hidden relative">
+    class="flex flex-col lg:flex-row {{ $canToggleDesktopSidebar ? 'sidebar-layout' : '' }} bg-[#FAFAFA] h-screen w-screen text-gray-800 antialiased overflow-hidden relative selection:bg-[#CC9863] selection:text-white">
 
-    <!-- ==============================================
-         OVERLAY BACKDROP (MOBILE ONLY)
-         ============================================== -->
+    <!-- OVERLAY BACKDROP (MOBILE ONLY) -->
     <div id="sidebar-backdrop"
-        class="fixed inset-0 bg-gray-900/60 z-40 hidden lg:hidden transition-opacity duration-300 opacity-0"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300 opacity-0"
         onclick="toggleSidebar()"></div>
 
-    <!-- ==============================================
-         TOMBOL TAMPILKAN SIDEBAR (Desktop - Saat Hidden)
-         Menggunakan Ikon Hamburger di kiri atas
-         ============================================== -->
+    <!-- TOMBOL TAMPILKAN SIDEBAR (Desktop - Saat Hidden) -->
     @if ($canToggleDesktopSidebar)
         <button id="sidebar-open-button" type="button" onclick="toggleDesktopSidebar()"
-            class="fixed left-4 top-4 z-[60] h-11 w-11 items-center justify-center rounded-xl bg-white text-gray-800 shadow-sm border border-gray-200 transition hover:bg-gray-100 hover:text-[#CC9863] focus:outline-none hidden lg:hidden"
+            class="fixed left-5 top-5 z-[60] h-11 w-11 items-center justify-center rounded-xl bg-white text-gray-800 shadow-md border border-gray-100 transition hover:bg-gray-50 hover:text-[#CC9863] focus:outline-none hidden lg:hidden group"
             aria-label="Tampilkan menu samping" title="Tampilkan Menu">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
                 </path>
             </svg>
@@ -146,307 +143,292 @@
          SIDEBAR (MAIN CONTAINER)
          ============================================== -->
     <aside id="sidebar"
-        class="sidebar-shell fixed inset-y-0 left-0 z-50 w-[260px] bg-[#1C1D21] text-gray-400 flex flex-col justify-between py-6 lg:py-8 px-5 h-full overflow-y-auto transform -translate-x-full lg:relative lg:translate-x-0 shrink-0 shadow-2xl lg:shadow-none"
+        class="sidebar-shell fixed inset-y-0 left-0 z-50 w-[270px] bg-[#141518] text-gray-400 flex flex-col h-full transform -translate-x-full lg:relative lg:translate-x-0 shrink-0 shadow-2xl lg:shadow-none"
         aria-label="Menu utama">
 
-        <div class="flex-1 flex flex-col">
+        <!-- HEADER SIDEBAR: Logo & Brand (Sticky Top) -->
+        <div
+            class="shrink-0 relative flex flex-col items-center justify-center pt-6 lg:pt-8 mb-6 pb-6 border-b border-white/10 px-4">
 
-            <!-- HEADER SIDEBAR: Logo, Text, & Tombol Hamburger -->
-            <div
-                class="relative flex flex-col items-center justify-center mb-8 pb-6 border-b border-gray-800/80 w-full pt-2">
-
-                <!-- Tombol Sembunyikan Desktop (Ikon Hamburger) -->
-                @if ($canToggleDesktopSidebar)
-                    <button id="desktop-sidebar-toggle" type="button" onclick="toggleDesktopSidebar()"
-                        class="absolute right-0 top-0 hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition focus:outline-none"
-                        title="Sembunyikan Menu">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                @endif
-
-                <!-- Tombol Tutup Mobile (X) -->
-                <button id="mobile-sidebar-close" type="button" onclick="toggleSidebar()"
-                    class="absolute right-0 top-0 lg:hidden h-9 w-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
+            @if ($canToggleDesktopSidebar)
+                <button id="desktop-sidebar-toggle" type="button" onclick="toggleDesktopSidebar()"
+                    class="absolute right-3 top-4 hidden lg:flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-white/10 hover:text-white transition focus:outline-none"
+                    title="Sembunyikan Menu">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
+            @endif
 
-                <!-- Logo & Brand Name (Center Vertikal) -->
-                <div class="flex flex-col items-center gap-3 mt-4">
-                    <div
-                        class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center p-2 shadow-inner border border-white/5">
-                        <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo"
-                            class="w-full h-full object-contain">
-                    </div>
-                    <span class="text-xl font-black text-white tracking-wide">
-                        Zee<span class="text-[#CC9863]">Perfume</span>
-                    </span>
+            <button id="mobile-sidebar-close" type="button" onclick="toggleSidebar()"
+                class="absolute right-3 top-4 lg:hidden h-8 w-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-white/10 hover:text-white transition focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+
+            <!-- Logo & Brand Name -->
+            <div class="flex flex-col items-center gap-3 mt-2">
+                <div
+                    class="w-14 h-14 bg-gradient-to-b from-white/10 to-white/5 rounded-2xl flex items-center justify-center p-2.5 shadow-inner border border-white/10">
+                    <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="ZeePerfume"
+                        class="w-full h-full object-contain">
                 </div>
-
+                <span class="text-xl font-black text-white tracking-wide">
+                    Zee<span class="text-[#CC9863]">Perfume</span>
+                </span>
             </div>
+        </div>
 
-            <!-- MENU NAVIGASI -->
-            <nav class="space-y-1.5 flex-1">
+        <!-- MENU NAVIGASI (Scrollable Middle) -->
+        <nav class="flex-1 overflow-y-auto custom-scroll px-4 pb-4 space-y-1">
 
-                <!-- ================= MENU OWNER ================= -->
-                @if ($currentRole === 'owner')
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3">Menu Utama</p>
-
-                    <a href="{{ url('owner/dashboard') }}"
-                        class="{{ request()->is('owner/dashboard') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                            </path>
-                        </svg>
-                        Dashboard
-                    </a>
-
-                    <a href="{{ url('owner/transaction') }}"
-                        class="{{ request()->is('owner/transaction*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                        Riwayat & Approval
-                    </a>
-
-                    <!-- GRUP KEUANGAN (OWNER) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-3">Keuangan</p>
-
-                    <a href="{{ route('owner.income.index') }}"
-                        class="{{ request()->routeIs('owner.income.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                        Laporan Pendapatan
-                    </a>
-
-                    <a href="{{ route('owner.expense.index') }}"
-                        class="{{ request()->routeIs('owner.expense.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z">
-                            </path>
-                        </svg>
-                        Beban Pengeluaran
-                    </a>
-
-                    <a href="{{ url('owner/finance') }}"
-                        class="{{ request()->routeIs('owner.finance.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                            </path>
-                        </svg>
-                        Analytics Finance
-                    </a>
-
-                    <!-- GRUP DATA MASTER (OWNER) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-2">Data Master
-                    </p>
-                    <details class="group"
-                        {{ request()->is('owner/employee*') || request()->is('owner/member*') || request()->is('owner/outlet*') || request()->is('owner/stock*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('owner/employee*') || request()->is('owner/member*') || request()->is('owner/outlet*') || request()->is('owner/stock*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Data Master</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-2 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ url('owner/stock') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('owner.stock.index', 'owner.stock.create', 'owner.stock.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Stok
-                                Barang</a>
-                            <a href="{{ route('owner.stock.history') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('owner.stock.history') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat
-                                Stok</a>
-                            <a href="{{ url('owner/employee') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/employee*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Manajemen
-                                Pegawai</a>
-                            <a href="{{ url('owner/member') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/member*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Member</a>
-                            <a href="{{ url('owner/outlet') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('owner/outlet*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Outlet</a>
-                        </div>
-                    </details>
-                @endif
-
-                <!-- ================= MENU ADMIN ================= -->
-                @if ($currentRole === 'admin')
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Utama
-                    </p>
-
-                    <a href="{{ url('admin/dashboard') }}"
-                        class="{{ request()->is('admin/dashboard') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                            </path>
-                        </svg>
-                        Dashboard
-                    </a>
-
-                    <!-- GRUP TRANSAKSI (ADMIN) -->
-                    <details class="group mt-2" {{ request()->is('admin/transaction*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/transaction*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Transaksi</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-2 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ route('admin.transaction.online') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.transaction.online') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Pesanan
-                                Online</a>
-                            <a href="{{ route('admin.transaction.index') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.transaction.index') || request()->routeIs('admin.transaction.show') || request()->routeIs('admin.transaction.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat
-                                Transaksi</a>
-                        </div>
-                    </details>
-
-                    <!-- GRUP KEUANGAN (ADMIN) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-3">Keuangan</p>
-                    <a href="{{ route('admin.expense.index') }}"
-                        class="{{ request()->routeIs('admin.expense.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                            </path>
-                        </svg>
-                        Beban Pengeluaran
-                    </a>
-
-                    <!-- GRUP DATA MASTER (ADMIN) -->
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mt-5 mb-2">Data Master
-                    </p>
-                    <details class="group"
-                        {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'open' : '' }}>
-                        <summary
-                            class="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-colors {{ request()->is('admin/stock*') || request()->is('admin/member*') ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                    </path>
-                                </svg>
-                                <span class="font-medium text-sm">Data Master</span>
-                            </div>
-                            <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </summary>
-                        <div class="mt-2 space-y-1 pl-11 pr-2 pb-2">
-                            <a href="{{ url('admin/stock') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.stock.index', 'admin.stock.create', 'admin.stock.edit') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Stok</a>
-                            <a href="{{ route('admin.stock.history') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->routeIs('admin.stock.history') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Riwayat
-                                Stok</a>
-                            <a href="{{ url('admin/member') }}"
-                                class="block py-2 text-sm transition-colors {{ request()->is('admin/member*') ? 'text-[#CC9863] font-bold' : 'text-gray-500 hover:text-gray-300' }}">Kelola
-                                Member</a>
-                        </div>
-                    </details>
-                @endif
-
-                <!-- ================= MENU KASIR ================= -->
-                @if ($currentRole === 'kasir')
-                    <p class="px-3 text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-3 mt-4">Menu Kasir
-                    </p>
-
-                    <a href="{{ url('kasir/pos') }}"
-                        class="{{ request()->is('kasir/pos') ? 'bg-[#CC9863] text-white shadow-md' : 'text-[#CC9863] hover:bg-gray-800 border border-dashed border-[#CC9863]/50' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                        Buka Layar Kasir (POS)
-                    </a>
-                    <a href="{{ url('kasir/transaction') }}"
-                        class="{{ request()->is('kasir/transaction*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }} flex items-center gap-3 px-3 py-3 rounded-xl transition-colors mt-2 text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                            </path>
-                        </svg>
-                        Riwayat Transaksi
-                    </a>
-                @endif
-            </nav>
-
-            <!-- FOOTER SIDEBAR (Profil & Logout) -->
-            <div class="mt-8 border-t border-gray-800/80 pt-6">
-                <a href="{{ route('profile.edit') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm font-medium {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white' : 'hover:bg-gray-800 text-gray-300' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- ================= MENU OWNER ================= -->
+            @if ($currentRole === 'owner')
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-2">Tinjauan
+                </p>
+                <a href="{{ route('owner.dashboard') }}"
+                    class="{{ request()->routeIs('owner.dashboard') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
                     </svg>
-                    Profil Pengguna
+                    Dashboard
+                </a>
+                <a href="{{ route('owner.finance.index') }}"
+                    class="{{ request()->routeIs('owner.finance.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    Analytics Finance
                 </a>
 
-                <div
-                    class="flex items-center justify-between gap-3 p-3 mt-3 bg-gray-800/30 rounded-2xl border border-gray-700/50">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div
-                            class="w-10 h-10 rounded-full border-2 border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-white shadow-inner shrink-0">
-                            {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
-                        </div>
-                        <div class="overflow-hidden">
-                            <p class="truncate text-sm font-bold text-white">
-                                {{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}</p>
-                            <p class="text-[10px] uppercase font-extrabold tracking-wider text-[#CC9863]">
-                                {{ $currentRole }}</p>
-                        </div>
-                    </div>
-                    <form method="POST" action="{{ route('logout') }}" class="shrink-0">
-                        @csrf
-                        <button type="submit"
-                            class="flex w-10 h-10 items-center justify-center rounded-xl text-red-400/80 transition hover:bg-red-500/10 hover:text-red-400 focus:outline-none"
-                            title="Keluar dari Akun">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                                </path>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Transaksi
+                    & Keuangan</p>
+                <a href="{{ route('owner.transaction.index') }}"
+                    class="{{ request()->routeIs('owner.transaction.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Riwayat Transaksi
+                </a>
+                <a href="{{ route('owner.income.index') }}"
+                    class="{{ request()->routeIs('owner.income.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Laporan Pendapatan
+                </a>
+                <a href="{{ route('owner.expense.index') }}"
+                    class="{{ request()->routeIs('owner.expense.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z">
+                        </path>
+                    </svg>
+                    Kelola Pengeluaran
+                </a>
 
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Inventori
+                    Stok</p>
+                <a href="{{ route('owner.stock.index') }}"
+                    class="{{ request()->routeIs('owner.stock.index', 'owner.stock.create', 'owner.stock.edit') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Kelola Stok
+                </a>
+                <a href="{{ route('owner.stock.history') }}"
+                    class="{{ request()->routeIs('owner.stock.history') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Riwayat Stok
+                </a>
+
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Data
+                    Master</p>
+                <a href="{{ route('owner.employee.index') }}"
+                    class="{{ request()->routeIs('owner.employee.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    Kelola Pegawai
+                </a>
+                <a href="{{ route('owner.outlet.index') }}"
+                    class="{{ request()->routeIs('owner.outlet.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                    Kelola Outlet
+                </a>
+                <a href="{{ route('owner.member.index') }}"
+                    class="{{ request()->routeIs('owner.member.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                    Kelola Member
+                </a>
+            @endif
+
+            <!-- ================= MENU ADMIN ================= -->
+            @if ($currentRole === 'admin')
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-2">Tinjauan
+                </p>
+                <a href="{{ route('admin.dashboard') }}"
+                    class="{{ request()->routeIs('admin.dashboard') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Transaksi
+                    & Keuangan</p>
+                <a href="{{ route('admin.transaction.online') }}"
+                    class="{{ request()->routeIs('admin.transaction.online') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                    Pesanan Online
+                </a>
+                <a href="{{ route('admin.transaction.index') }}"
+                    class="{{ request()->routeIs('admin.transaction.index', 'admin.transaction.show', 'admin.transaction.edit') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Riwayat Transaksi
+                </a>
+                <a href="{{ route('admin.expense.index') }}"
+                    class="{{ request()->routeIs('admin.expense.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z">
+                        </path>
+                    </svg>
+                    Kelola Pengeluaran
+                </a>
+
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Inventori
+                    Stok</p>
+                <a href="{{ route('admin.stock.index') }}"
+                    class="{{ request()->routeIs('admin.stock.index', 'admin.stock.create', 'admin.stock.edit') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Kelola Stok
+                </a>
+                <a href="{{ route('admin.stock.history') }}"
+                    class="{{ request()->routeIs('admin.stock.history') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Riwayat Stok
+                </a>
+
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-6">Data
+                    Master</p>
+                <a href="{{ route('admin.member.index') }}"
+                    class="{{ request()->routeIs('admin.member.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                    Kelola Member
+                </a>
+            @endif
+
+            <!-- ================= MENU KASIR ================= -->
+            @if ($currentRole === 'kasir')
+                <p class="px-3 text-[10px] font-extrabold tracking-[0.2em] text-gray-500 uppercase mb-2 mt-2">Menu
+                    Kasir</p>
+                <a href="{{ route('kasir.pos') }}"
+                    class="{{ request()->routeIs('kasir.pos') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    Buka Layar Kasir
+                </a>
+                <a href="{{ route('kasir.transaction.index') }}"
+                    class="{{ request()->routeIs('kasir.transaction.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }} flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mt-2 text-[13px] font-semibold">
+                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Riwayat Transaksi
+                </a>
+            @endif
+        </nav>
+
+        <!-- FOOTER SIDEBAR: Profil & Logout (Sticky Bottom) -->
+        <div class="shrink-0 mt-2 border-t border-white/10 px-4 py-5 bg-[#141518]">
+            <a href="{{ route('profile.edit') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-[13px] font-semibold {{ request()->routeIs('profile.*') ? 'bg-[#CC9863] text-white shadow-md shadow-[#CC9863]/20' : 'hover:bg-white/5 text-gray-300' }}">
+                <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Pengaturan Akun
+            </a>
+
+            <div class="flex items-center justify-between gap-3 p-3 mt-3 bg-black/20 rounded-xl border border-white/5">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div
+                        class="w-9 h-9 rounded-full border border-[#CC9863] bg-[#1C1D21] flex items-center justify-center text-sm font-bold text-[#CC9863] shadow-inner shrink-0">
+                        {{ auth()->check() ? mb_strtoupper(mb_substr(auth()->user()->nama_lengkap, 0, 1)) : 'U' }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="truncate text-[13px] font-bold text-white leading-tight">
+                            {{ auth()->check() ? auth()->user()->nama_lengkap : 'Guest' }}
+                        </p>
+                        <p class="text-[9px] uppercase font-extrabold tracking-widest text-gray-500 mt-0.5">
+                            {{ $currentRole }}
+                        </p>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-500/10 hover:text-red-400 focus:outline-none"
+                        title="Keluar dari Akun">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
         </div>
+
     </aside>
 
     <!-- ==============================================
@@ -456,20 +438,20 @@
 
         <!-- Mobile Header (Hamburger Menu - Mobile Only) -->
         <header
-            class="lg:hidden flex items-center justify-between p-4 bg-[#1C1D21] text-white shrink-0 shadow-sm relative z-20">
+            class="lg:hidden flex items-center justify-between p-4 bg-[#141518] text-white shrink-0 shadow-sm relative z-20">
             <div class="flex items-center gap-3">
                 <button id="mobile-sidebar-open" type="button" onclick="toggleSidebar()"
-                    class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gray-800 text-white transition hover:text-[#CC9863] focus:outline-none focus:ring-2 focus:ring-[#CC9863]"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-gray-300 transition hover:text-[#CC9863] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#CC9863]"
                     aria-label="Buka menu samping">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
-                <div class="flex items-center gap-2 font-bold text-xl">
+                <div class="flex items-center gap-2 font-bold text-lg tracking-wide">
                     <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo"
                         class="w-6 h-6 object-contain">
-                    <span class="text-[#CC9863]">ZeePerfume</span>
+                    <span class="text-white">Zee<span class="text-[#CC9863]">Perfume</span></span>
                 </div>
             </div>
         </header>
@@ -504,7 +486,6 @@
             if (desktopToggle) desktopToggle.setAttribute('aria-expanded', String(!desktopHidden));
             if (desktopOpen) {
                 desktopOpen.setAttribute('aria-expanded', String(!desktopHidden));
-                // Tombol muncul HANYA saat desktop dan sidebar di-hide
                 if (isDesktop && desktopHidden) {
                     desktopOpen.classList.remove('hidden');
                     desktopOpen.classList.add('flex');

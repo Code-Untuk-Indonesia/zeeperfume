@@ -193,6 +193,8 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::get('transaction/export', [OwnerTransactionController::class, 'export'])->name('transaction.export');
     Route::post('transaction/approve/{id}', [OwnerTransactionController::class, 'approve'])->name('transaction.approve');
     Route::post('transaction/reject/{id}', [OwnerTransactionController::class, 'reject'])->name('transaction.reject');
+    // Tambahkan ini di bagian -- TRANSAKSI & LAPORAN -- (Owner Routes)
+    Route::get('transaction/{id}/detail', [OwnerTransactionController::class, 'show'])->name('transaction.show');
 });
 Route::get('/perbaiki-storage', function () {
     // Target: Tempat foto aslinya berada (storage/app/public)
