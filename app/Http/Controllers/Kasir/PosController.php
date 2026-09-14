@@ -66,7 +66,7 @@ class PosController extends Controller
             'cart'          => 'required|array',
             'metode_bayar'  => ['required', Rule::in(['cash', 'qris', 'transfer', 'cash_tempo'])],
             'nominal_bayar' => 'required|numeric|min:0',
-            'subtotal'      => 'required|numeric', // Subtotal dasar (sebelum diskon global)
+            'subtotal'      => 'required|numeric', // Subtotal kotor sebelum diskon produk dan diskon tambahan
             'discount'      => 'required|numeric', // Diskon global / tambahan
             'total'         => 'required|numeric', // Total akhir
             'member_id'     => [
@@ -123,7 +123,7 @@ class PosController extends Controller
                 'member_id'        => $validated['member_id'] ?? null,
                 'nomor_nota'       => $nomorNota,
                 'tanggal_waktu'    => $waktu,
-                'subtotal'         => $validated['subtotal'], // Subtotal sebelum diskon global
+                'subtotal'         => $validated['subtotal'], // Subtotal kotor sebelum diskon produk dan diskon tambahan
                 'diskon_persen'    => $validated['diskon_persen'] ?? 0,
                 'diskon_nominal'   => $validated['discount'], // Total diskon tambahan / poin
                 'deskripsi_diskon' => ($validated['is_point_used'] ?? false) ? 'Tukar Poin Member' : ($validated['discount'] > 0 ? 'Diskon Manual/Persen' : null),

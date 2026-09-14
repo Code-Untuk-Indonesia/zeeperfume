@@ -471,6 +471,7 @@
         let activeCategory = 'all';
         let memberId = null;
         let memberPoints = 0;
+        let currentBaseSubtotal = 0;
         let currentSubtotal = 0;
         let currentDiscount = 0;
         let currentTotal = 0;
@@ -666,6 +667,7 @@
                 totalItemDiscount += lineDisc;
             });
 
+            currentBaseSubtotal = baseSubtotal;
             currentSubtotal = baseSubtotal - totalItemDiscount;
             currentDiscount = 0;
             usedPointsAmount = 0;
@@ -1120,7 +1122,7 @@
                 cart: cart,
                 metode_bayar: method,
                 nominal_bayar: paid,
-                subtotal: currentSubtotal,
+                subtotal: currentBaseSubtotal,
                 discount: currentDiscount,
                 total: currentTotal,
                 member_id: memberId,

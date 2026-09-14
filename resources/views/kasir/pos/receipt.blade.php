@@ -74,33 +74,68 @@
 
         <div class="divider"></div>
 
+        @php
+            $receiptItems = $transaction->details ?? collect();
+            $hasReceiptItems = $receiptItems->isNotEmpty();
+            $receiptSubtotal = 0;
+            $productDiscountTotal = 0;
+
+            foreach ($receiptItems as $receiptItem) {
+                $lineGross = max(0, round((float) ($receiptItem->harga_satuan ?? 0) * (float) ($receiptItem->qty ?? 0), 2));
+                $lineNet = min($lineGross, max(0, (float) ($receiptItem->subtotal ?? $lineGross)));
+                $receiptSubtotal += $lineGross;
+                $productDiscountTotal += max(0, round($lineGross - $lineNet, 2));
+            }
+
+            if (! $hasReceiptItems) {
+                $receiptSubtotal = max(0, (float) ($transaction->subtotal ?? 0));
+            }
+
+            $additionalDiscount = max(0, (float) ($transaction->diskon_nominal ?? 0));
+            $discountPercent = max(0, (float) ($transaction->diskon_persen ?? 0));
+            $discountDescription = strtolower(trim((string) ($transaction->deskripsi_diskon ?? '')));
+            $additionalDiscountLabel = $discountDescription === 'tukar poin member'
+                ? 'Potongan poin member'
+                : ($discountPercent > 0 && in_array($discountDescription, ['', 'diskon manual/persen'], true)
+                    ? 'Diskon tambahan (' . rtrim(rtrim(number_format($discountPercent, 2, '.', ''), '0'), '.') . '%)'
+                    : 'Diskon tambahan');
+        @endphp
+
         <!-- DAFTAR BARANG -->
         <div class="mb-2">
-            @if(isset($transaction->details))
-                @foreach($transaction->details as $item)
+            @if($hasReceiptItems)
+                @foreach($receiptItems as $item)
                     @php
-                        $itemDiscount = (float) ($item->diskon_satuan ?? 0);
-                        $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+                        $itemGross = max(0, round((float) ($item->harga_satuan ?? 0) * (float) ($item->qty ?? 0), 2));
+                        $itemSubtotal = min($itemGross, max(0, (float) ($item->subtotal ?? $itemGross)));
+                        $itemDiscount = max(0, round($itemGross - $itemSubtotal, 2));
+                        $itemDiscountPercent = max(0, (float) ($item->diskon_persen ?? 0));
                         $itemDiscountLabel = trim((string) ($item->catatan_diskon ?? ''));
+                        if ($itemDiscountLabel === '' || strtolower($itemDiscountLabel) === 'diskon item') {
+                            $itemDiscountLabel = 'Diskon produk';
+                        }
                     @endphp
                     <div class="mb-1">
                         <div class="font-bold">{{ $item->variant->product->nama_produk ?? 'Produk' }} - {{ $item->variant->nama_varian ?? 'Item' }}</div>
                         <div class="flex-between">
                             <span>{{ $item->qty }} x {{ number_format($item->harga_satuan, 0, ',', '.') }}</span>
-                            <span>{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                            <span>{{ number_format($itemGross, 0, ',', '.') }}</span>
                         </div>
                         @if($itemDiscount > 0)
+                        <div style="color: #b91c1c; font-size: 10px;">
+                            <span>{{ $itemDiscountLabel }}{{ $itemDiscountPercent > 0 ? ' ('.rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.').'%)' : '' }}</span>
+                        </div>
                         <div class="flex-between" style="font-size: 10px;">
-                            <span>{{ $itemDiscountLabel !== '' ? $itemDiscountLabel : 'Diskon item' }}{{ $itemDiscountPercent > 0 ? ' ('.rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.').'%)' : '' }}</span>
-                            <span>-{{ number_format($itemDiscount, 0, ',', '.') }}</span>
+                            <span>Setelah diskon</span>
+                            <span>{{ number_format($itemSubtotal, 0, ',', '.') }}</span>
                         </div>
                         @endif
                     </div>
                 @endforeach
             @else
                 <div class="flex-between">
-                    <span>Total Item Belanja</span>
-                    <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
+                    <span>Subtotal tercatat</span>
+                    <span>{{ number_format($receiptSubtotal, 0, ',', '.') }}</span>
                 </div>
             @endif
         </div>
@@ -109,18 +144,26 @@
 
         <!-- TOTAL -->
         <div>
-            <div class="flex-between">
-                <span>Subtotal</span>
-                <span>{{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
-            </div>
-            @if($transaction->diskon_nominal > 0)
-            <div class="flex-between" style="font-size: 10px;">
-                <span>Diskon{{ $transaction->deskripsi_diskon ? ' ('.$transaction->deskripsi_diskon.')' : '' }}</span>
-                <span>-{{ number_format($transaction->diskon_nominal, 0, ',', '.') }}</span>
-            </div>
+            @if($hasReceiptItems)
+                <div class="flex-between">
+                    <span>Subtotal</span>
+                    <span>{{ number_format($receiptSubtotal, 0, ',', '.') }}</span>
+                </div>
+            @endif
+            @if($hasReceiptItems && $productDiscountTotal > 0)
+                <div class="flex-between" style="color: #b91c1c;">
+                    <span>Total diskon produk</span>
+                    <span>-{{ number_format($productDiscountTotal, 0, ',', '.') }}</span>
+                </div>
+            @endif
+            @if($additionalDiscount > 0)
+                <div class="flex-between" style="color: #b91c1c;">
+                    <span>{{ $additionalDiscountLabel }}</span>
+                    <span>-{{ number_format($additionalDiscount, 0, ',', '.') }}</span>
+                </div>
             @endif
             <div class="flex-between font-bold mt-2" style="font-size: 14px;">
-                <span>TOTAL</span>
+                <span>TOTAL BAYAR</span>
                 <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
             </div>
         </div>

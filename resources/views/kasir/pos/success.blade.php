@@ -201,14 +201,46 @@
             <p style="margin: 2px 0;">Plgn : {{ $transaction->member->nama ?? 'Umum' }}</p>
         </div>
 
+        @php
+            $receiptItems = $transaction->details ?? collect();
+            $hasReceiptItems = $receiptItems->isNotEmpty();
+            $receiptSubtotal = 0;
+            $productDiscountTotal = 0;
+
+            foreach ($receiptItems as $receiptItem) {
+                $lineGross = max(0, round((float) ($receiptItem->harga_satuan ?? 0) * (float) ($receiptItem->qty ?? 0), 2));
+                $lineNet = min($lineGross, max(0, (float) ($receiptItem->subtotal ?? $lineGross)));
+                $receiptSubtotal += $lineGross;
+                $productDiscountTotal += max(0, round($lineGross - $lineNet, 2));
+            }
+
+            if (! $hasReceiptItems) {
+                $receiptSubtotal = max(0, (float) ($transaction->subtotal ?? 0));
+            }
+
+            $additionalDiscount = max(0, (float) ($transaction->diskon_nominal ?? 0));
+            $discountPercent = max(0, (float) ($transaction->diskon_persen ?? 0));
+            $discountDescription = strtolower(trim((string) ($transaction->deskripsi_diskon ?? '')));
+            $additionalDiscountLabel = $discountDescription === 'tukar poin member'
+                ? 'Potongan poin member'
+                : ($discountPercent > 0 && in_array($discountDescription, ['', 'diskon manual/persen'], true)
+                    ? 'Diskon tambahan (' . rtrim(rtrim(number_format($discountPercent, 2, '.', ''), '0'), '.') . '%)'
+                    : 'Diskon tambahan');
+        @endphp
+
         <!-- Daftar Item -->
         <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 4px;">
-            @if (isset($transaction->details))
-                @foreach ($transaction->details as $item)
+            @if ($hasReceiptItems)
+                @foreach ($receiptItems as $item)
                     @php
-                        $itemDiscount = (float) ($item->diskon_satuan ?? 0);
-                        $itemDiscountPercent = (float) ($item->diskon_persen ?? 0);
+                        $itemGross = max(0, round((float) ($item->harga_satuan ?? 0) * (float) ($item->qty ?? 0), 2));
+                        $itemSubtotal = min($itemGross, max(0, (float) ($item->subtotal ?? $itemGross)));
+                        $itemDiscount = max(0, round($itemGross - $itemSubtotal, 2));
+                        $itemDiscountPercent = max(0, (float) ($item->diskon_persen ?? 0));
                         $itemDiscountLabel = trim((string) ($item->catatan_diskon ?? ''));
+                        if ($itemDiscountLabel === '' || strtolower($itemDiscountLabel) === 'diskon item') {
+                            $itemDiscountLabel = 'Diskon produk';
+                        }
                     @endphp
                     <div style="margin-bottom: 6px;">
                         <p style="margin: 0; font-weight: bold;">
@@ -217,12 +249,15 @@
                         </p>
                         <div style="display: flex; justify-content: space-between;">
                             <span>{{ $item->qty }} x {{ number_format($item->harga_satuan, 0, ',', '.') }}</span>
-                            <span>{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                            <span>{{ number_format($itemGross, 0, ',', '.') }}</span>
                         </div>
                         @if ($itemDiscount > 0)
-                            <div style="display: flex; justify-content: space-between; color: #b91c1c;">
-                                <span>{{ $itemDiscountLabel !== '' ? $itemDiscountLabel : 'Diskon item' }}{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}</span>
-                                <span>-{{ number_format($itemDiscount, 0, ',', '.') }}</span>
+                            <div style="color: #b91c1c; font-size: 10px;">
+                                <span>{{ $itemDiscountLabel }}{{ $itemDiscountPercent > 0 ? ' (' . rtrim(rtrim(number_format($itemDiscountPercent, 2, '.', ''), '0'), '.') . '%)' : '' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                                <span>Setelah diskon</span>
+                                <span>{{ number_format($itemSubtotal, 0, ',', '.') }}</span>
                             </div>
                         @endif
                     </div>
@@ -230,27 +265,35 @@
             @else
                 <!-- Fallback jika detail tidak di-load -->
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Total Item Belanja</span>
-                    <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
+                    <span>Subtotal tercatat</span>
+                    <span>{{ number_format($receiptSubtotal, 0, ',', '.') }}</span>
                 </div>
             @endif
         </div>
 
         <!-- Ringkasan Total -->
         <div style="border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between;">
-                <span>Subtotal</span>
-                <span>{{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
-            </div>
-            @if ($transaction->diskon_nominal > 0)
+            @if ($hasReceiptItems)
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Diskon{{ $transaction->deskripsi_diskon ? ' (' . $transaction->deskripsi_diskon . ')' : '' }}</span>
-                    <span>-{{ number_format($transaction->diskon_nominal, 0, ',', '.') }}</span>
+                    <span>Subtotal</span>
+                    <span>{{ number_format($receiptSubtotal, 0, ',', '.') }}</span>
+                </div>
+            @endif
+            @if ($hasReceiptItems && $productDiscountTotal > 0)
+                <div style="display: flex; justify-content: space-between; color: #b91c1c;">
+                    <span>Total diskon produk</span>
+                    <span>-{{ number_format($productDiscountTotal, 0, ',', '.') }}</span>
+                </div>
+            @endif
+            @if ($additionalDiscount > 0)
+                <div style="display: flex; justify-content: space-between; color: #b91c1c;">
+                    <span>{{ $additionalDiscountLabel }}</span>
+                    <span>-{{ number_format($additionalDiscount, 0, ',', '.') }}</span>
                 </div>
             @endif
             <div
                 style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px; font-size: 14px;">
-                <span>TOTAL</span>
+                <span>TOTAL BAYAR</span>
                 <span>{{ number_format($transaction->total_belanja, 0, ',', '.') }}</span>
             </div>
         </div>

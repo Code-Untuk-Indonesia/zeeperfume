@@ -16,7 +16,7 @@ class KasirTransactionDetailTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_item_discount_is_saved_for_cashier_transaction_detail(): void
+    public function test_item_discount_is_saved_and_printed_as_a_clear_receipt_breakdown(): void
     {
         $branch = Branch::create(['nama_cabang' => 'Outlet Kasir']);
         $role = Role::create(['nama_role' => 'kasir']);
@@ -56,15 +56,24 @@ class KasirTransactionDetailTest extends TestCase
                 'discountInput' => 15000,
             ]],
             'metode_bayar' => 'cash',
-            'nominal_bayar' => 85000,
+            'nominal_bayar' => 76500,
             'subtotal' => 100000,
-            'discount' => 0,
-            'total' => 85000,
+            'discount' => 8500,
+            'diskon_persen' => 10,
+            'total' => 76500,
         ]);
 
         $response->assertOk()->assertJsonPath('success', true);
 
         $transactionId = $response->json('transaction_id');
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transactionId,
+            'subtotal' => 100000,
+            'diskon_persen' => 10,
+            'diskon_nominal' => 8500,
+            'total_belanja' => 76500,
+        ]);
+
         $this->assertDatabaseHas('transaction_details', [
             'transaksi_id' => $transactionId,
             'varian_id' => $variant->id,
@@ -85,10 +94,38 @@ class KasirTransactionDetailTest extends TestCase
             ->assertOk()
             ->assertSee('Diskon item', false);
 
-        $this->actingAs($cashier)
+        $successReceipt = $this->actingAs($cashier)
             ->get(route('kasir.pos.success', ['trx_id' => $transactionId]))
-            ->assertOk()
-            ->assertSee('Diskon item', false)
-            ->assertSee('-15.000', false);
+            ->assertOk();
+        $successReceipt
+            ->assertSee('1 x 100.000', false)
+            ->assertSee('Diskon produk', false)
+            ->assertSee('Setelah diskon', false)
+            ->assertSee('85.000', false)
+            ->assertSee('Subtotal', false)
+            ->assertSee('Total diskon produk', false)
+            ->assertSee('-15.000', false)
+            ->assertSee('Diskon tambahan (10%)', false)
+            ->assertSee('-8.500', false)
+            ->assertSee('TOTAL BAYAR', false)
+            ->assertSee('76.500', false);
+        $this->assertSame(1, substr_count($successReceipt->getContent(), '-15.000'));
+
+        $thermalReceipt = $this->actingAs($cashier)
+            ->get(route('kasir.pos.receipt', ['trx_id' => $transactionId]))
+            ->assertOk();
+        $thermalReceipt
+            ->assertSee('1 x 100.000', false)
+            ->assertSee('Diskon produk', false)
+            ->assertSee('Setelah diskon', false)
+            ->assertSee('85.000', false)
+            ->assertSee('Subtotal', false)
+            ->assertSee('Total diskon produk', false)
+            ->assertSee('-15.000', false)
+            ->assertSee('Diskon tambahan (10%)', false)
+            ->assertSee('-8.500', false)
+            ->assertSee('TOTAL BAYAR', false)
+            ->assertSee('76.500', false);
+        $this->assertSame(1, substr_count($thermalReceipt->getContent(), '-15.000'));
     }
 }
