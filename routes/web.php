@@ -178,7 +178,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::get('stock/edit/{id}', [OwnerStockController::class, 'edit'])->name('stock.edit');
     Route::post('stock/update/{id}', [OwnerStockController::class, 'update'])->name('stock.update');
     Route::delete('stock/destroy/{id}', [OwnerStockController::class, 'destroy'])->name('stock.destroy');
-
+    Route::post('category/ajax', [OwnerStockController::class, 'storeAjax'])->name('category.storeAjax');
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
     Route::get('member/create', [MemberController::class, 'create'])->name('member.create');
