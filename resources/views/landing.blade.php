@@ -376,7 +376,7 @@
         </nav>
     </header>
 
-<!-- ================= HERO SECTION ================= -->
+    <!-- ================= HERO SECTION ================= -->
     <main id="home" class="pt-[80px] md:pt-[100px] px-4 sm:px-6 lg:px-8 pb-8 overflow-hidden relative z-10">
 
         <!-- =========================================
@@ -395,15 +395,19 @@
                     <span class="block">Siapa Dirimu.</span>
                 </h1>
                 <p class="hero-fade delay-200 text-[13px] text-z-muted font-medium leading-relaxed pr-4">
-                    Temukan lebih dari 100 pilihan aroma untuk pria, wanita, dan kebutuhan laundry dengan harga terjangkau.
+                    Temukan lebih dari 100 pilihan aroma untuk pria, wanita, dan kebutuhan laundry dengan harga
+                    terjangkau.
                 </p>
             </div>
 
             <!-- Hero Card (Landscape Banner ala Aplikasi Mobile) -->
-            <div class="hero-fade delay-300 relative bg-gradient-to-br from-z-soft/30 to-z-white rounded-[1.5rem] p-6 shadow-lg shadow-z-blue/5 border border-z-soft/40 overflow-hidden flex flex-row min-h-[200px]">
+            <div
+                class="hero-fade delay-300 relative bg-gradient-to-br from-z-soft/30 to-z-white rounded-[1.5rem] p-6 shadow-lg shadow-z-blue/5 border border-z-soft/40 overflow-hidden flex flex-row min-h-[200px]">
 
                 <!-- Dekorasi Background -->
-                <div class="absolute top-0 right-0 w-48 h-48 bg-z-white rounded-full blur-2xl pointer-events-none transform translate-x-1/3 -translate-y-1/3"></div>
+                <div
+                    class="absolute top-0 right-0 w-48 h-48 bg-z-white rounded-full blur-2xl pointer-events-none transform translate-x-1/3 -translate-y-1/3">
+                </div>
 
                 <!-- Konten Kiri (Teks & Tombol) -->
                 <div class="relative z-10 w-3/5 flex flex-col justify-center pr-2">
@@ -415,22 +419,29 @@
                     </p>
 
                     <!-- Tombol Utama di dalam Card -->
-                    <a href="#collections" class="inline-flex items-center justify-center gap-2 bg-z-navy text-z-white text-[9px] font-bold uppercase tracking-widest py-2.5 px-4 rounded-xl w-max hover:bg-opacity-90 transition-all shadow-md shadow-z-navy/20">
+                    <a href="#collections"
+                        class="inline-flex items-center justify-center gap-2 bg-z-navy text-z-white text-[9px] font-bold uppercase tracking-widest py-2.5 px-4 rounded-xl w-max hover:bg-opacity-90 transition-all shadow-md shadow-z-navy/20">
                         Lihat Koleksi
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
                     </a>
                 </div>
 
                 <!-- Konten Kanan (Product Image) -->
-                <div class="absolute bottom-0 right-[-5%] w-[45%] h-full flex items-center justify-center pointer-events-none pb-2 pt-4">
+                <div
+                    class="absolute bottom-0 right-[-5%] w-[45%] h-full flex items-center justify-center pointer-events-none pb-2 pt-4">
                     <!-- FOTO PRODUK -->
-                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume" class="w-[85%] max-h-full object-contain drop-shadow-2xl z-10 mix-blend-multiply transform scale-110 translate-y-2">
+                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume"
+                        class="w-[85%] max-h-full object-contain drop-shadow-2xl z-10 mix-blend-multiply transform scale-110 translate-y-2">
                 </div>
             </div>
 
             <!-- Action Button 2 (Hubungi Kami) -->
             <div class="hero-fade delay-300 mt-4">
-                <a href="#contact-form" class="w-full bg-z-white border border-z-soft/60 shadow-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 text-[11px] font-bold text-z-navy uppercase tracking-widest hover:bg-z-soft/10 transition-colors">
+                <a href="#contact-form"
+                    class="w-full bg-z-white border border-z-soft/60 shadow-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 text-[11px] font-bold text-z-navy uppercase tracking-widest hover:bg-z-soft/10 transition-colors">
                     Hubungi Kami
                 </a>
             </div>
@@ -441,13 +452,19 @@
              TABLET & DESKTOP: HERO LENGKAP
              Ditampilkan mulai layar 768px
         ========================================== -->
-        <section class="hidden md:flex max-w-[1380px] mx-auto rounded-[2.5rem] bg-z-white border border-z-soft/30 overflow-hidden shadow-2xl shadow-z-navy/5 relative min-h-[680px] lg:min-h-[720px] flex-col justify-center">
+        <section
+            class="hidden md:flex max-w-[1380px] mx-auto rounded-[2.5rem] bg-z-white border border-z-soft/30 overflow-hidden shadow-2xl shadow-z-navy/5 relative min-h-[680px] lg:min-h-[720px] flex-col justify-center">
 
             <!-- Dekorasi Lingkaran Bias Cahaya (Agar background putih tidak terlihat kaku/mati) -->
-            <div class="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-z-soft opacity-20 blur-[100px] rounded-full pointer-events-none"></div>
-            <div class="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-z-blue opacity-[0.05] blur-[120px] rounded-full pointer-events-none"></div>
+            <div
+                class="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-z-soft opacity-20 blur-[100px] rounded-full pointer-events-none">
+            </div>
+            <div
+                class="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-z-blue opacity-[0.05] blur-[120px] rounded-full pointer-events-none">
+            </div>
 
-            <div class="w-full relative z-10 px-10 lg:px-16 py-12 lg:py-0 flex flex-row items-center justify-between min-h-[680px] lg:min-h-[720px]">
+            <div
+                class="w-full relative z-10 px-10 lg:px-16 py-12 lg:py-0 flex flex-row items-center justify-between min-h-[680px] lg:min-h-[720px]">
 
                 <!-- LEFT CONTENT -->
                 <div class="w-full lg:w-1/2 flex flex-col justify-center text-left pt-10 lg:pt-0">
@@ -456,27 +473,34 @@
                         Satu Aroma, Satu Cerita
                     </p>
 
-                    <h1 class="hero-fade delay-100 font-luxury text-5xl lg:text-6xl xl:text-[4.5rem] leading-[1.1] tracking-tight text-z-navy mb-5 lg:mb-6">
+                    <h1
+                        class="hero-fade delay-100 font-luxury text-5xl lg:text-6xl xl:text-[4.5rem] leading-[1.1] tracking-tight text-z-navy mb-5 lg:mb-6">
                         <span class="block">Aroma yang</span>
                         <span class="block italic text-z-blue">Menceritakan</span>
                         <span class="block">Siapa Dirimu.</span>
                     </h1>
 
-                    <p class="hero-fade delay-200 text-[14px] lg:text-[15px] text-z-muted leading-relaxed font-medium max-w-[460px]">
+                    <p
+                        class="hero-fade delay-200 text-[14px] lg:text-[15px] text-z-muted leading-relaxed font-medium max-w-[460px]">
                         Temukan lebih dari 100 pilihan aroma untuk pria, wanita, dan kebutuhan laundry. Dari karakter
                         segar hingga mewah, ZEEPERFUME menghadirkan wewangian berkualitas dengan harga terjangkau.
                     </p>
 
                     <!-- Tombol -->
-                    <div class="hero-fade delay-300 flex flex-row items-center justify-start gap-4 mt-8 lg:mt-10 mb-8 lg:mb-12">
-                        <a href="#collections" class="group h-12 px-8 rounded-full bg-z-blue text-z-white flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest hover:bg-opacity-90 shadow-lg shadow-z-blue/30 transition-all transform active:scale-95 border border-z-blue">
+                    <div
+                        class="hero-fade delay-300 flex flex-row items-center justify-start gap-4 mt-8 lg:mt-10 mb-8 lg:mb-12">
+                        <a href="#collections"
+                            class="group h-12 px-8 rounded-full bg-z-blue text-z-white flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest hover:bg-opacity-90 shadow-lg shadow-z-blue/30 transition-all transform active:scale-95 border border-z-blue">
                             Temukan Aromamu
-                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                             </svg>
                         </a>
 
-                        <a href="#contact-form" class="group h-12 px-8 rounded-full bg-z-white border border-z-soft/80 text-z-navy flex items-center justify-center gap-2.5 text-[11px] font-bold uppercase tracking-widest hover:bg-z-soft/10 transition-all transform active:scale-95 shadow-sm">
+                        <a href="#contact-form"
+                            class="group h-12 px-8 rounded-full bg-z-white border border-z-soft/80 text-z-navy flex items-center justify-center gap-2.5 text-[11px] font-bold uppercase tracking-widest hover:bg-z-soft/10 transition-all transform active:scale-95 shadow-sm">
                             Hubungi Kami
                         </a>
                     </div>
@@ -486,26 +510,33 @@
                 <div class="w-1/2 h-full relative flex justify-center items-center pointer-events-auto">
 
                     <!-- FOTO PRODUK DESKTOP -->
-                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume" class="hero-fade delay-200 w-[60%] lg:w-[50%] max-h-[80%] object-contain drop-shadow-2xl z-10 transition-transform duration-700 hover:scale-105">
+                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume"
+                        class="hero-fade delay-200 w-[60%] lg:w-[50%] max-h-[80%] object-contain drop-shadow-2xl z-10 transition-transform duration-700 hover:scale-105">
 
                     <!-- Hotspot 1 (Cap Botol) -->
-                    <div class="absolute top-[25%] right-[20%] lg:right-[25%] flex items-center flex-col-reverse gap-2 hero-fade delay-300 z-20">
+                    <div
+                        class="absolute top-[25%] right-[20%] lg:right-[25%] flex items-center flex-col-reverse gap-2 hero-fade delay-300 z-20">
                         <div class="w-[1px] h-6 lg:h-10 bg-z-soft border-l border-dashed border-z-muted"></div>
-                        <div class="bg-z-white/95 backdrop-blur-md text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-navy tracking-wide border border-z-soft/50">
+                        <div
+                            class="bg-z-white/95 backdrop-blur-md text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-navy tracking-wide border border-z-soft/50">
                             Kualitas Premium
                         </div>
-                        <div class="w-8 h-8 rounded-full bg-z-soft/20 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform mt-1">
+                        <div
+                            class="w-8 h-8 rounded-full bg-z-soft/20 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform mt-1">
                             <div class="w-2 h-2 rounded-full bg-z-blue shadow-lg shadow-z-blue"></div>
                         </div>
                     </div>
 
                     <!-- Hotspot 2 (Isi Botol) -->
-                    <div class="absolute top-[60%] left-[15%] lg:left-[20%] flex items-center flex-row gap-2 lg:gap-3 hero-fade delay-300 z-20">
-                        <div class="bg-z-blue text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-white tracking-wide border border-z-blue">
+                    <div
+                        class="absolute top-[60%] left-[15%] lg:left-[20%] flex items-center flex-row gap-2 lg:gap-3 hero-fade delay-300 z-20">
+                        <div
+                            class="bg-z-blue text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-white tracking-wide border border-z-blue">
                             Tahan Lama & Khas
                         </div>
                         <div class="w-4 lg:w-8 h-[1px] bg-z-soft border-t border-dashed border-z-muted"></div>
-                        <div class="w-8 h-8 rounded-full bg-z-blue/10 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform">
+                        <div
+                            class="w-8 h-8 rounded-full bg-z-blue/10 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform">
                             <div class="w-2 h-2 rounded-full bg-z-blue shadow-lg shadow-z-blue/50"></div>
                         </div>
                     </div>
