@@ -199,27 +199,7 @@
                 <div class="space-y-5">
 
                     <!-- Kategori Setup -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5">
-                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide">
-                                Kategori <span class="text-red-500">*</span>
-                            </label>
-                            <button type="button" @click.prevent="openCategoryModal = true"
-                                class="text-[10px] bg-orange-50 text-[#CC9863] px-2 py-1 rounded font-bold hover:bg-orange-100 transition focus:outline-none">
-                                + Baru
-                            </button>
-                        </div>
-                        <select name="category_id" id="category_select"
-                            class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800"
-                            required>
-                            <option value="">Pilih Kategori</option>
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
-                                    {{ $cat->nama_kategori }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    @include('components.stock-category-select', ['categories' => $categories])
 
                     <!-- Nama Induk -->
                     <div>
@@ -311,57 +291,5 @@
     [x-cloak] { display: none !important; }
 </style>
 
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('categoryManager', () => ({
-            openCategoryModal: false,
-            newCategoryName: '',
-            isLoading: false,
-            errorMessage: '',
-            successMessage: '',
-            async saveCategory() {
-                if (!this.newCategoryName.trim()) {
-                    this.errorMessage = 'Nama kategori tidak boleh kosong!';
-                    return;
-                }
-
-                this.isLoading = true;
-                this.errorMessage = '';
-                this.successMessage = '';
-
-                try {
-                    const response = await fetch("{{ url(auth()->user()->role->nama_role . '/category/ajax') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ nama_kategori: this.newCategoryName })
-                    });
-
-                    const data = await response.json();
-                    this.isLoading = false;
-
-                    if (response.ok && data.success) {
-                        this.successMessage = data.message;
-                        const selectEl = document.getElementById('category_select');
-                        selectEl.add(new Option(data.category.nama_kategori, data.category.id, true, true));
-
-                        setTimeout(() => {
-                            this.openCategoryModal = false;
-                            this.newCategoryName = '';
-                            this.successMessage = '';
-                        }, 1000);
-                    } else {
-                        this.errorMessage = data.message || 'Terjadi kesalahan.';
-                    }
-                } catch (error) {
-                    this.isLoading = false;
-                    this.errorMessage = 'Koneksi terputus. Pastikan internet stabil.';
-                }
-            }
-        }));
-    });
-</script>
+@include('components.stock-category-manager-script')
 @endsection
