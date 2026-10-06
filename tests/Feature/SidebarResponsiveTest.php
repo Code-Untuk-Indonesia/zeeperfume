@@ -47,7 +47,7 @@ class SidebarResponsiveTest extends TestCase
 
         return User::create([
             'role_id' => $role->id,
-            'nama_lengkap' => ucfirst($roleName).' Zee Perfume',
+            'nama_lengkap' => ucfirst($roleName).' ZEEPERFUME',
             'username' => $roleName.'-'.Str::lower(Str::random(8)),
             'password' => 'password',
             'status_aktif' => true,

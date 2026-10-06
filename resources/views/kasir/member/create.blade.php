@@ -105,7 +105,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
-                            ZeePerfume
+                            ZEEPERFUME
                         </div>
                         <span
                             class="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded text-[10px] font-bold tracking-widest uppercase">

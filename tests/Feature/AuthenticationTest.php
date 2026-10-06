@@ -70,7 +70,7 @@ class AuthenticationTest extends TestCase
 
         return User::create([
             'role_id' => $role->getKey(),
-            'nama_lengkap' => ucfirst($roleName).' Zee Perfume',
+            'nama_lengkap' => ucfirst($roleName).' ZEEPERFUME',
             'username' => $roleName,
             'password' => 'password',
             'status_aktif' => $active,

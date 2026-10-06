@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Transaksi - ZeePerfume</title>
+    <title>Riwayat Transaksi - ZEEPERFUME</title>
     <style>
         * { box-sizing: border-box; }
         body {

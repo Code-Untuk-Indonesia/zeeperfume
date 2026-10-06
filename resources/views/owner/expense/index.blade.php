@@ -33,7 +33,7 @@
                 </select>
             </form>
 
-            <!-- Tombol Tambah (Warna Coklat ZeePerfume) -->
+            <!-- Tombol Tambah (Warna Coklat ZEEPERFUME) -->
             <button onclick="openModal('addModal')" class="w-full sm:w-auto bg-[#CC9863] text-white px-5 py-2.5 rounded-xl font-extrabold shadow-md shadow-[#CC9863]/20 hover:bg-[#b58555] transition-all transform active:scale-95 flex items-center justify-center gap-2 text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Catat Pengeluaran
@@ -210,7 +210,7 @@
 
                 <div class="p-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
                     <button type="button" onclick="closeModal('addModal')" class="flex-1 py-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-100 hover:text-gray-900 transition-all focus:outline-none">Batal</button>
-                    <!-- Tombol Simpan Diperbarui (Warna Coklat ZeePerfume) -->
+                    <!-- Tombol Simpan Diperbarui (Warna Coklat ZEEPERFUME) -->
                     <button type="submit" class="flex-1 py-3.5 bg-[#CC9863] text-white rounded-xl font-extrabold text-sm hover:bg-[#b58555] transition-all shadow-md shadow-[#CC9863]/20 flex items-center justify-center gap-2 transform active:scale-95 focus:outline-none">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                         Simpan Data

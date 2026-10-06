@@ -89,7 +89,7 @@
                         <div class="hidden xs:block min-w-0">
                             <div
                                 class="flex items-center whitespace-nowrap text-base sm:text-lg lg:text-xl font-bold tracking-tight">
-                                ZeePerfume <span class="text-[#CC9863] ml-1">KASIR</span>
+                                ZEEPERFUME <span class="text-[#CC9863] ml-1">KASIR</span>
                             </div>
                         </div>
                     </a>
