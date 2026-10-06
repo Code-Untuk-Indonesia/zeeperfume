@@ -10,11 +10,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Mengganti Logo (Favicon) Website dari Laravel ke ZeePerfume -->
+    <!-- Mengganti Logo (Favicon) Website dari Laravel ke ZEEPERFUME -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('asset/zeeperfume_logo.svg') }}">
     <link rel="shortcut icon" href="{{ asset('asset/zeeperfume_logo.svg') }}">
 
-    <title>ZeePerfume - @yield('title', 'Dashboard')</title>
+    <title>ZEEPERFUME - @yield('title', 'Dashboard')</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -132,10 +132,10 @@
             <!-- Logo -->
             <div class="flex flex-col items-center gap-3 mt-2">
                 <div class="w-14 h-14 bg-gradient-to-b from-white/10 to-white/5 rounded-2xl flex items-center justify-center p-2.5 shadow-inner border border-white/10">
-                    <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="ZeePerfume" class="w-full h-full object-contain">
+                    <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="ZEEPERFUME" class="w-full h-full object-contain">
                 </div>
                 <span class="text-xl font-black text-white tracking-wide">
-                    Zee<span class="text-[#CC9863]">Perfume</span>
+                    ZEE<span class="text-[#CC9863]">PERFUME</span>
                 </span>
             </div>
         </div>
@@ -323,7 +323,7 @@
                 </button>
                 <div class="flex items-center gap-2 font-bold text-lg tracking-wide">
                     <img src="{{ asset('asset/zeeperfume_logo.svg') }}" alt="Logo" class="w-6 h-6 object-contain">
-                    <span class="text-white">Zee<span class="text-[#CC9863]">Perfume</span></span>
+                    <span class="text-white">ZEE<span class="text-[#CC9863]">PERFUME</span></span>
                 </div>
             </div>
         </header>

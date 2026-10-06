@@ -28,13 +28,13 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'role' => 'owner',
-                'nama_lengkap' => 'Owner Zee Perfume',
+                'nama_lengkap' => 'Owner ZEEPERFUME',
                 'username' => (string) config('seeders.owner_username'),
                 'cabang_id' => null,
             ],
             [
                 'role' => 'admin',
-                'nama_lengkap' => 'Admin Zee Perfume',
+                'nama_lengkap' => 'Admin ZEEPERFUME',
                 'username' => (string) config('seeders.admin_username'),
                 'cabang_id' => null,
             ],

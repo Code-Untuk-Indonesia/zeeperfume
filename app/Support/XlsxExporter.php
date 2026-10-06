@@ -137,8 +137,8 @@ class XlsxExporter
             . 'xmlns:dcterms="http://purl.org/dc/terms/" '
             . 'xmlns:dcmitype="http://purl.org/dc/dcmitype/" '
             . 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            . '<dc:title>ZeePerfume Report</dc:title>'
-            . '<dc:creator>ZeePerfume</dc:creator>'
+            . '<dc:title>ZEEPERFUME Report</dc:title>'
+            . '<dc:creator>ZEEPERFUME</dc:creator>'
             . '<dcterms:created xsi:type="dcterms:W3CDTF">' . now()->toIso8601String() . '</dcterms:created>'
             . '</cp:coreProperties>';
     }

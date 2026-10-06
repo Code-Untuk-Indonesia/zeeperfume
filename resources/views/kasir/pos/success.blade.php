@@ -105,7 +105,7 @@
                             $waText =
                                 'Halo Kak' . ($transaction->member ? ' ' . $transaction->member->nama : '') . ",\n\n";
                             $waText .=
-                                'Terima kasih telah berbelanja di *ZeePerfume ' .
+                                'Terima kasih telah berbelanja di *ZEEPERFUME ' .
                                 ($transaction->branch->nama_cabang ?? 'Pusat') .
                                 "*.\n";
                             $waText .= "Berikut adalah detail transaksi Anda:\n\n";
@@ -180,12 +180,12 @@
 
         <!-- Header Struk & Logo -->
         <div style="text-align: center; margin-bottom: 10px;">
-            <!-- Logo ZeePerfume -->
+            <!-- Logo ZEEPERFUME -->
             <!-- Gunakan base64 image jika print terputus/lambat meload aset eksternal. Jika Anda punya URL gambar logo, ganti atribut src di bawah -->
             <img src="{{ asset('asset/zeeperfume.png') }}"
                 alt="Logo" style="width: 45px; height: 45px; margin: 0 auto 5px; display: block; border-radius: 50%;">
 
-            <h2 style="font-size: 16px; font-weight: bold; margin:0;">ZeePerfume</h2>
+            <h2 style="font-size: 16px; font-weight: bold; margin:0;">ZEEPERFUME</h2>
             <p style="margin: 2px 0;">Cabang: <strong>{{ $transaction->branch->nama_cabang ?? 'Pusat' }}</strong></p>
 
             <!-- Jika tabel branch punya field alamat dan no_telp, Anda bisa panggil seperti ini: -->

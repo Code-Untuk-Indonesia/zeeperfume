@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Masuk - ZeePerfume POS</title>
+    <title>Masuk - ZEEPERFUME POS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,17 +16,17 @@
     <!--
     THESIS: Login adalah gerbang kerja outlet, bukan halaman promosi atau kartu generik di tengah layar.
     OWN-WORLD: Arang, putih hangat, dan amber dari dashboard dengan bidang tegas serta sudut 16px.
-    STORY: Pengguna mengenali ZeePerfume, memahami akun dikelola internal, lalu masuk dengan username dan password.
+    STORY: Pengguna mengenali ZEEPERFUME, memahami akun dikelola internal, lalu masuk dengan username dan password.
     FIRST VIEWPORT: Konteks operasional berada di panel arang kiri dan form menjadi fokus tunggal pada bidang terang kanan.
     FORM: Komposisi split-screen yang menyatu dengan shell dashboard; seed key ZEE-AUTH-01.
     FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
     -->
     <div class="grid min-h-dvh lg:grid-cols-[minmax(0,0.92fr)_minmax(32rem,1.08fr)]">
-        <section class="relative hidden overflow-hidden bg-[#1C1D21] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14" aria-label="Tentang ZeePerfume POS">
+        <section class="relative hidden overflow-hidden bg-[#1C1D21] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14" aria-label="Tentang ZEEPERFUME POS">
             <div class="absolute left-0 top-0 h-1.5 w-40 bg-[#CC9863]"></div>
 
             <div class="flex items-center gap-3">
-                <span class="text-2xl font-extrabold tracking-[-0.03em] text-[#D9AA78]">ZeePerfume</span>
+                <span class="text-2xl font-extrabold tracking-[-0.03em] text-[#D9AA78]">ZEEPERFUME</span>
                 <span class="border-l border-white/20 pl-3 text-xs font-semibold text-[#D7D7D9]">Point of Sale</span>
             </div>
 
@@ -35,7 +35,7 @@
                     Kerja outlet, <span class="text-[#D9AA78]">lebih tertata.</span>
                 </h1>
                 <p class="mt-7 max-w-lg text-base leading-7 text-[#D7D7D9]">
-                    Transaksi, stok, dan laporan Zee Perfume berada dalam satu ruang kerja untuk tim outlet.
+                    Transaksi, stok, dan laporan ZEEPERFUME berada dalam satu ruang kerja untuk tim outlet.
                 </p>
             </div>
 
@@ -45,14 +45,14 @@
                     <span class="border-l border-white/15 pl-5">Stok</span>
                     <span class="border-l border-white/15 pl-5">Laporan</span>
                 </div>
-                <p class="mt-5 text-xs text-[#B9B9BD]">Akses internal untuk tim Zee Perfume.</p>
+                <p class="mt-5 text-xs text-[#B9B9BD]">Akses internal untuk tim ZEEPERFUME.</p>
             </div>
         </section>
 
         <main class="flex min-h-dvh items-center px-5 py-8 sm:px-10 lg:px-16 xl:px-24">
             <div class="mx-auto w-full max-w-[29rem]">
                 <div class="mb-12 flex items-center justify-between lg:hidden">
-                    <span class="text-xl font-extrabold tracking-[-0.03em] text-[#8A5B2E]">ZeePerfume</span>
+                    <span class="text-xl font-extrabold tracking-[-0.03em] text-[#8A5B2E]">ZEEPERFUME</span>
                     <span class="text-xs font-semibold text-[#5F6065]">Point of Sale</span>
                 </div>
 

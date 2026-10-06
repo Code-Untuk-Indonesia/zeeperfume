@@ -56,7 +56,7 @@
         <div class="text-center mb-2">
             <!-- Ganti dengan URL logo Anda -->
             <img src="{{ asset('asset/zeeperfume.png') }}" alt="Logo" style="width: 45px; height: 45px; margin: 0 auto 5px; display: block; border-radius: 50%; filter: grayscale(100%);">
-            <div style="font-size: 16px; font-weight: bold;">ZeePerfume</div>
+            <div style="font-size: 16px; font-weight: bold;">ZEEPERFUME</div>
             <div style="font-size: 10px;">Cabang: {{ $transaction->branch->nama_cabang ?? 'Pusat' }}</div>
             <div style="font-size: 10px;">{{ $transaction->branch->alamat ?? 'Jl. Contoh Alamat Toko' }}</div>
             <div style="font-size: 10px;">Telp: {{ $transaction->branch->no_telp ?? '0812-3456-7890' }}</div>
