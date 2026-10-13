@@ -375,75 +375,61 @@
             </div>
         </nav>
     </header>
-
     <!-- ================= HERO SECTION ================= -->
     <main id="home" class="pt-[80px] md:pt-[100px] px-4 sm:px-6 lg:px-8 pb-8 overflow-hidden relative z-10">
 
         <!-- =========================================
-             MOBILE: HERO SECTION (APP-LIKE DESIGN)
+             MOBILE: HERO SECTION (SINGLE COLUMN)
              Ditampilkan pada layar di bawah 768px
         ========================================== -->
-        <section class="block md:hidden w-full max-w-[480px] mx-auto pb-10">
-            <!-- Teks Utama & Deskripsi -->
-            <div class="mb-5 pt-2">
-                <p class="hero-fade text-[10px] uppercase tracking-[0.3em] text-z-blue font-extrabold mb-2.5">
+        <!-- Gunakan background alam untuk Mobile. Bg-cover dan bg-center agar proporsional -->
+        <section
+            class="block md:hidden w-full max-w-[480px] mx-auto rounded-[2rem] border border-z-soft/50 shadow-lg overflow-hidden relative min-h-[600px] flex flex-col justify-between pt-10 pb-8 px-5 bg-cover bg-center bg-no-repeat"
+            style="background-image: url('{{ asset('asset/bg-pantai.png') }}');">
+
+            <!-- Gradient Overlay Mobile: Memudar dari putih tebal di atas (untuk teks) ke agak transparan di bawah -->
+            <div
+                class="absolute inset-0 bg-gradient-to-b from-z-white/95 via-z-white/80 to-z-white/40 pointer-events-none z-0">
+            </div>
+
+            <!-- Teks Utama & Deskripsi (Center Aligned) -->
+            <div class="flex flex-col items-center text-center mb-6 relative z-10">
+                <p class="hero-fade text-[10px] uppercase tracking-[0.3em] text-z-blue font-extrabold mb-3">
                     Satu Aroma, Satu Cerita
                 </p>
-                <h1 class="hero-fade delay-100 font-luxury text-[2.5rem] leading-[1.1] tracking-tight text-z-navy mb-3">
+                <h1
+                    class="hero-fade delay-100 font-luxury text-[2.5rem] leading-[1.15] tracking-tight text-z-navy mb-4">
                     <span class="block">Aroma yang</span>
                     <span class="block italic text-z-blue">Menceritakan</span>
-                    <span class="block">Siapa Dirimu.</span>
+                    <span class="block">Karaktermu.</span>
                 </h1>
-                <p class="hero-fade delay-200 text-[13px] text-z-muted font-medium leading-relaxed pr-4">
-                    Temukan lebih dari 100 pilihan aroma untuk pria, wanita, dan kebutuhan laundry dengan harga
-                    terjangkau.
+                <p class="hero-fade delay-200 text-[13px] text-z-muted font-medium leading-relaxed px-2">
+                    100+ pilihan wewangian eksklusif untuk personal dan laundry. Sensasi aroma mewah yang tahan lama
+                    dengan harga terjangkau.
                 </p>
             </div>
 
-            <!-- Hero Card (Landscape Banner ala Aplikasi Mobile) -->
-            <div
-                class="hero-fade delay-300 relative bg-gradient-to-br from-z-soft/30 to-z-white rounded-[1.5rem] p-6 shadow-lg shadow-z-blue/5 border border-z-soft/40 overflow-hidden flex flex-row min-h-[200px]">
-
-                <!-- Dekorasi Background -->
-                <div
-                    class="absolute top-0 right-0 w-48 h-48 bg-z-white rounded-full blur-2xl pointer-events-none transform translate-x-1/3 -translate-y-1/3">
-                </div>
-
-                <!-- Konten Kiri (Teks & Tombol) -->
-                <div class="relative z-10 w-3/5 flex flex-col justify-center pr-2">
-                    <h2 class="font-luxury text-[22px] text-z-navy font-bold leading-[1.2] mb-1">
-                        Wewangian<br>Eksklusif
-                    </h2>
-                    <p class="text-[9.5px] font-extrabold uppercase tracking-widest text-z-muted mb-5">
-                        SIGNATURE SCENT
-                    </p>
-
-                    <!-- Tombol Utama di dalam Card -->
-                    <a href="#collections"
-                        class="inline-flex items-center justify-center gap-2 bg-z-navy text-z-white text-[9px] font-bold uppercase tracking-widest py-2.5 px-4 rounded-xl w-max hover:bg-opacity-90 transition-all shadow-md shadow-z-navy/20">
-                        Lihat Koleksi
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </a>
-                </div>
-
-                <!-- Konten Kanan (Product Image) -->
-                <div
-                    class="absolute bottom-0 right-[-5%] w-[45%] h-full flex items-center justify-center pointer-events-none pb-2 pt-4">
-                    <!-- FOTO PRODUK -->
-                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume"
-                        class="w-[85%] max-h-full object-contain drop-shadow-2xl z-10 mix-blend-multiply transform scale-110 translate-y-2">
-                </div>
-            </div>
-
-            <!-- Action Button 2 (Hubungi Kami) -->
-            <div class="hero-fade delay-300 mt-4">
+            <!-- Tombol Aksi Mobile (Stacked) -->
+            <div class="hero-fade delay-300 flex flex-col gap-3 mb-8 w-full relative z-10">
+                <a href="#collections"
+                    class="w-full inline-flex items-center justify-center gap-2 bg-z-blue text-z-white text-[10px] font-bold uppercase tracking-widest py-3.5 px-4 rounded-full hover:bg-opacity-90 transition-all shadow-md shadow-z-blue/20">
+                    Temukan Aromamu
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </a>
                 <a href="#contact-form"
-                    class="w-full bg-z-white border border-z-soft/60 shadow-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 text-[11px] font-bold text-z-navy uppercase tracking-widest hover:bg-z-soft/10 transition-colors">
+                    class="w-full bg-z-white/80 backdrop-blur border border-z-soft/80 shadow-sm rounded-full py-3.5 px-4 flex items-center justify-center gap-2 text-[10px] font-bold text-z-navy uppercase tracking-widest hover:bg-z-white transition-colors">
                     Hubungi Kami
                 </a>
+            </div>
+
+            <!-- Foto Produk Saja -->
+            <div class="hero-fade delay-300 w-full flex justify-center relative flex-grow items-end">
+                <!-- FOTO PRODUK MOBILE -->
+                <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume"
+                    class="w-[75%] max-w-[250px] object-contain drop-shadow-2xl relative z-10 transform hover:scale-105 transition-transform duration-500">
             </div>
 
         </section>
@@ -452,41 +438,39 @@
              TABLET & DESKTOP: HERO LENGKAP
              Ditampilkan mulai layar 768px
         ========================================== -->
+        <!-- Gunakan background alam untuk Desktop -->
         <section
-            class="hidden md:flex max-w-[1380px] mx-auto rounded-[2.5rem] bg-z-white border border-z-soft/30 overflow-hidden shadow-2xl shadow-z-navy/5 relative min-h-[680px] lg:min-h-[720px] flex-col justify-center">
+            class="hidden md:flex max-w-[1380px] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl shadow-z-navy/10 relative min-h-[680px] lg:min-h-[720px] flex-col justify-center bg-cover bg-center bg-no-repeat"
+            style="background-image: url('{{ asset('asset/bg-pantai.png') }}');">
 
-            <!-- Dekorasi Lingkaran Bias Cahaya (Agar background putih tidak terlihat kaku/mati) -->
-            <div
-                class="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-z-soft opacity-20 blur-[100px] rounded-full pointer-events-none">
-            </div>
-            <div
-                class="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-z-blue opacity-[0.05] blur-[120px] rounded-full pointer-events-none">
+            <!-- Gradient Overlay (Meredup ke arah produk di kanan agar fokus pada botol) -->
+            <div class="absolute inset-0 bg-gradient-to-r from-z-white via-z-white/80 to-transparent z-0">
             </div>
 
             <div
                 class="w-full relative z-10 px-10 lg:px-16 py-12 lg:py-0 flex flex-row items-center justify-between min-h-[680px] lg:min-h-[720px]">
 
-                <!-- LEFT CONTENT -->
-                <div class="w-full lg:w-1/2 flex flex-col justify-center text-left pt-10 lg:pt-0">
+                <!-- LEFT CONTENT (Copywriting) -->
+                <div class="w-full lg:w-1/2 flex flex-col justify-center text-left pt-10 lg:pt-0 relative z-20">
 
                     <p class="hero-fade text-[11px] uppercase tracking-[0.3em] text-z-blue font-extrabold mb-4">
                         Satu Aroma, Satu Cerita
                     </p>
 
                     <h1
-                        class="hero-fade delay-100 font-luxury text-5xl lg:text-6xl xl:text-[4.5rem] leading-[1.1] tracking-tight text-z-navy mb-5 lg:mb-6">
+                        class="hero-fade delay-100 font-luxury text-5xl lg:text-6xl xl:text-[4.5rem] leading-[1.15] tracking-tight text-z-navy mb-5 lg:mb-6">
                         <span class="block">Aroma yang</span>
                         <span class="block italic text-z-blue">Menceritakan</span>
-                        <span class="block">Siapa Dirimu.</span>
+                        <span class="block">Karaktermu.</span>
                     </h1>
 
                     <p
-                        class="hero-fade delay-200 text-[14px] lg:text-[15px] text-z-muted leading-relaxed font-medium max-w-[460px]">
-                        Temukan lebih dari 100 pilihan aroma untuk pria, wanita, dan kebutuhan laundry. Dari karakter
-                        segar hingga mewah, ZEEPERFUME menghadirkan wewangian berkualitas dengan harga terjangkau.
+                        class="hero-fade delay-200 text-[14px] lg:text-[15px] text-z-navy/80 leading-relaxed font-medium max-w-[460px]">
+                        100+ pilihan wewangian eksklusif untuk personal dan laundry. Sensasi aroma mewah yang tahan lama
+                        dengan harga terjangkau.
                     </p>
 
-                    <!-- Tombol -->
+                    <!-- Tombol Aksi Desktop -->
                     <div
                         class="hero-fade delay-300 flex flex-row items-center justify-start gap-4 mt-8 lg:mt-10 mb-8 lg:mb-12">
                         <a href="#collections"
@@ -500,46 +484,49 @@
                         </a>
 
                         <a href="#contact-form"
-                            class="group h-12 px-8 rounded-full bg-z-white border border-z-soft/80 text-z-navy flex items-center justify-center gap-2.5 text-[11px] font-bold uppercase tracking-widest hover:bg-z-soft/10 transition-all transform active:scale-95 shadow-sm">
+                            class="group h-12 px-8 rounded-full bg-z-white/60 backdrop-blur-md border border-z-soft/80 text-z-navy flex items-center justify-center gap-2.5 text-[11px] font-bold uppercase tracking-widest hover:bg-z-white transition-all transform active:scale-95 shadow-sm">
                             Hubungi Kami
                         </a>
                     </div>
                 </div>
 
-                <!-- RIGHT CONTENT (Gambar & Hotspot) -->
-                <div class="w-1/2 h-full relative flex justify-center items-center pointer-events-auto">
+                <!-- RIGHT CONTENT (Gambar Produk & Hotspot) -->
+                <div
+                    class="w-1/2 h-full relative flex justify-center lg:justify-end items-center pointer-events-auto pr-0 lg:pr-16">
 
                     <!-- FOTO PRODUK DESKTOP -->
-                    <img src="{{ asset('asset/product (1).png') }}" alt="Featured Perfume"
-                        class="hero-fade delay-200 w-[60%] lg:w-[50%] max-h-[80%] object-contain drop-shadow-2xl z-10 transition-transform duration-700 hover:scale-105">
+                    <img src="{{ asset('asset/product (1).png') }}"
+                        class="hero-fade delay-200 w-full max-w-[350px] lg:max-w-[400px] object-contain drop-shadow-2xl relative z-10 transform hover:scale-105 transition-transform duration-700"
+                        alt="Zee Perfume Product">
 
-                    <!-- Hotspot 1 (Cap Botol) -->
+                    <!-- Hotspot 1 (Diarahkan ke area "Cap/Tutup Botol") -->
                     <div
-                        class="absolute top-[25%] right-[20%] lg:right-[25%] flex items-center flex-col-reverse gap-2 hero-fade delay-300 z-20">
-                        <div class="w-[1px] h-6 lg:h-10 bg-z-soft border-l border-dashed border-z-muted"></div>
+                        class="absolute top-[25%] lg:top-[20%] right-[30%] lg:right-[40%] flex items-center flex-col-reverse gap-2 hero-fade delay-300 z-20">
+                        <div class="w-[1px] h-6 lg:h-12 bg-z-navy/20 border-l border-dashed border-z-navy/40"></div>
                         <div
                             class="bg-z-white/95 backdrop-blur-md text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-navy tracking-wide border border-z-soft/50">
                             Kualitas Premium
                         </div>
                         <div
-                            class="w-8 h-8 rounded-full bg-z-soft/20 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform mt-1">
+                            class="w-8 h-8 rounded-full bg-z-white/40 backdrop-blur border border-z-white flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform mt-1">
                             <div class="w-2 h-2 rounded-full bg-z-blue shadow-lg shadow-z-blue"></div>
                         </div>
                     </div>
 
-                    <!-- Hotspot 2 (Isi Botol) -->
+                    <!-- Hotspot 2 (Diarahkan ke area "Body/Isi Botol") -->
                     <div
-                        class="absolute top-[60%] left-[15%] lg:left-[20%] flex items-center flex-row gap-2 lg:gap-3 hero-fade delay-300 z-20">
+                        class="absolute top-[60%] left-[10%] lg:left-[5%] flex items-center flex-row gap-2 lg:gap-3 hero-fade delay-300 z-20">
                         <div
-                            class="bg-z-blue text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-md text-z-white tracking-wide border border-z-blue">
+                            class="w-8 h-8 rounded-full bg-z-blue/20 backdrop-blur border border-z-blue/40 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform">
+                            <div class="w-2 h-2 rounded-full bg-z-white shadow-lg"></div>
+                        </div>
+                        <div class="w-4 lg:w-12 h-[1px] bg-z-navy/20 border-t border-dashed border-z-navy/40"></div>
+                        <div
+                            class="bg-z-blue/95 backdrop-blur-md text-[9px] font-bold px-3 py-1.5 rounded-lg shadow-xl text-z-white tracking-wide border border-z-blue">
                             Tahan Lama & Khas
                         </div>
-                        <div class="w-4 lg:w-8 h-[1px] bg-z-soft border-t border-dashed border-z-muted"></div>
-                        <div
-                            class="w-8 h-8 rounded-full bg-z-blue/10 backdrop-blur border border-z-blue/30 flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 transition-transform">
-                            <div class="w-2 h-2 rounded-full bg-z-blue shadow-lg shadow-z-blue/50"></div>
-                        </div>
                     </div>
+
                 </div>
 
             </div>
@@ -607,6 +594,7 @@
             </div>
         </div>
     </section>
+
     <!-- ================= COLLECTIONS SECTION (MOBILE-FIRST & ENHANCED TYPOGRAPHY) ================= -->
     <section id="collections" class="py-16 lg:py-24 bg-z-white border-y border-z-soft/30">
         <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
