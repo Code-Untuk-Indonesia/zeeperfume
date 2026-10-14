@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Masuk - ZeePerfume POS</title>
+    <title>Masuk - ZEEPERFUME POS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
             <div class="absolute left-0 top-0 h-1.5 w-40 bg-[#CC9863]"></div>
 
             <div class="flex items-center gap-3">
-                <span class="text-2xl font-extrabold tracking-[-0.03em] text-[#D9AA78]">ZeePerfume</span>
+                <span class="text-2xl font-extrabold tracking-[-0.03em] text-[#D9AA78]">ZEEPERFUME</span>
                 <span class="border-l border-white/20 pl-3 text-xs font-semibold text-[#D7D7D9]">Point of Sale</span>
             </div>
 
@@ -52,7 +52,9 @@
         <main class="flex min-h-dvh items-center px-5 py-8 sm:px-10 lg:px-16 xl:px-24">
             <div class="mx-auto w-full max-w-[29rem]">
                 <div class="mb-12 flex items-center justify-between lg:hidden">
-                    <span class="text-xl font-extrabold tracking-[-0.03em] text-[#8A5B2E]">ZeePerfume</span>
+                    <span class="text-xl font-extrabold tracking-[-0.03em] text-[#8A5B2E]">ZEEPERFUME
+
+                    </span>
                     <span class="text-xs font-semibold text-[#5F6065]">Point of Sale</span>
                 </div>
 
