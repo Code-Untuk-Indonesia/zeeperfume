@@ -667,6 +667,405 @@
         </div>
     </section>
 
+    <!-- ================= EXCLUSIVE SERIES SLIDER SECTION (SHOWCASE ONLY) ================= -->
+    <section id="exclusive-series" class="relative py-16 lg:py-24 overflow-hidden border-y border-[#D9C19B]/30 bg-[#39291F]">
+
+        <!-- Background Image Utama untuk Seluruh Section -->
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('asset/Mist Valley.svg') }}" alt="Background" class="w-full h-full object-cover opacity-50">
+            <!-- Gradient overlay agar teks dan kartu tetap mudah dibaca -->
+            <div class="absolute inset-0 bg-gradient-to-t from-[#39291F] via-[#39291F]/70 to-[#39291F]/40"></div>
+        </div>
+
+        <div class="relative z-10 max-w-[1380px] mx-auto px-0 sm:px-6 lg:px-8">
+
+            <!-- Section Header -->
+            <div class="text-center mb-10 md:mb-16 px-4">
+                <h2 class="font-luxury text-4xl sm:text-5xl lg:text-6xl text-white mb-4 drop-shadow-lg">
+                    Zeeperfume Collections
+                </h2>
+                <!-- Garis dekorasi -->
+                <div class="h-1 w-20 bg-[#A66C2D] mx-auto rounded-full shadow-[0_0_10px_rgba(166,108,45,0.8)]"></div>
+            </div>
+
+            <!-- Slider Container (Tanpa Tombol Navigasi Desktop) -->
+            <div class="relative w-full">
+
+                <!-- Track Slider (Scrollbar disembunyikan menggunakan class 'hide-scrollbar') -->
+                <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 hide-scrollbar pb-10 pt-4 px-4 sm:px-0">
+
+                    <!-- ================= CARD 1: Redber Rouge ================= -->
+                    <div class="shrink-0 w-[260px] md:w-[280px] snap-center bg-[#39291F]/60 backdrop-blur-xl border border-[#D9C19B]/30 rounded-[2rem] p-5 flex flex-col relative group transition-transform duration-300 hover:-translate-y-2 shadow-2xl">
+
+                        <!-- Badges Header -->
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] text-white/80 font-medium tracking-wide">Terjual 34,894 kali!</span>
+                            <div class="flex flex-col items-end gap-1.5">
+                                <span class="bg-[#39291F]/80 text-[#D9C19B] text-[9px] font-bold px-2 py-0.5 rounded border border-[#D9C19B]/40">Best Seller</span>
+                            </div>
+                        </div>
+
+                        <!-- Product Image -->
+                        <div class="h-[180px] w-full flex items-center justify-center mb-8">
+                            <div class="block w-full h-full relative">
+                                <!-- Efek cahaya di belakang botol saat di-hover -->
+                                <div class="absolute inset-0 bg-[#A66C2D] rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+                                <img src="{{ asset('asset/01_Redber_Rouge_HD.png') }}" alt="Redber Rouge"
+                                     class="max-w-full max-h-full object-contain mx-auto relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </div>
+
+                        <!-- Card Content -->
+                        <div class="mt-auto pb-2">
+                            <h3 class="font-luxury text-3xl text-white mb-2 drop-shadow-md">
+                                Redber Rouge
+                            </h3>
+                            <p class="text-[13px] text-[#FFF8EB]/80 line-clamp-3 leading-relaxed">
+                                Sensasi kemewahan dalam setiap semprotan. Aroma modern berkarakter kuat yang memikat.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ================= CARD 2: Romantic Wishy ================= -->
+                    <div class="shrink-0 w-[260px] md:w-[280px] snap-center bg-[#39291F]/60 backdrop-blur-xl border border-[#D9C19B]/30 rounded-[2rem] p-5 flex flex-col relative group transition-transform duration-300 hover:-translate-y-2 shadow-2xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] text-white/80 font-medium tracking-wide">Terjual 36,661 kali!</span>
+                        </div>
+                        <div class="h-[180px] w-full flex items-center justify-center mb-8">
+                            <div class="block w-full h-full relative">
+                                <div class="absolute inset-0 bg-[#A66C2D] rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+                                <img src="{{ asset('asset/03_Romantic_wishy_HD.png') }}" alt="Romantic Wishy"
+                                     class="max-w-full max-h-full object-contain mx-auto relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </div>
+                        <div class="mt-auto pb-2">
+                            <h3 class="font-luxury text-3xl text-white mb-2 drop-shadow-md">
+                                Romantic Wishy
+                            </h3>
+                            <p class="text-[13px] text-[#FFF8EB]/80 line-clamp-3 leading-relaxed">
+                                Pesona floral dan sentuhan manis yang membangkitkan nuansa romantis yang elegan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ================= CARD 3: Valency Noir ================= -->
+                    <div class="shrink-0 w-[260px] md:w-[280px] snap-center bg-[#39291F]/60 backdrop-blur-xl border border-[#D9C19B]/30 rounded-[2rem] p-5 flex flex-col relative group transition-transform duration-300 hover:-translate-y-2 shadow-2xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] text-white/80 font-medium tracking-wide">Terjual 36,598 kali!</span>
+                            <div class="flex flex-col items-end gap-1.5">
+                                <span class="bg-[#39291F]/80 text-[#D9C19B] text-[9px] font-bold px-2 py-0.5 rounded border border-[#D9C19B]/40">Exclusive</span>
+                            </div>
+                        </div>
+                        <div class="h-[180px] w-full flex items-center justify-center mb-8">
+                            <div class="block w-full h-full relative">
+                                <div class="absolute inset-0 bg-[#A66C2D] rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+                                <img src="{{ asset('asset/02_Valency_Noir_HD.png') }}" alt="Valency Noir"
+                                     class="max-w-full max-h-full object-contain mx-auto relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </div>
+                        <div class="mt-auto pb-2">
+                            <h3 class="font-luxury text-3xl text-white mb-2 drop-shadow-md">
+                                Valency Noir
+                            </h3>
+                            <p class="text-[13px] text-[#FFF8EB]/80 line-clamp-3 leading-relaxed">
+                                Aroma malam yang memikat. Perpaduan sempurna untuk menciptakan impresi klasik misterius.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ================= CARD 4: Swett Nagita ================= -->
+                    <div class="shrink-0 w-[260px] md:w-[280px] snap-center bg-[#39291F]/60 backdrop-blur-xl border border-[#D9C19B]/30 rounded-[2rem] p-5 flex flex-col relative group transition-transform duration-300 hover:-translate-y-2 shadow-2xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] text-white/80 font-medium tracking-wide">Terjual 33,745 kali!</span>
+                        </div>
+                        <div class="h-[180px] w-full flex items-center justify-center mb-8">
+                            <div class="block w-full h-full relative">
+                                <div class="absolute inset-0 bg-[#A66C2D] rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+                                <img src="{{ asset('asset/04_Swett_Nagita_HD.png') }}" alt="Swett Nagita"
+                                     class="max-w-full max-h-full object-contain mx-auto relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </div>
+                        <div class="mt-auto pb-2">
+                            <h3 class="font-luxury text-3xl text-white mb-2 drop-shadow-md">
+                                Swett Nagita
+                            </h3>
+                            <p class="text-[13px] text-[#FFF8EB]/80 line-clamp-3 leading-relaxed">
+                                Pancarkan energi ceria lewat aroma manis yang segar dan tahan lama.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ================= CARD 5: Scandaleousy ================= -->
+                    <div class="shrink-0 w-[260px] md:w-[280px] snap-center bg-[#39291F]/60 backdrop-blur-xl border border-[#D9C19B]/30 rounded-[2rem] p-5 flex flex-col relative group transition-transform duration-300 hover:-translate-y-2 shadow-2xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] text-white/80 font-medium tracking-wide">Terjual 24,263 kali!</span>
+                            <div class="flex flex-col items-end gap-1.5">
+                                <span class="bg-[#39291F]/80 text-[#D9C19B] text-[9px] font-bold px-2 py-0.5 rounded border border-[#D9C19B]/40">Limited</span>
+                            </div>
+                        </div>
+                        <div class="h-[180px] w-full flex items-center justify-center mb-8">
+                            <div class="block w-full h-full relative">
+                                <div class="absolute inset-0 bg-[#A66C2D] rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"></div>
+                                <img src="{{ asset('asset/05_Scandaleousy_HD.png') }}" alt="Scandaleousy"
+                                     class="max-w-full max-h-full object-contain mx-auto relative z-10 drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </div>
+                        <div class="mt-auto pb-2">
+                            <h3 class="font-luxury text-3xl text-white mb-2 drop-shadow-md">
+                                Scandaleousy
+                            </h3>
+                            <p class="text-[13px] text-[#FFF8EB]/80 line-clamp-3 leading-relaxed">
+                                Dirancang untuk Anda yang berani mengekspresikan diri dan meninggalkan memori kuat.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Bagian "Discover All" Button -->
+            <div class="mt-4 px-4 sm:px-0">
+                <div class="flex flex-row items-center gap-4 sm:gap-8 max-w-lg mx-auto">
+                    <span class="h-px bg-[#D9C19B]/40 flex-1 block"></span>
+                    <a href="#contact-form" class="inline-flex items-center justify-center h-12 px-6 sm:px-8 bg-white/10 hover:bg-[#FFF8EB] text-white hover:text-[#39291F] border border-[#D9C19B]/50 rounded-full font-bold text-[10px] sm:text-[11px] uppercase tracking-widest transition-colors duration-300">
+                        Pesan Aroma Favoritmu
+                    </a>
+                    <span class="h-px bg-[#D9C19B]/40 flex-1 block"></span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+<!-- ================= FAVORITES COLLECTIONS (SQUARE LINKS GRID DENGAN MODAL) ================= -->
+    <section id="favorites-collections" class="py-16 lg:py-24 bg-[#FFFAF5] border-y border-[#D9C19B]/30 overflow-hidden"
+        x-data="{
+            modalOpen: false,
+            activeImage: '',
+            activeProduct: null,
+            products: {
+                'redber': {
+                    title: 'Redber Rouge',
+                    subtitle: 'Modern & Berkelas',
+                    desc: 'Sensasi kemewahan dalam setiap semprotan. Aroma modern berkarakter kuat yang siap menjadikan Anda pusat perhatian di berbagai momen istimewa. Cocok untuk penggunaan formal maupun kasual yang elegan.',
+                    img: '{{ asset('asset/01_Redber_Rouge_HD.png') }}',
+                    gallery: [
+                        '{{ asset('asset/01_Redber_Rouge_HD.png') }}',
+                        '{{ asset('asset/botolbg_2.jpg') }}'
+                    ]
+                },
+                'valency': {
+                    title: 'Valency Noir',
+                    subtitle: 'Misterius & Elegan',
+                    desc: 'Aroma malam yang memikat. Perpaduan sempurna untuk menciptakan impresi klasik misterius yang sulit dilupakan. Memancarkan aura percaya diri yang tenang namun menghanyutkan.',
+                    img: '{{ asset('asset/02_Valency_Noir_HD.png') }}',
+                    gallery: [
+                        '{{ asset('asset/02_Valency_Noir_HD.png') }}',
+                        '{{ asset('asset/botolbg.svg') }}'
+                    ]
+                },
+                'marva': {
+                    title: 'Marva',
+                    subtitle: 'Eksklusif & Karismatik',
+                    desc: 'Hadirkan pesona karismatik dan wibawa dalam rutinitas Anda. Marva memadukan nuansa elegan yang mendalam dan berkelas, dirancang untuk individu yang berani mengekspresikan diri.',
+                    img: '{{ asset('asset/08_Marva_HD.png') }}',
+                    gallery: [
+                        '{{ asset('asset/08_Marva_HD.png') }}',
+                        '{{ asset('asset/botolbg_2.jpg') }}'
+                    ]
+                }
+            },
+            openModal(id) {
+                this.activeProduct = this.products[id];
+                this.activeImage = this.activeProduct.gallery[0];
+                this.modalOpen = true;
+            }
+        }">
+
+        <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Section Header -->
+            <div class="text-center max-w-2xl mx-auto mb-12 md:mb-16 relative">
+                <div class="flex items-center justify-center gap-4 mb-2">
+                    <svg class="w-4 h-4 text-[#A66C2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <h2 class="font-luxury text-4xl sm:text-5xl lg:text-[3.5rem] text-[#39291F] tracking-tight drop-shadow-sm">
+                        Favorites
+                    </h2>
+                    <svg class="w-4 h-4 text-[#A66C2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <p class="text-[14px] sm:text-base text-[#554333] font-medium px-2">
+                    Pilihan eksklusif pelanggan setia kami
+                </p>
+            </div>
+
+            <!-- Square Grid Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-[1200px] mx-auto">
+
+                <!-- CARD 1: Redber Rouge -->
+                <div class="group relative overflow-hidden rounded-[1.5rem] shadow-md shadow-[#39291F]/5 border border-[#D9C19B]/40 block transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl cursor-pointer"
+                     @click="openModal('redber')">
+                    <div class="block h-full w-full relative">
+                        <div class="relative w-full aspect-[4/5] overflow-hidden bg-[#FFF8EB]">
+                            <img src="{{ asset('asset/01_Redber_Rouge_HD.png') }}" alt="Redber Rouge"
+                                 class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#39291F]/90 via-[#39291F]/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        <div class="absolute bottom-0 left-0 w-full p-6 sm:p-8 flex flex-col justify-end">
+                            <h3 class="font-luxury text-3xl md:text-[2rem] text-white leading-tight mb-4 drop-shadow-md transform transition-transform duration-500 group-hover:-translate-y-1">
+                                Redber Rouge
+                            </h3>
+                            <div class="flex items-center justify-between overflow-hidden">
+                                <span class="inline-block px-5 py-2 rounded-full border border-white/50 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] bg-white/10 backdrop-blur-sm transform transition-all duration-500 group-hover:bg-[#A66C2D] group-hover:border-[#A66C2D] group-hover:text-white">
+                                    Lihat Detail
+                                </span>
+                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white transform translate-x-12 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 bg-[#A66C2D]">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: Valency Noir (Center) -->
+                <div class="group relative overflow-hidden rounded-[1.5rem] shadow-md shadow-[#39291F]/5 border border-[#D9C19B]/40 block transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl md:scale-[1.05] z-10 cursor-pointer"
+                     @click="openModal('valency')">
+                    <div class="block h-full w-full relative">
+                        <div class="relative w-full aspect-[4/5] overflow-hidden bg-[#FFF8EB]">
+                            <img src="{{ asset('asset/02_Valency_Noir_HD.png') }}" alt="Valency Noir"
+                                 class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#39291F]/90 via-[#39291F]/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        <div class="absolute bottom-0 left-0 w-full p-6 sm:p-8 flex flex-col justify-end">
+                            <h3 class="font-luxury text-3xl md:text-[2rem] text-white leading-tight mb-4 drop-shadow-md transform transition-transform duration-500 group-hover:-translate-y-1">
+                                Valency Noir
+                            </h3>
+                            <div class="flex items-center justify-between overflow-hidden">
+                                <span class="inline-block px-5 py-2 rounded-full border border-white/50 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] bg-white/10 backdrop-blur-sm transform transition-all duration-500 group-hover:bg-[#A66C2D] group-hover:border-[#A66C2D] group-hover:text-white">
+                                    Lihat Detail
+                                </span>
+                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white transform translate-x-12 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 bg-[#A66C2D]">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Marva -->
+                <div class="group relative overflow-hidden rounded-[1.5rem] shadow-md shadow-[#39291F]/5 border border-[#D9C19B]/40 block transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl cursor-pointer"
+                     @click="openModal('marva')">
+                    <div class="block h-full w-full relative">
+                        <div class="relative w-full aspect-[4/5] overflow-hidden bg-[#FFF8EB]">
+                            <img src="{{ asset('asset/08_Marva_HD.png') }}" alt="Marva"
+                                 class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#39291F]/90 via-[#39291F]/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+
+                        <div class="absolute bottom-0 left-0 w-full p-6 sm:p-8 flex flex-col justify-end">
+                            <h3 class="font-luxury text-3xl md:text-[2rem] text-white leading-tight mb-4 drop-shadow-md transform transition-transform duration-500 group-hover:-translate-y-1">
+                                Marva
+                            </h3>
+                            <div class="flex items-center justify-between overflow-hidden">
+                                <span class="inline-block px-5 py-2 rounded-full border border-white/50 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] bg-white/10 backdrop-blur-sm transform transition-all duration-500 group-hover:bg-[#A66C2D] group-hover:border-[#A66C2D] group-hover:text-white">
+                                    Lihat Detail
+                                </span>
+                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white transform translate-x-12 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100 bg-[#A66C2D]">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= PRODUCT MODAL (POPUP) ================= -->
+        <!-- Overlay & Dialog -->
+        <div x-show="modalOpen" style="display: none;"
+             class="fixed inset-0 z-[100] overflow-y-auto"
+             aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-10 text-center sm:p-0">
+
+                <!-- Background Backdrop Blur -->
+                <div x-show="modalOpen"
+                     x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 transition-opacity bg-[#1C1D21]/80 backdrop-blur-sm"
+                     aria-hidden="true" @click="modalOpen = false"></div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <!-- Modal Content Panel -->
+                <div x-show="modalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="inline-block w-full max-w-4xl text-left align-bottom transition-all transform bg-white rounded-3xl shadow-2xl sm:my-8 sm:align-middle overflow-hidden border border-[#D9C19B]/40 relative">
+
+                     <div class="flex flex-col md:flex-row h-full">
+
+                         <!-- KIRI: Galeri Foto -->
+                         <div class="w-full md:w-1/2 bg-[#FFF8EB] p-6 sm:p-8 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-[#D9C19B]/30">
+                            <!-- Tombol Close (Mobile) -->
+                            <button @click="modalOpen = false" class="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white text-[#39291F] border border-[#D9C19B]/50 z-10 shadow-sm">
+                                <i class="bi bi-x-lg text-sm"></i>
+                            </button>
+
+                            <!-- Foto Utama -->
+                            <div class="w-full aspect-square rounded-2xl bg-white mb-4 flex items-center justify-center p-4 border border-[#D9C19B]/20 shadow-inner">
+                                <img :src="activeImage" class="max-w-full max-h-full object-contain drop-shadow-[0_15px_15px_rgba(57,41,31,0.3)] transition-all duration-300">
+                            </div>
+
+                            <!-- Thumbnail Galeri (Bisa diklik) -->
+                            <div class="flex gap-3 overflow-x-auto w-full pb-2 hide-scrollbar justify-center">
+                                <template x-for="img in activeProduct?.gallery">
+                                    <button @click="activeImage = img"
+                                            :class="activeImage === img ? 'border-[#A66C2D] ring-2 ring-[#A66C2D]/20' : 'border-[#D9C19B]/40 hover:border-[#A66C2D]'"
+                                            class="w-16 h-16 shrink-0 rounded-xl bg-white border flex items-center justify-center p-1 cursor-pointer transition-all">
+                                        <img :src="img" class="w-full h-full object-contain">
+                                    </button>
+                                </template>
+                            </div>
+                         </div>
+
+                         <!-- KANAN: Detail & Deskripsi -->
+                         <div class="w-full md:w-1/2 p-6 sm:p-10 lg:p-12 flex flex-col justify-center relative bg-white">
+                            <!-- Tombol Close (Desktop) -->
+                            <button @click="modalOpen = false" class="hidden md:flex absolute top-6 right-6 w-10 h-10 items-center justify-center rounded-full bg-[#FFF8EB] text-[#39291F] hover:bg-[#A66C2D] hover:text-white border border-[#D9C19B]/50 transition-colors z-10 shadow-sm">
+                                <i class="bi bi-x-lg text-lg"></i>
+                            </button>
+
+                            <span class="text-[#8A5B2D] text-[10px] font-extrabold uppercase tracking-[0.2em] mb-3" x-text="activeProduct?.subtitle"></span>
+                            <h2 class="font-luxury text-4xl lg:text-5xl text-[#39291F] mb-4" x-text="activeProduct?.title"></h2>
+
+                            <div class="w-10 h-1 bg-[#D9C19B] rounded-full mb-6"></div>
+
+                            <p class="text-[#554333] text-[13px] md:text-[14px] leading-relaxed font-medium mb-8 pb-8 border-b border-[#D9C19B]/30" x-text="activeProduct?.desc"></p>
+
+                            <!-- Tombol Aksi -->
+                            <div class="mt-auto">
+                                <a href="#contact-form" @click="modalOpen = false" class="flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-[#A66C2D] text-white hover:bg-[#845323] transition-all font-bold text-[12px] uppercase tracking-widest shadow-lg shadow-[#A66C2D]/20 transform active:scale-[0.98]">
+                                    Pesan Aroma Ini
+                                    <i class="bi bi-whatsapp ml-1 text-lg"></i>
+                                </a>
+                            </div>
+                         </div>
+                     </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- ================= COLLECTIONS SECTION (MOBILE-FIRST & ENHANCED TYPOGRAPHY) ================= -->
     <section id="collections" class="py-16 lg:py-24 bg-[#FFFAF5] border-y border-[#D9C19B]/30">
         <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
