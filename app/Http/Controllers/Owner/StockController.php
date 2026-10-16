@@ -43,7 +43,9 @@ class StockController extends Controller
     {
         $categories = Category::all();
         $branches = Branch::all();
-        return view('owner.stock.create', compact('categories', 'branches'));
+        // Get all existing products to be used as parent product suggestion
+        $existingProducts = Product::all();
+        return view('owner.stock.create', compact('categories', 'branches', 'existingProducts'));
     }
 
     public function storeAjax(Request $request)
@@ -60,11 +62,19 @@ class StockController extends Controller
         }
     }
 
+    // AJAX Endpoint to get products by category
+    public function getProductsByCategory($categoryId)
+    {
+        $products = Product::where('kategori_id', $categoryId)->get();
+        return response()->json(['success' => true, 'products' => $products]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'product_id'  => 'nullable|exists:products,id', // Allow selecting existing product
+            'name'        => 'required_without:product_id|string|max:255', // Require if no product selected
             'status'      => 'required|in:ada_stok,draft',
             'variants'    => 'required|array|min:1',
             'variants.*.name'  => 'required|string',
@@ -76,13 +86,21 @@ class StockController extends Controller
         try {
             $userId = auth()->id() ?? 1;
 
-            // 1. Simpan Produk Induk
-            $product = Product::create([
-                'nama_produk' => $request->name,
-                'deskripsi'   => $request->description,
-                'kategori_id' => $request->category_id,
-                'tipe_stok'   => $request->status,
-            ]);
+            // 1. Simpan Produk Induk ATAU Gunakan Produk Induk yang sudah ada
+            if ($request->filled('product_id')) {
+                // Use existing product
+                $product = Product::findOrFail($request->product_id);
+                // Optionally update product status/description if needed
+            } else {
+                // Create new product
+                $product = Product::create([
+                    'nama_produk' => $request->name,
+                    'deskripsi'   => $request->description,
+                    'kategori_id' => $request->category_id,
+                    'tipe_stok'   => $request->status,
+                ]);
+            }
+
 
             // 2. Loop Semua Varian yang diinput
             foreach ($request->variants as $varId => $varData) {
@@ -215,8 +233,9 @@ class StockController extends Controller
             ]);
 
             foreach ($request->variants as $varId => $varData) {
-                $variant = ProductVariant::find($varId);
-                if (!$variant) continue;
+                // Cek apakah ini varian baru (ID diawali dengan 'new_') atau varian lama
+                $isNewVariant = str_starts_with($varId, 'new_');
+                $variant = $isNewVariant ? null : ProductVariant::find($varId);
 
                 $updateData = [
                     'nama_varian' => $varData['name'],
@@ -233,7 +252,13 @@ class StockController extends Controller
                     $updateData['image'] = 'uploads/variants/' . $imageName;
                 }
 
-                $variant->update($updateData);
+                // JIKA VARIAN ADA, UPDATE. JIKA TIDAK ADA, BUAT VARIAN BARU KE INDUK INI.
+                if ($variant) {
+                    $variant->update($updateData);
+                } else {
+                    $updateData['produk_id'] = $product->id;
+                    $variant = ProductVariant::create($updateData);
+                }
 
                 // Update Stok Pusat
                 $stokPusatBaru = $varData['stock_pusat'] ?? 0;
@@ -248,7 +273,7 @@ class StockController extends Controller
                         'user_id' => $userId,
                         'jenis_riwayat' => $diffPusat > 0 ? 'masuk' : 'keluar',
                         'qty' => $diffPusat,
-                        'keterangan' => 'Penyesuaian stok pusat',
+                        'keterangan' => $isNewVariant ? 'Stok awal varian baru' : 'Penyesuaian stok pusat',
                         'waktu' => now(),
                     ]);
                 }
@@ -315,7 +340,7 @@ class StockController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('owner.stock.index')->with('success', 'Produk berhasil diperbarui!');
+            return redirect()->route('owner.stock.index')->with('success', 'Produk berhasil diperbarui dan varian baru ditambahkan!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal update produk: ' . $e->getMessage());

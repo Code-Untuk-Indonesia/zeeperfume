@@ -2,7 +2,9 @@
     document.getElementById('btn-add-variant')?.addEventListener('click', function() {
         const container = document.getElementById('variants-container');
         const template = document.getElementById('variant-template').innerHTML;
-        const newIndex = Date.now();
+
+        // PENTING: Gunakan 'new_' agar backend tau ini varian baru yang disisipkan
+        const newIndex = 'new_' + Date.now();
 
         const newHtml = template.replace(/__IDX__/g, newIndex);
         container.insertAdjacentHTML('beforeend', newHtml);

@@ -200,11 +200,25 @@ class PosController extends Controller
                 ]);
             }
 
-            // 5. Potong Poin Member (Jika menggunakan opsi Tukar Poin)
-            if (($validated['member_id'] ?? null) && ($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
+            // 5. Update Poin Member (Potong poin yang dipakai & Tambah poin dari pembelanjaan)
+            if (!empty($validated['member_id'])) {
                 $member = Member::find($validated['member_id']);
+
                 if ($member) {
-                    $member->decrement('poin', $validated['used_points']);
+                    // A. Potong poin jika member menukarkan poin untuk diskon
+                    if (($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
+                        $member->decrement('poin', $validated['used_points']);
+                    }
+
+                    // B. Tambah poin dari transaksi ini
+                    // RUMUS: Total Belanja dibagi nominal tertentu.
+                    // Contoh di bawah: Setiap belanja Rp 10.000 dapat 1 Poin.
+                    // Silakan ubah angka 10000 sesuai kebijakan toko Anda.
+                    $poinDidapat = floor($totalBelanja / 10000);
+
+                    if ($poinDidapat > 0) {
+                        $member->increment('poin', $poinDidapat);
+                    }
                 }
             }
 

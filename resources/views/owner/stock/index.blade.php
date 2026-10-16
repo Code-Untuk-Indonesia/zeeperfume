@@ -21,7 +21,6 @@
 
         <!-- Quick Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-            <!-- Stat 1 -->
             <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition">
                 <div class="bg-blue-50 text-blue-500 p-3.5 rounded-2xl">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +32,6 @@
                     <h4 class="text-xl font-black text-gray-900 mt-0.5">{{ number_format($totalProducts ?? 0) }} Item</h4>
                 </div>
             </div>
-            <!-- Stat 2 -->
             <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition">
                 <div class="bg-red-50 text-red-500 p-3.5 rounded-2xl">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +43,6 @@
                     <h4 class="text-xl font-black text-red-600 mt-0.5">{{ $lowStockCount ?? 0 }} Item <span class="text-[11px] text-gray-400 font-medium ml-1">(&lt; 10 qty)</span></h4>
                 </div>
             </div>
-            <!-- Stat 3 -->
             <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition">
                 <div class="bg-green-50 text-green-500 p-3.5 rounded-2xl">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,10 +97,9 @@
                 <table class="w-full text-left whitespace-nowrap">
                     <thead class="bg-gray-50 text-gray-500 text-[11px] font-extrabold uppercase tracking-wider border-y border-gray-200">
                         <tr>
-                            <!-- URUTAN KOLOM DIBALIK SESUAI PERMINTAAN -->
-                            <th class="px-6 py-5 min-w-[450px]">Foto, Detail Varian & Stok Cabang</th>
-                            <th class="px-6 py-5 w-64">Produk Induk & Kategori</th>
-                            <th class="px-6 py-5 text-center w-28">Aksi</th>
+                            <th class="px-6 py-5 w-[30%]">Produk Induk & Kategori</th>
+                            <th class="px-6 py-5 w-[55%]">Foto, Detail Varian & Stok Cabang</th>
+                            <th class="px-6 py-5 text-center w-[15%]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
@@ -111,7 +107,31 @@
                         @forelse($products as $product)
                             <tr class="hover:bg-gray-50/50 transition-colors group">
 
-                                <!-- KOLOM 1: VARIAN & STOK (MAIN VIEW) -->
+                                <!-- KOLOM 1: INFO PRODUK INDUK & KATEGORI -->
+                                <td class="px-6 py-5 align-top">
+                                    <div class="flex flex-col gap-2">
+                                        <h3 class="font-extrabold text-gray-900 text-base leading-tight whitespace-normal line-clamp-2">
+                                            {{ $product->nama_produk }}
+                                        </h3>
+
+                                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                                            <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold border border-gray-200 shadow-sm flex items-center gap-1.5">
+                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                                {{ $product->category->nama_kategori ?? 'Tanpa Kategori' }}
+                                            </span>
+
+                                            @if($product->tipe_stok === 'draft')
+                                                <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-md text-[10px] font-bold border border-red-100 uppercase shadow-sm">Draft</span>
+                                            @endif
+                                        </div>
+
+                                        <p class="text-[10px] text-gray-400 font-semibold mt-1">
+                                            ID: #{{ str_pad($product->id, 4, '0', STR_PAD_LEFT) }} &bull; {{ $product->variants->count() ?? 0 }} Varian
+                                        </p>
+                                    </div>
+                                </td>
+
+                                <!-- KOLOM 2: VARIAN & STOK (MAIN VIEW) -->
                                 <td class="px-6 py-5 align-top">
                                     @if ($product->variants->count() > 0)
                                         <div class="flex flex-col gap-3">
@@ -132,7 +152,7 @@
 
                                                     {{-- Varian Info & Harga --}}
                                                     <div class="flex-1 min-w-[150px]">
-                                                        <span class="font-extrabold text-gray-900 text-sm block mb-1">{{ $variant->nama_varian }}</span>
+                                                        <span class="font-extrabold text-gray-900 text-sm block mb-1 whitespace-normal">{{ $variant->nama_varian }}</span>
 
                                                         <div class="flex items-center gap-2 mb-1">
                                                             <span class="font-black text-[#CC9863] text-sm">
@@ -175,30 +195,6 @@
                                             ⚠️ Produk belum memiliki foto, varian & harga.
                                         </div>
                                     @endif
-                                </td>
-
-                                <!-- KOLOM 2: INFO PRODUK INDUK & KATEGORI -->
-                                <td class="px-6 py-5 align-top">
-                                    <div class="flex flex-col gap-1.5">
-                                        <h3 class="font-extrabold text-gray-900 text-base leading-tight whitespace-normal line-clamp-2">
-                                            {{ $product->nama_produk }}
-                                        </h3>
-
-                                        <div class="flex flex-wrap items-center gap-2 mt-1">
-                                            <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold border border-gray-200 shadow-sm flex items-center gap-1.5">
-                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                                                {{ $product->category->nama_kategori ?? 'Tanpa Kategori' }}
-                                            </span>
-
-                                            @if($product->tipe_stok === 'draft')
-                                                <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-md text-[10px] font-bold border border-red-100 uppercase shadow-sm">Draft</span>
-                                            @endif
-                                        </div>
-
-                                        <p class="text-[10px] text-gray-400 font-semibold mt-1">
-                                            ID: #{{ str_pad($product->id, 4, '0', STR_PAD_LEFT) }} &bull; {{ $product->variants->count() ?? 0 }} Varian
-                                        </p>
-                                    </div>
                                 </td>
 
                                 <!-- KOLOM 3: AKSI -->
@@ -255,7 +251,8 @@
             @if(isset($products) && $products->hasPages())
                 <div class="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white">
                     <span class="text-sm font-semibold text-gray-500">
-                        Menampilkan <span class="text-gray-900">{{ $products->firstItem() }}</span> - <span class="text-gray-900">{{ $products->lastItem() }}</span> dari total <span class="text-gray-900">{{ $products->total() }}</span> produk
+                        Menampilkan <span class="text-gray-900">{{ $products->firstItem() }}</span> -
+                        <span class="text-gray-900">{{ $products->lastItem() }}</span> dari total <span class="text-gray-900">{{ $products->total() }}</span> produk
                     </span>
                     <div class="pagination-custom">
                         {{ $products->links('pagination::tailwind') }}

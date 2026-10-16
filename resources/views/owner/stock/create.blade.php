@@ -76,33 +76,73 @@
         </div>
 
         <!-- ================= KANAN: PENGATURAN KATEGORI & INFO PRODUK ================= -->
-        <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="categoryManager()">
+        <!-- Inject existing products as JSON for Alpine -->
+        <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="productManager({{ json_encode($existingProducts) }})">
 
             <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative sticky top-6">
                 <h2 class="text-base font-extrabold text-gray-900 mb-4 border-b border-gray-100 pb-3">Informasi Induk Produk</h2>
                 <div class="space-y-5">
 
                     <!-- Kategori Setup -->
-                    @include('components.stock-category-select', ['categories' => $categories])
+                    <!-- Gunakan x-model pada level ini jika tidak ada di stock-category-select -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide">
+                                Kategori <span class="text-red-500">*</span>
+                            </label>
+                            <button type="button" @click.prevent="openCategoryModal = true"
+                                class="text-[10px] bg-orange-50 text-[#CC9863] px-2 py-1 rounded font-bold hover:bg-orange-100 transition focus:outline-none">
+                                + Baru
+                            </button>
+                        </div>
+                        <select name="category_id" id="category_select" x-model="selectedCategoryId" @change="fetchProductsByCategory"
+                            class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800"
+                            required>
+                            <option value="">Pilih Kategori</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->nama_kategori }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                    <!-- Nama Induk -->
+                    <!-- Pilihan: Buat Induk Baru atau Pilih Induk Lama -->
                     <div>
                         <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
-                            Nama Induk Produk <span class="text-red-500">*</span>
+                            Pilih Produk Induk <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="name" value="{{ old('name') }}"
+                        <select name="product_id" x-model="selectedProductId" @change="handleProductSelection"
+                            class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800 mb-2">
+                            <option value="">-- Buat Produk Induk Baru --</option>
+                            <template x-for="prod in filteredProducts" :key="prod.id">
+                                <option :value="prod.id" x-text="prod.nama_produk"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- Nama Induk (Input manual jika buat baru) -->
+                    <div x-show="!selectedProductId">
+                        <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
+                            Nama Induk Produk Baru <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="name" x-model="productName" :required="!selectedProductId"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-900"
-                            placeholder="Cth: Parfum Baccarat" required>
+                            placeholder="Cth: Parfum Baccarat">
                     </div>
 
                     <!-- Deskripsi -->
-                    <div>
+                    <div x-show="!selectedProductId">
                         <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
                             Deskripsi Singkat
                         </label>
-                        <textarea name="description" rows="3"
+                        <textarea name="description" rows="3" x-model="productDescription"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition text-sm font-medium"
-                            placeholder="Wangi floral, vanilla...">{{ old('description') }}</textarea>
+                            placeholder="Wangi floral, vanilla..."></textarea>
+                    </div>
+
+                    <div x-show="selectedProductId" class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                         <p class="text-xs text-blue-800 font-medium">Varian ini akan ditambahkan ke produk induk <strong x-text="productName"></strong>.</p>
                     </div>
 
                     <!-- Status -->
@@ -133,7 +173,7 @@
                     </div>
                 </div>
 
-                <!-- Modal Alpine Kategori -->
+                <!-- Modal Alpine Kategori (Tetap dipertahankan dari versi Anda) -->
                 <div x-cloak x-show="openCategoryModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="openCategoryModal = false" x-show="openCategoryModal" x-transition.opacity></div>
 
@@ -178,3 +218,130 @@
 @include('components.stock-category-manager-script')
 @include('components.stock-variant-manager-script')
 @endsection
+<script>
+    document.getElementById('btn-add-variant')?.addEventListener('click', function() {
+        const container = document.getElementById('variants-container');
+        const template = document.getElementById('variant-template').innerHTML;
+
+        // PENTING: Gunakan 'new_' agar backend tau ini varian baru yang disisipkan
+        const newIndex = 'new_' + Date.now();
+
+        const newHtml = template.replace(/__IDX__/g, newIndex);
+        container.insertAdjacentHTML('beforeend', newHtml);
+
+        updateVariantNumbers();
+    });
+
+    function updateVariantNumbers() {
+        const numbers = document.querySelectorAll('#variants-container .variant-number');
+        numbers.forEach((el, i) => {
+            el.innerText = i + 1;
+        });
+    }
+</script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        // Menggabungkan categoryManager sebelumnya dengan logika pemilihan produk
+        Alpine.data('productManager', (allProducts) => ({
+            // Category properties
+            openCategoryModal: false,
+            newCategoryName: '',
+            isLoading: false,
+            errorMessage: '',
+            successMessage: '',
+
+            // Product properties
+            allProducts: allProducts,
+            filteredProducts: [],
+            selectedCategoryId: '{{ old('category_id') }}',
+            selectedProductId: '{{ old('product_id') }}',
+            productName: '{{ old('name') }}',
+            productDescription: '{{ old('description') }}',
+
+            init() {
+                 if (this.selectedCategoryId) {
+                     this.filterProducts();
+                 }
+                 if(this.selectedProductId){
+                     this.handleProductSelection();
+                 }
+            },
+
+            fetchProductsByCategory() {
+                this.filterProducts();
+                this.selectedProductId = ''; // Reset product when category changes
+                this.productName = '';
+                this.productDescription = '';
+            },
+
+            filterProducts() {
+                 if (this.selectedCategoryId) {
+                     this.filteredProducts = this.allProducts.filter(p => p.kategori_id == this.selectedCategoryId);
+                 } else {
+                     this.filteredProducts = [];
+                 }
+            },
+
+            handleProductSelection() {
+                if (this.selectedProductId) {
+                    const product = this.allProducts.find(p => p.id == this.selectedProductId);
+                    if (product) {
+                        this.productName = product.nama_produk;
+                        this.productDescription = product.deskripsi;
+                    }
+                } else {
+                    this.productName = '';
+                    this.productDescription = '';
+                }
+            },
+
+            // Metode penyimpanan kategori (dari kode Anda sebelumnya)
+            async saveCategory() {
+                if (!this.newCategoryName.trim()) {
+                    this.errorMessage = 'Nama kategori tidak boleh kosong!';
+                    return;
+                }
+
+                this.isLoading = true;
+                this.errorMessage = '';
+                this.successMessage = '';
+
+                try {
+                    const response = await fetch("{{ url(auth()->user()->role->nama_role . '/category/ajax') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ nama_kategori: this.newCategoryName })
+                    });
+
+                    const data = await response.json();
+                    this.isLoading = false;
+
+                    if (response.ok && data.success) {
+                        this.successMessage = data.message;
+                        const selectEl = document.getElementById('category_select');
+                        selectEl.add(new Option(data.category.nama_kategori, data.category.id, true, true));
+
+                        // Update model
+                        this.selectedCategoryId = data.category.id;
+                        this.filterProducts(); // Update dropdown produk untuk kategori baru ini
+
+                        setTimeout(() => {
+                            this.openCategoryModal = false;
+                            this.newCategoryName = '';
+                            this.successMessage = '';
+                        }, 1000);
+                    } else {
+                        this.errorMessage = data.message || 'Terjadi kesalahan.';
+                    }
+                } catch (error) {
+                    this.isLoading = false;
+                    this.errorMessage = 'Koneksi terputus. Pastikan internet stabil.';
+                }
+            }
+        }));
+    });
+</script>
