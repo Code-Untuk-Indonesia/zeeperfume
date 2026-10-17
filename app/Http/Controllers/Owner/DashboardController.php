@@ -17,7 +17,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // 1. Ambil Parameter Filter
-        $period = $request->query('period', 'this_month');
+        $period = $request->query('period', 'today');
         $startDateInput = $request->query('start_date');
         $endDateInput = $request->query('end_date');
 

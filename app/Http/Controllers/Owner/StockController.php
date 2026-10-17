@@ -211,10 +211,11 @@ class StockController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'status'      => 'required|in:ada_stok,draft',
-            'variants'    => 'required|array|min:1',
+            'category_id'      => 'required|exists:categories,id',
+            'product_id'       => 'nullable|exists:products,id',
+            'name'             => 'required_without:product_id|string|max:255',
+            'status'           => 'required|in:ada_stok,draft',
+            'variants'         => 'required|array|min:1',
             'variants.*.name'  => 'required|string',
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -225,19 +226,39 @@ class StockController extends Controller
             $product = Product::findOrFail($id);
             $userId  = auth()->id() ?? 1;
 
-            $product->update([
-                'nama_produk' => $request->name,
-                'deskripsi'   => $request->description,
-                'kategori_id' => $request->category_id,
-                'tipe_stok'   => $request->status,
-            ]);
+            $targetProductId = $product->id;
+
+            // Logika Perpindahan Produk Induk
+            if ($request->filled('product_id')) {
+                if ($request->product_id != $product->id) {
+                    // Skenario 1: Memindahkan varian ke produk induk lain yang sudah ada
+                    $targetProductId = $request->product_id;
+                } else {
+                    // Skenario 2: Tetap di produk ini, update data induknya
+                    $product->update([
+                        'nama_produk' => $request->name,
+                        'deskripsi'   => $request->description,
+                        'kategori_id' => $request->category_id,
+                        'tipe_stok'   => $request->status,
+                    ]);
+                }
+            } else {
+                // Skenario 3: Memisahkan varian menjadi Produk Induk BARU
+                $newProduct = Product::create([
+                    'nama_produk' => $request->name,
+                    'deskripsi'   => $request->description,
+                    'kategori_id' => $request->category_id,
+                    'tipe_stok'   => $request->status,
+                ]);
+                $targetProductId = $newProduct->id;
+            }
 
             foreach ($request->variants as $varId => $varData) {
-                // Cek apakah ini varian baru (ID diawali dengan 'new_') atau varian lama
                 $isNewVariant = str_starts_with($varId, 'new_');
                 $variant = $isNewVariant ? null : ProductVariant::find($varId);
 
                 $updateData = [
+                    'produk_id'   => $targetProductId, // Menggunakan ID Induk yang baru/lama
                     'nama_varian' => $varData['name'],
                     'sku'         => $varData['sku'] ?? null,
                     'harga_beli'  => $varData['cost'] ?? 0,
@@ -252,11 +273,9 @@ class StockController extends Controller
                     $updateData['image'] = 'uploads/variants/' . $imageName;
                 }
 
-                // JIKA VARIAN ADA, UPDATE. JIKA TIDAK ADA, BUAT VARIAN BARU KE INDUK INI.
                 if ($variant) {
                     $variant->update($updateData);
                 } else {
-                    $updateData['produk_id'] = $product->id;
                     $variant = ProductVariant::create($updateData);
                 }
 
@@ -339,8 +358,13 @@ class StockController extends Controller
                 }
             }
 
+            // Opsional: Hapus produk lama jika sudah tidak memiliki varian sama sekali
+            if ($product->id != $targetProductId && $product->variants()->count() == 0) {
+                $product->delete();
+            }
+
             DB::commit();
-            return redirect()->route('owner.stock.index')->with('success', 'Produk berhasil diperbarui dan varian baru ditambahkan!');
+            return redirect()->route('owner.stock.index')->with('success', 'Produk berhasil diperbarui dan dipindahkan!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal update produk: ' . $e->getMessage());

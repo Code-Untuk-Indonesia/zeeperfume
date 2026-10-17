@@ -216,6 +216,21 @@
         [id] {
             scroll-margin-top: 100px;
         }
+
+/* Hide scrollbar on desktop */
+@media (min-width: 768px) {
+    #exclusive-series .hide-scrollbar {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer */
+    }
+
+    #exclusive-series .hide-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Edge, Safari */
+        width: 0;
+        height: 0;
+    }
+}
+
     </style>
 </head>
 
@@ -305,7 +320,7 @@
             class="hero-mobile relative isolate md:hidden mx-auto w-full max-w-[480px]
                min-h-[760px] rounded-[2rem] overflow-hidden
                border border-[#D8B985]/60 shadow-xl"
-            style="background-image: url('{{ asset('asset/Golden Coastal Sunset Lookout.png') }}');">
+            style="background-image: url('{{ asset('asset/Golden Coastal Sunset Lookout.svg') }}');">
 
             <!-- Warm overlay -->
             <div class="absolute inset-0 z-0 pointer-events-none"
@@ -411,7 +426,7 @@
                border border-[#D9C19B]/50
                shadow-2xl shadow-[#39291F]/15
                md:flex lg:min-h-[710px]"
-            style="background-image: url('{{ asset('asset/Golden Coastal Sunset Lookout.png') }}');">
+            style="background-image: url('{{ asset('asset/Golden Coastal Sunset Lookout.svg') }}');">
 
             <!-- Overlay: strong behind text, fades into the landscape -->
             <div class="absolute inset-0 z-0 pointer-events-none"
@@ -864,6 +879,98 @@
 
         </div>
     </section>
+<!-- ================= LAUNDRY PERFUME SECTION ================= -->
+    <section id="laundry-perfume" class="py-16 lg:py-28 bg-white border-y border-[#D9C19B]/30 relative overflow-hidden">
+
+        <!-- Efek Bias Cahaya Latar -->
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-[#FFF8EB] rounded-full blur-[120px] opacity-70 pointer-events-none -z-10 translate-x-1/3 -translate-y-1/4"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#D8B985] rounded-full blur-[100px] opacity-20 pointer-events-none -z-10 -translate-x-1/3 translate-y-1/4"></div>
+
+        <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+
+                <!-- KIRI: Teks & Keunggulan -->
+                <div class="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-center">
+                    <p class="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A5B2D] mb-3 md:mb-4">
+                        Perawatan Pakaian Premium
+                    </p>
+                    <h2 class="font-luxury text-4xl sm:text-5xl lg:text-[3.5rem] leading-[1.1] tracking-tight text-[#39291F] mb-5 md:mb-6">
+                        Kesegaran Mewah <br>
+                        <span class="italic text-[#A66C2D]">di Setiap Serat Kain.</span>
+                    </h2>
+                    <p class="text-[13px] md:text-[14.5px] text-[#554333] leading-relaxed font-medium mb-8">
+                        Bukan sekadar pewangi biasa. Parfum Laundry ZEEPERFUME diracik khusus dengan konsentrat tinggi untuk memberikan aroma segar yang tahan lama, mencegah bau apek, dan merawat pakaian Anda layaknya dari butik mahal.
+                    </p>
+
+                    <ul class="space-y-4 mb-10">
+                        <li class="flex items-start gap-3.5">
+                            <div class="w-6 h-6 rounded-full bg-[#FFF8EB] border border-[#D9C19B]/50 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="bi bi-check2 text-[#A66C2D] text-sm"></i>
+                            </div>
+                            <span class="text-[13px] md:text-[14px] font-bold text-[#39291F]">Wangi Tahan Lama Hingga 30 Hari <br><span class="font-medium text-[#554333] text-xs">(di dalam lemari penyimpanan)</span></span>
+                        </li>
+                        <li class="flex items-start gap-3.5">
+                            <div class="w-6 h-6 rounded-full bg-[#FFF8EB] border border-[#D9C19B]/50 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="bi bi-check2 text-[#A66C2D] text-sm"></i>
+                            </div>
+                            <span class="text-[13px] md:text-[14px] font-bold text-[#39291F]">Anti-Bakteri & Mencegah Bau Apek</span>
+                        </li>
+                        <li class="flex items-start gap-3.5">
+                            <div class="w-6 h-6 rounded-full bg-[#FFF8EB] border border-[#D9C19B]/50 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="bi bi-check2 text-[#A66C2D] text-sm"></i>
+                            </div>
+                            <span class="text-[13px] md:text-[14px] font-bold text-[#39291F]">Ramah & Aman untuk Semua Jenis Kain</span>
+                        </li>
+                    </ul>
+
+                    <a href="#contact-form" class="inline-flex items-center justify-center gap-3 h-14 px-8 rounded-xl bg-[#39291F] text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#A66C2D] transition-all w-max shadow-xl shadow-[#39291F]/20 transform active:scale-95">
+                        Pesan Parfum Laundry
+                        <i class="bi bi-arrow-right text-lg"></i>
+                    </a>
+                </div>
+
+                <!-- KANAN: Grid Kartu Produk -->
+                <div class="lg:col-span-7 order-1 lg:order-2 grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 relative">
+
+                    <!-- Dekorasi Lingkaran Kecil -->
+                    <div class="hidden lg:block absolute -top-8 -right-8 w-24 h-24 bg-transparent border border-[#D9C19B]/40 rounded-full border-dashed animate-[spin_30s_linear_infinite]"></div>
+
+                    <!-- Laundry Card 1 -->
+                    <div class="bg-[#FFFAF5] rounded-[2rem] p-6 sm:p-8 border border-[#D9C19B]/40 shadow-xl shadow-[#39291F]/5 group hover:-translate-y-2 transition-transform duration-500 relative z-10">
+                        <div class="aspect-square bg-white rounded-[1.5rem] mb-6 flex items-center justify-center p-4 border border-[#D9C19B]/20 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-[#A66C2D] blur-[60px] opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+                            <!-- Silakan ubah src ke gambar parfum laundry Anda -->
+                            <img src="{{ asset('asset/Parfum Laundry Premium 250 M.svg') }}" alt="Laundry Fresh" class="w-full h-full object-contain relative z-10 drop-shadow-[0_15px_15px_rgba(57,41,31,0.2)] group-hover:scale-110 transition-transform duration-700">
+                        </div>
+                        <span class="inline-block px-3 py-1 bg-[#FFF8EB] border border-[#D9C19B]/50 text-[#8A5B2D] rounded-lg text-[9px] font-extrabold uppercase tracking-widest mb-3">
+                            Varian Terlaris
+                        </span>
+                        <h3 class="font-luxury text-3xl text-[#39291F] mb-2 leading-none">Ocean Fresh</h3>
+                        <p class="text-[12px] md:text-[13px] text-[#554333] font-medium leading-relaxed">
+                            Keharuman segar layaknya hembusan angin laut pagi. Sangat bersih, murni, dan memberikan sensasi menenangkan.
+                        </p>
+                    </div>
+
+                    <!-- Laundry Card 2 (Asimetris / Turun sedikit di Desktop) -->
+                    <div class="bg-[#FFFAF5] rounded-[2rem] p-6 sm:p-8 border border-[#D9C19B]/40 shadow-xl shadow-[#39291F]/5 group hover:-translate-y-2 transition-transform duration-500 relative z-10 lg:translate-y-12">
+                        <div class="aspect-square bg-white rounded-[1.5rem] mb-6 flex items-center justify-center p-4 border border-[#D9C19B]/20 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-[#A66C2D] blur-[60px] opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+                            <!-- Silakan ubah src ke gambar parfum laundry Anda -->
+                            <img src="{{ asset('asset/lp-Parfum Laundry 250 ML, 1 Liter dan 5 Liter.svg') }}" alt="Laundry Sweet" class="w-full h-full object-contain relative z-10 drop-shadow-[0_15px_15px_rgba(57,41,31,0.2)] group-hover:scale-110 transition-transform duration-700">
+                        </div>
+                        <span class="inline-block px-3 py-1 bg-[#FFF8EB] border border-[#D9C19B]/50 text-[#8A5B2D] rounded-lg text-[9px] font-extrabold uppercase tracking-widest mb-3">
+                            Aroma Floral
+                        </span>
+                        <h3 class="font-luxury text-3xl text-[#39291F] mb-2 leading-none">Soft Sakura</h3>
+                        <p class="text-[12px] md:text-[13px] text-[#554333] font-medium leading-relaxed">
+                            Aroma bunga sakura yang lembut dan manis, memberikan sentuhan elegan dan feminin pada setiap pakaian Anda.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- ================= FAVORITES COLLECTIONS (SQUARE LINKS GRID DENGAN MODAL) ================= -->
     <section id="favorites-collections"
         class="py-16 lg:py-24 bg-[#FFFAF5] border-y border-[#D9C19B]/30 overflow-hidden" x-data="{
@@ -1134,6 +1241,7 @@
             </div>
         </div>
     </section>
+
     <!-- ================= COLLECTIONS SECTION (MOBILE-FIRST & ENHANCED TYPOGRAPHY) ================= -->
     <section id="collections" class="py-16 lg:py-24 bg-[#FFFAF5] border-y border-[#D9C19B]/30">
         <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">

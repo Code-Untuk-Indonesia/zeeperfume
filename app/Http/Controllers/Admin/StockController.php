@@ -43,7 +43,9 @@ class StockController extends Controller
     {
         $categories = Category::all();
         $branches = Branch::all();
-        return view('admin.stock.create', compact('categories', 'branches'));
+        // Get all existing products to be used as parent product suggestion
+        $existingProducts = Product::all();
+        return view('admin.stock.create', compact('categories', 'branches', 'existingProducts'));
     }
 
     public function storeAjax(Request $request)
@@ -60,11 +62,19 @@ class StockController extends Controller
         }
     }
 
+    // AJAX Endpoint to get products by category
+    public function getProductsByCategory($categoryId)
+    {
+        $products = Product::where('kategori_id', $categoryId)->get();
+        return response()->json(['success' => true, 'products' => $products]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'product_id'  => 'nullable|exists:products,id', // Allow selecting existing product
+            'name'        => 'required_without:product_id|string|max:255', // Require if no product selected
             'status'      => 'required|in:ada_stok,draft',
             'variants'    => 'required|array|min:1',
             'variants.*.name'  => 'required|string',
@@ -76,13 +86,19 @@ class StockController extends Controller
         try {
             $userId = auth()->id() ?? 1;
 
-            // 1. Simpan Produk Induk
-            $product = Product::create([
-                'nama_produk' => $request->name,
-                'deskripsi'   => $request->description,
-                'kategori_id' => $request->category_id,
-                'tipe_stok'   => $request->status,
-            ]);
+            // 1. Simpan Produk Induk ATAU Gunakan Produk Induk yang sudah ada
+            if ($request->filled('product_id')) {
+                // Use existing product
+                $product = Product::findOrFail($request->product_id);
+            } else {
+                // Create new product
+                $product = Product::create([
+                    'nama_produk' => $request->name,
+                    'deskripsi'   => $request->description,
+                    'kategori_id' => $request->category_id,
+                    'tipe_stok'   => $request->status,
+                ]);
+            }
 
             // 2. Loop Semua Varian yang diinput
             foreach ($request->variants as $varId => $varData) {
@@ -96,7 +112,7 @@ class StockController extends Controller
                     $imagePath = 'uploads/variants/' . $imageName;
                 }
 
-                // Simpan Varian (Gunakan ?: 0 agar String Kosong "" otomatis jadi 0)
+                // Simpan Varian
                 $variant = ProductVariant::create([
                     'produk_id'   => $product->id,
                     'nama_varian' => $varData['name'],
@@ -187,16 +203,18 @@ class StockController extends Controller
         $product = Product::with(['variants.branchStocks'])->findOrFail($id);
         $categories = Category::all();
         $branches = Branch::all();
-        return view('admin.stock.edit', compact('product', 'categories', 'branches'));
+        $existingProducts = Product::all();
+        return view('admin.stock.edit', compact('product', 'categories', 'branches', 'existingProducts'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'status'      => 'required|in:ada_stok,draft',
-            'variants'    => 'required|array|min:1',
+            'category_id'      => 'required|exists:categories,id',
+            'product_id'       => 'nullable|exists:products,id',
+            'name'             => 'required_without:product_id|string|max:255',
+            'status'           => 'required|in:ada_stok,draft',
+            'variants'         => 'required|array|min:1',
             'variants.*.name'  => 'required|string',
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -207,18 +225,40 @@ class StockController extends Controller
             $product = Product::findOrFail($id);
             $userId  = auth()->id() ?? 1;
 
-            $product->update([
-                'nama_produk' => $request->name,
-                'deskripsi'   => $request->description,
-                'kategori_id' => $request->category_id,
-                'tipe_stok'   => $request->status,
-            ]);
+            $targetProductId = $product->id;
+
+            // Logika Perpindahan Produk Induk
+            if ($request->filled('product_id')) {
+                if ($request->product_id != $product->id) {
+                    // Skenario 1: Memindahkan varian ke produk induk lain yang sudah ada
+                    $targetProductId = $request->product_id;
+                } else {
+                    // Skenario 2: Tetap di produk ini, update data induknya
+                    $product->update([
+                        'nama_produk' => $request->name,
+                        'deskripsi'   => $request->description,
+                        'kategori_id' => $request->category_id,
+                        'tipe_stok'   => $request->status,
+                    ]);
+                }
+            } else {
+                // Skenario 3: Memisahkan varian menjadi Produk Induk BARU
+                $newProduct = Product::create([
+                    'nama_produk' => $request->name,
+                    'deskripsi'   => $request->description,
+                    'kategori_id' => $request->category_id,
+                    'tipe_stok'   => $request->status,
+                ]);
+                $targetProductId = $newProduct->id;
+            }
 
             foreach ($request->variants as $varId => $varData) {
-                $variant = ProductVariant::find($varId);
-                if (!$variant) continue;
+                // Cek apakah ini varian baru (ID diawali dengan 'new_') atau varian lama
+                $isNewVariant = str_starts_with($varId, 'new_');
+                $variant = $isNewVariant ? null : ProductVariant::find($varId);
 
                 $updateData = [
+                    'produk_id'   => $targetProductId,
                     'nama_varian' => $varData['name'],
                     'sku'         => $varData['sku'] ?? null,
                     'harga_beli'  => $varData['cost'] ?: 0,
@@ -233,7 +273,12 @@ class StockController extends Controller
                     $updateData['image'] = 'uploads/variants/' . $imageName;
                 }
 
-                $variant->update($updateData);
+                // JIKA VARIAN ADA, UPDATE. JIKA TIDAK ADA, BUAT VARIAN BARU KE INDUK INI.
+                if ($variant) {
+                    $variant->update($updateData);
+                } else {
+                    $variant = ProductVariant::create($updateData);
+                }
 
                 // Update Stok Pusat
                 $stokPusatBaru = $varData['stock_pusat'] ?: 0;
@@ -248,7 +293,7 @@ class StockController extends Controller
                         'user_id' => $userId,
                         'jenis_riwayat' => $diffPusat > 0 ? 'masuk' : 'keluar',
                         'qty' => $diffPusat,
-                        'keterangan' => 'Penyesuaian stok pusat',
+                        'keterangan' => $isNewVariant ? 'Stok awal varian baru' : 'Penyesuaian stok pusat',
                         'waktu' => now(),
                     ]);
                 }
@@ -314,8 +359,13 @@ class StockController extends Controller
                 }
             }
 
+            // Opsional: Hapus produk lama jika sudah tidak memiliki varian sama sekali
+            if ($product->id != $targetProductId && $product->variants()->count() == 0) {
+                $product->delete();
+            }
+
             DB::commit();
-            return redirect()->route('admin.stock.index')->with('success', 'Produk berhasil diperbarui!');
+            return redirect()->route('admin.stock.index')->with('success', 'Produk berhasil diperbarui dan dipindahkan!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal update produk: ' . $e->getMessage());

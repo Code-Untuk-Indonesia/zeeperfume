@@ -1,6 +1,11 @@
 @extends('template.sidebar')
 @section('title', 'Edit Produk')
 
+@php
+    // Ambil data produk lain untuk keperluan pemindahan varian
+    $existingProducts = \App\Models\Product::all();
+@endphp
+
 @section('content')
     <main class="flex-1 bg-[#FAFAFA] overflow-y-auto px-4 lg:px-10 py-6 lg:py-8 w-full relative">
 
@@ -15,10 +20,9 @@
             </div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Edit: {{ $product->nama_produk }}
             </h1>
-            <p class="text-gray-500 text-sm mt-1">Perbarui informasi dasar produk dan sesuaikan harga, satuan, serta stok untuk setiap varian.</p>
+            <p class="text-gray-500 text-sm mt-1">Perbarui informasi dasar, sesuaikan stok, atau pindahkan varian ke produk induk lain.</p>
         </div>
 
-        <!-- ================= NOTIFIKASI ERROR ================= -->
         @if (session('error'))
             <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl shadow-sm">
                 <div class="flex items-center gap-2 font-bold">
@@ -55,7 +59,7 @@
             enctype="multipart/form-data" class="flex flex-col xl:flex-row gap-6">
             @csrf
 
-            <!-- ================= KIRI: VARIAN PRODUK (EXISTING + TAMBAH BARU) ================= -->
+            <!-- ================= KIRI: VARIAN PRODUK ================= -->
             <div class="flex-1 space-y-6">
                 <div class="flex justify-between items-end mb-2 border-b border-gray-200 pb-4">
                     <div>
@@ -90,7 +94,7 @@
                                                 <div class="relative w-full h-full">
                                                     <img :src="imagePreview" class="w-full h-full object-cover">
                                                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <span class="text-white text-[9px] font-bold uppercase tracking-wider">Ubah Foto</span>
+                                                        <span class="text-white text-[9px] font-bold uppercase tracking-wider">Ubah</span>
                                                     </div>
                                                 </div>
                                             </template>
@@ -98,7 +102,7 @@
                                                 @change="const file = $event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => imagePreview = e.target.result; reader.readAsDataURL(file); }">
                                         </label>
                                         <div class="text-[10px] text-gray-500 font-medium leading-relaxed">
-                                            <p>Biarkan kosong jika tidak ingin mengubah foto lama.</p>
+                                            <p>Abaikan jika tidak ingin mengubah foto.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -176,9 +180,9 @@
                     @endforeach
                 </div>
 
-                <button type="button" id="btn-add-variant" class="w-full py-4 border-2 border-dashed border-gray-300 text-gray-500 font-bold rounded-2xl hover:bg-orange-50 hover:border-[#CC9863] hover:text-[#CC9863] transition-all flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Tambah Varian Baru ke Produk Ini
+                <button type="button" id="btn-add-variant" class="w-full py-4 border-2 border-dashed border-gray-300 text-[#CC9863] font-bold rounded-2xl bg-orange-50/50 hover:bg-orange-50 hover:border-[#CC9863] transition-all flex items-center justify-center gap-2 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    Tambah Varian Baru
                 </button>
 
                 <!-- Template Hidden untuk Penambahan Varian JS -->
@@ -188,7 +192,7 @@
             </div>
 
             <!-- ================= KANAN: PENGATURAN KATEGORI & INFO PRODUK ================= -->
-            <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="categoryManager()">
+            <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="productManager({{ json_encode($existingProducts) }})">
 
                 <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative sticky top-6">
                     <h2 class="text-base font-extrabold text-gray-900 mb-4 border-b border-gray-100 pb-3">Informasi Induk Produk</h2>
@@ -205,30 +209,49 @@
                                     + Baru
                                 </button>
                             </div>
-                            <select name="category_id" id="category_select" x-model="selectedCategoryId"
+                            <select name="category_id" id="category_select" x-model="selectedCategoryId" @change="fetchProductsByCategory"
                                 class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800"
                                 required>
                                 <option value="">Pilih Kategori</option>
                                 @foreach ($categories as $cat)
-                                    <option value="{{ $cat->id }}">
+                                    <option value="{{ $cat->id }}" {{ old('category_id', $product->kategori_id) == $cat->id ? 'selected' : '' }}>
                                         {{ $cat->nama_kategori }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <!-- Nama Induk -->
+                        <!-- Pilih Produk Induk -->
                         <div>
-                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Nama Induk Produk <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" value="{{ old('name', $product->nama_produk) }}"
-                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-900" required>
+                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
+                                Pilih Produk Induk <span class="text-red-500">*</span>
+                            </label>
+                            <select name="product_id" x-model="selectedProductId" @change="handleProductSelection"
+                                class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-800 mb-2">
+                                <option value="">-- Pisahkan Jadi Produk Baru --</option>
+                                <template x-for="prod in filteredProducts" :key="prod.id">
+                                    <option :value="prod.id" x-text="prod.nama_produk" :selected="prod.id == currentProductId"></option>
+                                </template>
+                            </select>
                         </div>
 
-                        <!-- Deskripsi -->
-                        <div>
+                        <!-- Nama Induk (Tampil jika Buat Baru / Tetap di Induk yg sama) -->
+                        <div x-show="!selectedProductId || selectedProductId == currentProductId">
+                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Nama Induk Produk <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" x-model="productName" :required="!selectedProductId || selectedProductId == currentProductId"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-900">
+                        </div>
+
+                        <!-- Deskripsi (Tampil jika Buat Baru / Tetap di Induk yg sama) -->
+                        <div x-show="!selectedProductId || selectedProductId == currentProductId">
                             <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">Deskripsi Singkat</label>
-                            <textarea name="description" rows="3"
-                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition text-sm font-medium">{{ old('description', $product->deskripsi) }}</textarea>
+                            <textarea name="description" rows="3" x-model="productDescription"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition text-sm font-medium"></textarea>
+                        </div>
+
+                        <!-- Info Perpindahan Varian -->
+                        <div x-cloak x-show="selectedProductId && selectedProductId != currentProductId" class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                            <p class="text-xs text-blue-800 font-medium">Semua varian di atas akan <strong>dipindahkan</strong> ke dalam produk induk <strong x-text="productName"></strong>.</p>
                         </div>
 
                         <!-- Status -->
@@ -247,7 +270,7 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
                                 </svg>
-                                Update & Simpan Produk
+                                Update & Simpan
                             </button>
                             <a href="{{ url(auth()->user()->role->nama_role . '/stock') }}"
                                 class="w-full bg-gray-50 text-gray-600 text-center py-3.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors border border-gray-200">
@@ -322,13 +345,54 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('categoryManager', () => ({
+            Alpine.data('productManager', (allProducts) => ({
                 openCategoryModal: false,
                 newCategoryName: '',
                 isLoading: false,
                 errorMessage: '',
                 successMessage: '',
+
+                allProducts: allProducts,
+                filteredProducts: [],
                 selectedCategoryId: '{{ old('category_id', $product->kategori_id) }}',
+                selectedProductId: '{{ old('product_id', $product->id) }}',
+                currentProductId: '{{ $product->id }}',
+                productName: {!! json_encode(old('name', $product->nama_produk)) !!},
+                productDescription: {!! json_encode(old('description', $product->deskripsi)) !!},
+
+                init() {
+                     if (this.selectedCategoryId) {
+                         this.filterProducts();
+                     }
+                },
+
+                fetchProductsByCategory() {
+                    this.filterProducts();
+                    this.selectedProductId = '';
+                    this.productName = '';
+                    this.productDescription = '';
+                },
+
+                filterProducts() {
+                     if (this.selectedCategoryId) {
+                         this.filteredProducts = this.allProducts.filter(p => p.kategori_id == this.selectedCategoryId);
+                     } else {
+                         this.filteredProducts = [];
+                     }
+                },
+
+                handleProductSelection() {
+                    if (this.selectedProductId) {
+                        const product = this.allProducts.find(p => p.id == this.selectedProductId);
+                        if (product) {
+                            this.productName = product.nama_produk;
+                            this.productDescription = product.deskripsi;
+                        }
+                    } else {
+                        this.productName = '';
+                        this.productDescription = '';
+                    }
+                },
 
                 async saveCategory() {
                     if (!this.newCategoryName.trim()) {
@@ -360,6 +424,7 @@
                             selectEl.add(new Option(data.category.nama_kategori, data.category.id, true, true));
 
                             this.selectedCategoryId = data.category.id;
+                            this.filterProducts();
 
                             setTimeout(() => {
                                 this.openCategoryModal = false;
@@ -378,4 +443,3 @@
         });
     </script>
 @endsection
-

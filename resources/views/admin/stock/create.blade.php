@@ -17,7 +17,7 @@
         <p class="text-gray-500 text-sm mt-1">Tambahkan informasi dasar produk beserta detail varian (ukuran/satuan) yang dimilikinya.</p>
     </div>
 
-    <!-- NOTIFIKASI ERROR (Jika Gagal Simpan) -->
+    <!-- NOTIFIKASI ERROR -->
     @if (session('error'))
         <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl shadow-sm">
             <div class="flex items-center gap-2 font-bold">
@@ -42,7 +42,6 @@
         </div>
     @endif
 
-    <!-- PENTING: Gunakan /store untuk Tambah Baru, bukan /update -->
     <form action="{{ url(auth()->user()->role->nama_role . '/stock/store') }}" method="POST"
         enctype="multipart/form-data" class="flex flex-col xl:flex-row gap-6">
         @csrf
@@ -64,8 +63,8 @@
                 @endforeach
             </div>
 
-            <button type="button" id="btn-add-variant" class="w-full py-4 border-2 border-dashed border-gray-300 text-gray-500 font-bold rounded-2xl hover:bg-orange-50 hover:border-[#CC9863] hover:text-[#CC9863] transition-all flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <button type="button" id="btn-add-variant" class="w-full py-4 border-2 border-dashed border-gray-300 text-[#CC9863] font-bold rounded-2xl bg-orange-50/50 hover:bg-orange-50 hover:border-[#CC9863] transition-all flex items-center justify-center gap-2 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 Tambah Varian Lainnya
             </button>
 
@@ -76,33 +75,104 @@
         </div>
 
         <!-- ================= KANAN: PENGATURAN KATEGORI & INFO PRODUK ================= -->
-        <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="categoryManager()">
+        <div class="w-full xl:w-[360px] space-y-6 shrink-0" x-data="productManager({{ json_encode($existingProducts ?? []) }}, {{ json_encode($categories ?? []) }})">
 
             <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative sticky top-6">
                 <h2 class="text-base font-extrabold text-gray-900 mb-4 border-b border-gray-100 pb-3">Informasi Induk Produk</h2>
                 <div class="space-y-5">
 
-                    <!-- Kategori Setup -->
-                    @include('components.stock-category-select', ['categories' => $categories])
+                    <!-- KATEGORI DROPDOWN PENCARIAN -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide">
+                                Kategori <span class="text-red-500">*</span>
+                            </label>
+                            <button type="button" @click.prevent="openCategoryModal = true"
+                                class="text-[10px] bg-orange-50 text-[#CC9863] px-2 py-1 rounded font-bold hover:bg-orange-100 transition focus:outline-none">
+                                + Baru
+                            </button>
+                        </div>
 
-                    <!-- Nama Induk -->
+                        <div @click.away="openCat = false" class="relative w-full">
+                            <div @click="openCat = !openCat" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 cursor-pointer flex justify-between items-center focus:bg-white focus:border-[#CC9863] transition font-bold text-gray-800">
+                                <span x-text="selectedCategoryId ? (categories.find(c => c.id == selectedCategoryId)?.nama_kategori || 'Pilih Kategori') : 'Pilih Kategori'" class="truncate pr-2"></span>
+                                <svg class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{'rotate-180': openCat}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+
+                            <div x-cloak x-show="openCat" class="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden"
+                                x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                                <div class="p-2 border-b border-gray-100 bg-white sticky top-0 z-10">
+                                    <div class="relative">
+                                        <svg class="absolute left-2.5 top-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                        <input type="text" x-model="searchCat" class="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#CC9863] text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Cari Kategori..." @click.stop>
+                                    </div>
+                                </div>
+                                <ul class="max-h-48 overflow-y-auto p-1.5 custom-scrollbar">
+                                    <li @click="selectedCategoryId = ''; openCat = false; searchCat = ''; fetchProductsByCategory()" class="px-3 py-2 hover:bg-orange-50 cursor-pointer rounded-lg text-sm font-semibold text-gray-500">-- Kosongkan --</li>
+                                    <template x-for="cat in categories.filter(c => c.nama_kategori.toLowerCase().includes(searchCat.toLowerCase()))" :key="cat.id">
+                                        <li @click="selectedCategoryId = cat.id; openCat = false; searchCat = ''; fetchProductsByCategory()" class="px-3 py-2 hover:bg-orange-50 cursor-pointer rounded-lg text-sm font-bold text-gray-800" x-text="cat.nama_kategori"></li>
+                                    </template>
+                                    <li x-show="categories.filter(c => c.nama_kategori.toLowerCase().includes(searchCat.toLowerCase())).length === 0" class="px-3 py-3 text-center text-xs text-gray-400">Tidak ditemukan.</li>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="category_id" :value="selectedCategoryId" required>
+                        </div>
+                    </div>
+
+                    <!-- PRODUK INDUK DROPDOWN PENCARIAN -->
                     <div>
                         <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
-                            Nama Induk Produk <span class="text-red-500">*</span>
+                            Pilih Produk Induk <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="name" value="{{ old('name') }}"
+
+                        <div @click.away="openProd = false" class="relative w-full mb-2">
+                            <div @click="openProd = !openProd" class="w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-gray-50 cursor-pointer flex justify-between items-center focus:bg-white focus:border-[#CC9863] transition font-bold text-gray-800">
+                                <span x-text="selectedProductId ? (allProducts.find(p => p.id == selectedProductId)?.nama_produk || '-- Buat Produk Induk Baru --') : '-- Buat Produk Induk Baru --'" class="truncate pr-2"></span>
+                                <svg class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{'rotate-180': openProd}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+
+                            <div x-cloak x-show="openProd" class="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden"
+                                x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                                <div class="p-2 border-b border-gray-100 bg-white sticky top-0 z-10">
+                                    <div class="relative">
+                                        <svg class="absolute left-2.5 top-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                        <input type="text" x-model="searchProd" class="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#CC9863] text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Cari Produk..." @click.stop>
+                                    </div>
+                                </div>
+                                <ul class="max-h-48 overflow-y-auto p-1.5 custom-scrollbar">
+                                    <li @click="selectedProductId = ''; openProd = false; searchProd = ''; handleProductSelection()" class="px-3 py-2 hover:bg-orange-50 cursor-pointer rounded-lg text-sm font-bold text-[#CC9863]">-- Buat Produk Induk Baru --</li>
+                                    <template x-for="prod in filteredProducts.filter(p => p.nama_produk.toLowerCase().includes(searchProd.toLowerCase()))" :key="prod.id">
+                                        <li @click="selectedProductId = prod.id; openProd = false; searchProd = ''; handleProductSelection()" class="px-3 py-2 hover:bg-orange-50 cursor-pointer rounded-lg text-sm font-bold text-gray-800 truncate" x-text="prod.nama_produk"></li>
+                                    </template>
+                                    <li x-show="filteredProducts.filter(p => p.nama_produk.toLowerCase().includes(searchProd.toLowerCase())).length === 0" class="px-3 py-3 text-center text-xs text-gray-400">Produk tidak ditemukan.</li>
+                                </ul>
+                            </div>
+                            <input type="hidden" name="product_id" :value="selectedProductId">
+                        </div>
+                    </div>
+
+                    <!-- Nama Induk (Input manual jika buat baru) -->
+                    <div x-show="!selectedProductId">
+                        <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
+                            Nama Induk Produk Baru <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="name" x-model="productName" :required="!selectedProductId"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition font-bold text-gray-900"
-                            placeholder="Cth: Parfum Baccarat" required>
+                            placeholder="Cth: Parfum Baccarat">
                     </div>
 
                     <!-- Deskripsi -->
-                    <div>
+                    <div x-show="!selectedProductId">
                         <label class="block text-xs font-extrabold text-gray-700 uppercase tracking-wide mb-1.5">
                             Deskripsi Singkat
                         </label>
-                        <textarea name="description" rows="3"
+                        <textarea name="description" rows="3" x-model="productDescription"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-[#CC9863] transition text-sm font-medium"
-                            placeholder="Wangi floral, vanilla...">{{ old('description') }}</textarea>
+                            placeholder="Wangi floral, vanilla..."></textarea>
+                    </div>
+
+                    <div x-show="selectedProductId" class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                         <p class="text-xs text-blue-800 font-medium">Varian ini akan ditambahkan ke produk induk <strong x-text="productName"></strong>.</p>
                     </div>
 
                     <!-- Status -->
@@ -175,6 +245,131 @@
     [x-cloak] { display: none !important; }
 </style>
 
-@include('components.stock-category-manager-script')
-@include('components.stock-variant-manager-script')
+<script>
+    document.getElementById('btn-add-variant')?.addEventListener('click', function() {
+        const container = document.getElementById('variants-container');
+        const template = document.getElementById('variant-template').innerHTML;
+
+        const newIndex = 'new_' + Date.now();
+        const newHtml = template.replace(/__IDX__/g, newIndex);
+        container.insertAdjacentHTML('beforeend', newHtml);
+
+        updateVariantNumbers();
+    });
+
+    function updateVariantNumbers() {
+        const numbers = document.querySelectorAll('#variants-container .variant-number');
+        numbers.forEach((el, i) => {
+            el.innerText = i + 1;
+        });
+    }
+</script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('productManager', (allProducts, allCategories) => ({
+            openCategoryModal: false,
+            newCategoryName: '',
+            isLoading: false,
+            errorMessage: '',
+            successMessage: '',
+
+            openCat: false,
+            searchCat: '',
+            openProd: false,
+            searchProd: '',
+
+            allProducts: allProducts || [],
+            categories: allCategories || [],
+            filteredProducts: [],
+
+            selectedCategoryId: '{{ old("category_id") }}',
+            selectedProductId: '{{ old("product_id") }}',
+            productName: {!! json_encode(old('name', '')) !!},
+            productDescription: {!! json_encode(old('description', '')) !!},
+
+            init() {
+                 if (this.selectedCategoryId) {
+                     this.filterProducts();
+                 }
+                 if(this.selectedProductId){
+                     this.handleProductSelection();
+                 }
+            },
+
+            fetchProductsByCategory() {
+                this.filterProducts();
+                this.selectedProductId = ''; // Reset
+                this.productName = '';
+                this.productDescription = '';
+            },
+
+            filterProducts() {
+                 if (this.selectedCategoryId) {
+                     this.filteredProducts = this.allProducts.filter(p => p.kategori_id == this.selectedCategoryId);
+                 } else {
+                     this.filteredProducts = [];
+                 }
+            },
+
+            handleProductSelection() {
+                if (this.selectedProductId) {
+                    const product = this.allProducts.find(p => p.id == this.selectedProductId);
+                    if (product) {
+                        this.productName = product.nama_produk;
+                        this.productDescription = product.deskripsi;
+                    }
+                } else {
+                    this.productName = '';
+                    this.productDescription = '';
+                }
+            },
+
+            async saveCategory() {
+                if (!this.newCategoryName.trim()) {
+                    this.errorMessage = 'Nama kategori tidak boleh kosong!';
+                    return;
+                }
+
+                this.isLoading = true;
+                this.errorMessage = '';
+                this.successMessage = '';
+
+                try {
+                    const response = await fetch("{{ url(auth()->user()->role->nama_role . '/category/ajax') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ nama_kategori: this.newCategoryName })
+                    });
+
+                    const data = await response.json();
+                    this.isLoading = false;
+
+                    if (response.ok && data.success) {
+                        this.successMessage = data.message;
+
+                        // Push new category directly to array
+                        this.categories.push(data.category);
+                        this.selectedCategoryId = data.category.id;
+                        this.filterProducts();
+
+                        setTimeout(() => {
+                            this.openCategoryModal = false;
+                            this.newCategoryName = '';
+                            this.successMessage = '';
+                        }, 1000);
+                    } else {
+                        this.errorMessage = data.message || 'Terjadi kesalahan.';
+                    }
+                } catch (error) {
+                    this.isLoading = false;
+                    this.errorMessage = 'Koneksi terputus. Pastikan internet stabil.';
+                }
+            }
+        }));
+    });
+</script>
 @endsection
