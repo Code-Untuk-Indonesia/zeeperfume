@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\BranchStock;
 use App\Models\Member;
+use App\Models\ProductVariant;
 use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Support\BranchOperatingHours;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,11 +20,15 @@ class TransactionController extends Controller
 {
     /**
      * Memproses dan menyimpan transaksi ke Database (Checkout)
+     *
+     * @param Request $request
+     * @param BranchOperatingHours $operatingHours
+     * @return JsonResponse
      */
-    public function store(Request $request, BranchOperatingHours $operatingHours)
+    public function store(Request $request, BranchOperatingHours $operatingHours): JsonResponse
     {
         $user = $request->user();
-        $cabangId = $user ? $user->cabang_id : 1;
+        $cabangId = $user ? (int) $user->cabang_id : 1;
         $closedMessage = $operatingHours->closedMessage($cabangId);
 
         if ($closedMessage !== null) {
@@ -67,12 +73,12 @@ class TransactionController extends Controller
 
         DB::beginTransaction();
         try {
-            $kasirId  = $user ? $user->id : 3;
-            $waktu    = Carbon::now();
+            $kasirId = $user ? (int) $user->id : 3;
+            $waktu = Carbon::now();
 
             // 1. Generate Nomor Nota
             $lastTrx = Transaction::whereDate('tanggal_waktu', $waktu->toDateString())->count();
-            $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad($lastTrx + 1, 4, '0', STR_PAD_LEFT);
+            $nomorNota = 'INV-' . $waktu->format('Ymd') . '-' . str_pad((string) ($lastTrx + 1), 4, '0', STR_PAD_LEFT);
 
             // Hitung kembalian (hanya jika tunai)
             $kembalian = $metodeBayar === 'cash' ? max(0, $nominalBayar - $totalBelanja) : 0;
@@ -99,72 +105,24 @@ class TransactionController extends Controller
                 'cabang_id'        => $cabangId,
             ]);
 
-            // 3. Looping Keranjang
-            foreach ($validated['cart'] as $item) {
-                $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
-                $hargaSatuan = $item['unit'] === 'ml' ? $item['pricePerMl'] : $item['price'];
+            // 3. Proses Keranjang (Detail Transaksi, Pengurangan Stok & Riwayat Stok)
+            $this->processCartItems($transaction, $validated['cart'], $cabangId, $kasirId, $waktu);
 
-                $subtotalItemDasar = $item['unit'] === 'ml' ? $item['price'] : ($hargaSatuan * $item['qty']);
-                $diskonItem = $item['itemDiscount'] ?? 0;
-                $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
-
-                $discountType = $item['discountType'] ?? 'rupiah';
-                $discountInput = (float) ($item['discountInput'] ?? 0);
-
-                // Insert Detail Transaksi
-                TransactionDetail::create([
-                    'transaksi_id'   => $transaction->id,
-                    'varian_id'      => $item['variantId'],
-                    'qty'            => $qtyOrMl,
-                    'harga_satuan'   => $hargaSatuan,
-                    'diskon_persen'  => $discountType === 'percent' ? $discountInput : 0,
-                    'diskon_satuan'  => $diskonItem,
-                    'catatan_diskon' => $diskonItem > 0 ? 'Diskon item' : null,
-                    'subtotal'       => $subtotalFinalItem,
-                ]);
-
-                // Kurangi Stok Cabang
-                $stock = BranchStock::where('cabang_id', $cabangId)->where('varian_id', $item['variantId'])->first();
-                if ($stock) {
-                    $stock->decrement('stok', $qtyOrMl);
-                }
-
-                // Catat di Stock History
-                StockHistory::create([
-                    'cabang_id'     => $cabangId,
-                    'varian_id'     => $item['variantId'],
-                    'user_id'       => $kasirId,
-                    'transaksi_id'  => $transaction->id,
-                    'jenis_riwayat' => 'penjualan',
-                    'qty'           => -$qtyOrMl,
-                    'keterangan'    => 'Penjualan ' . ($item['name'] ?? 'Item') . ($item['unit'] === 'ml' ? " ($qtyOrMl ml)" : ''),
-                    'waktu'         => $waktu,
-                ]);
-            }
+            // Hitung total poin yang didapat member berdasarkan akumulasi barang per kategori
+            $totalPoinDidapat = $this->calculateEarnedPoints($validated['cart']);
 
             // 4. Catatan Piutang jika Metode Cash Tempo
-            if ($metodeBayar === 'cash_tempo') {
-                $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
-                DB::table('cash_tempo')->insert([
-                    'transaksi_id'        => $transaction->id,
-                    'tanggal_jatuh_tempo' => $validated['cash_tempo']['tanggal_jatuh_tempo'],
-                    'jumlah_piutang'      => $totalBelanja,
-                    'sisa_piutang'        => $sisaPiutang,
-                    'status_tempo'        => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
-                    'status_verifikasi'   => 'menunggu',
-                    'catatan_penagihan'   => $validated['cash_tempo']['catatan_penagihan'] ?? null,
-                    'created_at'          => $waktu,
-                    'updated_at'          => $waktu,
-                ]);
+            if ($metodeBayar === 'cash_tempo' && isset($validated['cash_tempo'])) {
+                $this->processCashTempo($transaction->id, $validated['cash_tempo'], $totalBelanja, $nominalBayar, $waktu);
             }
 
-            // 5. Potong Poin Member
-            if (($validated['member_id'] ?? null) && ($validated['is_point_used'] ?? false) && ($validated['used_points'] ?? 0) > 0) {
-                $member = Member::find($validated['member_id']);
-                if ($member) {
-                    $member->decrement('poin', $validated['used_points']);
-                }
-            }
+            // 5. Update Poin Member (Potong poin yang dipakai & Tambah poin dari pembelian)
+            $this->processMemberPoints(
+                isset($validated['member_id']) ? (int) $validated['member_id'] : null,
+                (bool) ($validated['is_point_used'] ?? false),
+                (int) ($validated['used_points'] ?? 0),
+                $totalPoinDidapat
+            );
 
             DB::commit();
 
@@ -172,15 +130,167 @@ class TransactionController extends Controller
             $transaction->load(['details.variant.product', 'member', 'cashTempo']);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Transaksi berhasil diproses.',
-                'data'    => $transaction,
+                'success'      => true,
+                'message'      => 'Transaksi berhasil diproses.',
+                'data'         => $transaction,
+                'poin_didapat' => $totalPoinDidapat,
                 // Arahkan ke endpoint API yang baru
-                'receipt_url' => url("api/transactions/{$transaction->id}/receipt")
+                'receipt_url'  => url("api/transactions/{$transaction->id}/receipt")
             ], 201);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Simpan detail transaksi, kurangi stok cabang, dan catat riwayat stok.
+     */
+    private function processCartItems(Transaction $transaction, array $cart, int $cabangId, int $kasirId, Carbon $waktu): void
+    {
+        foreach ($cart as $item) {
+            $isMl = ($item['unit'] ?? '') === 'ml';
+            $qtyOrMl = $isMl ? $item['ml'] : $item['qty'];
+            $hargaSatuan = $isMl ? $item['pricePerMl'] : $item['price'];
+
+            $subtotalItemDasar = $isMl ? $item['price'] : ($hargaSatuan * $item['qty']);
+            $diskonItem = $item['itemDiscount'] ?? 0;
+            $subtotalFinalItem = max(0, $subtotalItemDasar - $diskonItem);
+
+            $discountType = $item['discountType'] ?? 'rupiah';
+            $discountInput = (float) ($item['discountInput'] ?? 0);
+
+            // Insert Detail Transaksi
+            TransactionDetail::create([
+                'transaksi_id'   => $transaction->id,
+                'varian_id'      => $item['variantId'],
+                'qty'            => $qtyOrMl,
+                'harga_satuan'   => $hargaSatuan,
+                'diskon_persen'  => $discountType === 'percent' ? $discountInput : 0,
+                'diskon_satuan'  => $diskonItem,
+                'catatan_diskon' => $diskonItem > 0 ? 'Diskon item' : null,
+                'subtotal'       => $subtotalFinalItem,
+            ]);
+
+            // Kurangi Stok Cabang
+            $stock = BranchStock::where('cabang_id', $cabangId)->where('varian_id', $item['variantId'])->first();
+            if ($stock) {
+                $stock->decrement('stok', $qtyOrMl);
+            }
+
+            // Catat di Stock History
+            StockHistory::create([
+                'cabang_id'     => $cabangId,
+                'varian_id'     => $item['variantId'],
+                'user_id'       => $kasirId,
+                'transaksi_id'  => $transaction->id,
+                'jenis_riwayat' => 'penjualan',
+                'qty'           => -$qtyOrMl,
+                'keterangan'    => 'Penjualan ' . ($item['name'] ?? 'Item') . ($isMl ? " ($qtyOrMl ml)" : ''),
+                'waktu'         => $waktu,
+            ]);
+        }
+    }
+
+    /**
+     * Hitung total poin yang diperoleh member berdasarkan akumulasi jumlah barang per kategori.
+     */
+    private function calculateEarnedPoints(array $cart): int
+    {
+        $variantIds = [];
+        foreach ($cart as $item) {
+            if (!empty($item['variantId'])) {
+                $variantIds[] = (int) $item['variantId'];
+            }
+        }
+
+        if (empty($variantIds)) {
+            return 0;
+        }
+
+        $variants = ProductVariant::with('product.category')
+            ->whereIn('id', array_unique($variantIds))
+            ->get()
+            ->keyBy('id');
+
+        $categoryQuantities = [];
+        $categoryPointValues = [];
+
+        foreach ($cart as $item) {
+            $variantId = $item['variantId'] ?? null;
+            if (!$variantId || !$variants->has($variantId)) {
+                continue;
+            }
+
+            $variant = $variants->get($variantId);
+            $category = $variant?->product?->category;
+            if (!$category) {
+                continue;
+            }
+
+            $catId = $category->id;
+            $qty = ($item['unit'] ?? '') === 'ml' ? ($item['qty'] ?? 1) : ($item['qty'] ?? 0);
+
+            if (!isset($categoryQuantities[$catId])) {
+                $categoryQuantities[$catId] = 0;
+                $categoryPointValues[$catId] = (float) ($category->nilai_poin ?? 0);
+            }
+
+            $categoryQuantities[$catId] += (int) $qty;
+        }
+
+        $totalPoin = 0.0;
+        foreach ($categoryQuantities as $catId => $qty) {
+            $pointVal = $categoryPointValues[$catId] ?? 0;
+            if ($qty > 0 && $pointVal > 0) {
+                $totalPoin += ($qty * $pointVal);
+            }
+        }
+
+        return (int) $totalPoin;
+    }
+
+    /**
+     * Catat piutang untuk transaksi cash tempo.
+     */
+    private function processCashTempo(int $transactionId, array $tempoData, float $totalBelanja, float $nominalBayar, Carbon $waktu): void
+    {
+        $sisaPiutang = max(0, $totalBelanja - $nominalBayar);
+        DB::table('cash_tempo')->insert([
+            'transaksi_id'        => $transactionId,
+            'tanggal_jatuh_tempo' => $tempoData['tanggal_jatuh_tempo'],
+            'jumlah_piutang'      => $totalBelanja,
+            'sisa_piutang'        => $sisaPiutang,
+            'status_tempo'        => $sisaPiutang > 0 ? 'belum_lunas' : 'lunas',
+            'status_verifikasi'   => 'menunggu',
+            'catatan_penagihan'   => $tempoData['catatan_penagihan'] ?? null,
+            'created_at'          => $waktu,
+            'updated_at'          => $waktu,
+        ]);
+    }
+
+    /**
+     * Potong dan tambah poin member.
+     */
+    private function processMemberPoints(?int $memberId, bool $isPointUsed, int $usedPoints, int $earnedPoints): void
+    {
+        if (!$memberId) {
+            return;
+        }
+
+        $member = Member::find($memberId);
+        if (!$member) {
+            return;
+        }
+
+        // A. Potong poin jika member menukarkan poin untuk diskon
+        if ($isPointUsed && $usedPoints > 0) {
+            $member->decrement('poin', $usedPoints);
+        }
+
+        // B. Tambah poin dari transaksi ini
+        if ($earnedPoints > 0) {
+            $member->increment('poin', $earnedPoints);
         }
     }
 
