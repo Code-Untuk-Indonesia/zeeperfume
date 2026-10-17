@@ -7,6 +7,7 @@ use App\Models\BranchStock;
 use App\Models\Category;
 use App\Models\Member;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\StockHistory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -134,6 +135,9 @@ class PosController extends Controller
                 'cabang_id'        => $cabangId,
             ]);
 
+            // Variabel penampung total poin yang didapat dari item keranjang
+            $totalPoinDidapat = 0;
+
             // 3. Looping Keranjang untuk Detail Transaksi, Potong Stok, dan History
             foreach ($validated['cart'] as $item) {
                 $qtyOrMl = $item['unit'] === 'ml' ? $item['ml'] : $item['qty'];
@@ -160,6 +164,19 @@ class PosController extends Controller
                     'catatan_diskon' => $diskonItem > 0 ? 'Diskon item' : null,
                     'subtotal'      => $subtotalFinalItem,
                 ]);
+
+                // Hitung Poin Berdasarkan Kategori Varian Produk Secara Dinamis
+                $variantModel = ProductVariant::with('product.category')->find($item['variantId']);
+                if ($variantModel && $variantModel->product && $variantModel->product->category) {
+                    $nilaiPoinKategori = $variantModel->product->category->nilai_poin ?? 0;
+
+                    if ($item['unit'] === 'ml') {
+                        $jumlahItemPoin = ($item['qty'] ?? 1);
+                        $totalPoinDidapat += ($jumlahItemPoin * $nilaiPoinKategori);
+                    } else {
+                        $totalPoinDidapat += ($item['qty'] * $nilaiPoinKategori);
+                    }
+                }
 
                 // Kurangi Stok Cabang
                 $stock = BranchStock::where('cabang_id', $cabangId)
@@ -200,7 +217,7 @@ class PosController extends Controller
                 ]);
             }
 
-            // 5. Update Poin Member (Potong poin yang dipakai & Tambah poin dari pembelanjaan)
+            // 5. Update Poin Member (Potong poin yang dipakai & Tambah poin dari kategori produk)
             if (!empty($validated['member_id'])) {
                 $member = Member::find($validated['member_id']);
 
@@ -210,14 +227,9 @@ class PosController extends Controller
                         $member->decrement('poin', $validated['used_points']);
                     }
 
-                    // B. Tambah poin dari transaksi ini
-                    // RUMUS: Total Belanja dibagi nominal tertentu.
-                    // Contoh di bawah: Setiap belanja Rp 10.000 dapat 1 Poin.
-                    // Silakan ubah angka 10000 sesuai kebijakan toko Anda.
-                    $poinDidapat = floor($totalBelanja / 10000);
-
-                    if ($poinDidapat > 0) {
-                        $member->increment('poin', $poinDidapat);
+                    // B. Tambah poin dari transaksi ini sesuai akumulasi kategori produk
+                    if ($totalPoinDidapat > 0) {
+                        $member->increment('poin', $totalPoinDidapat);
                     }
                 }
             }
@@ -425,11 +437,13 @@ class PosController extends Controller
     {
         $request->validate([
             'nama_kategori' => 'required|string|max:255|unique:categories,nama_kategori',
+            'nilai_poin'    => 'nullable|numeric|min:0',
         ]);
 
         try {
             $category = Category::create([
                 'nama_kategori' => $request->nama_kategori,
+                'nilai_poin'    => $request->nilai_poin ?? 0
             ]);
 
             return response()->json([
@@ -453,6 +467,7 @@ class PosController extends Controller
             'branch',
             'details.variant.product',
             'cashTempo',
+            'shipments',
         ])->findOrFail($trx_id);
 
         return view('kasir.pos.receipt', compact('transaction'));

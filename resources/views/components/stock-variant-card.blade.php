@@ -105,9 +105,8 @@
                     <span class="text-sm font-bold text-gray-700">Distribusikan langsung ke cabang lain?</span>
                 </label>
 
-                <div x-show="showBranches" x-transition style="display: none;"
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6 border-l-2 border-gray-100">
-                    @foreach ($branches->where('id', '!=', 1) as $branch)
+                <div x-show="showBranches" x-transition style="display: none;" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6 border-l-2 border-gray-100">
+                    @foreach($branches->where('id', '!=', 1) as $branch)
                         @php
                             $bAssign = isset($variant['branches'][$branch->id]['assign']);
                             $bStock = $variant['branches'][$branch->id]['stock'] ?? '';
@@ -145,3 +144,4 @@
         </div>
     </div>
 </div>
+

@@ -79,6 +79,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('outlet/edit', 'admin.outlet.edit')->name('outlet.edit');
 
     Route::post('category/ajax', [AdminStockController::class, 'storeAjax'])->name('category.storeAjax');
+    Route::put('category/ajax/{id}', [AdminStockController::class, 'updateAjax'])->name('category.updateAjax');
+
 
     // Stock CRUD
     Route::get('stock', [AdminStockController::class, 'index'])->name('stock.index');
@@ -105,6 +107,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('member/{member}/edit', [AdminMemberController::class, 'edit'])->name('member.edit');
     Route::put('member/{member}', [AdminMemberController::class, 'update'])->name('member.update');
     Route::delete('member/{member}', [AdminMemberController::class, 'destroy'])->name('member.destroy');
+    Route::get('member/{member}/detail', [AdminMemberController::class, 'show'])->name('member.show');
+    // RUTE BARU POTONG POIN:
+    Route::post('member/{member}/deduct-point', [AdminMemberController::class, 'deductPoint'])->name('member.deduct_point');
 });
 
 
@@ -179,6 +184,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::post('stock/update/{id}', [OwnerStockController::class, 'update'])->name('stock.update');
     Route::delete('stock/destroy/{id}', [OwnerStockController::class, 'destroy'])->name('stock.destroy');
     Route::post('category/ajax', [OwnerStockController::class, 'storeAjax'])->name('category.storeAjax');
+    Route::put('category/ajax/{id}', [App\Http\Controllers\Owner\StockController::class, 'updateAjax'])->name('owner.category.updateAjax');
     // -- MEMBER --
     Route::get('member', [MemberController::class, 'index'])->name('member.index');
     Route::get('member/create', [MemberController::class, 'create'])->name('member.create');

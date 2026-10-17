@@ -52,10 +52,14 @@ class StockController extends Controller
     {
         $request->validate([
             'nama_kategori' => 'required|string|max:255|unique:categories,nama_kategori',
+            'nilai_poin'    => 'nullable|numeric|min:0', // Validasi poin
         ]);
 
         try {
-            $category = Category::create(['nama_kategori' => $request->nama_kategori]);
+            $category = Category::create([
+                'nama_kategori' => $request->nama_kategori,
+                'nilai_poin'    => $request->nilai_poin ?? 0
+            ]);
             return response()->json(['success' => true, 'category' => $category, 'message' => 'Kategori berhasil ditambahkan!']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()], 500);
@@ -117,14 +121,14 @@ class StockController extends Controller
                     'produk_id'   => $product->id,
                     'nama_varian' => $varData['name'],
                     'sku'         => $varData['sku'] ?? null,
-                    'harga_beli'  => $varData['cost'] ?: 0,
-                    'harga_jual'  => $varData['price'] ?: 0,
+                    'harga_beli'  => isset($varData['cost']) && is_numeric($varData['cost']) ? $varData['cost'] : 0,
+                    'harga_jual'  => isset($varData['price']) && is_numeric($varData['price']) ? $varData['price'] : 0,
                     'satuan'      => $varData['unit'] ?? 'pcs',
                     'image'       => $imagePath,
                 ]);
 
                 // Simpan Stok Pusat (Wajib)
-                $stokPusat = $varData['stock_pusat'] ?: 0;
+                $stokPusat = isset($varData['stock_pusat']) && is_numeric($varData['stock_pusat']) ? $varData['stock_pusat'] : 0;
                 if ($stokPusat > 0) {
                     BranchStock::create(['varian_id' => $variant->id, 'cabang_id' => 1, 'stok' => $stokPusat]);
                     StockHistory::create([
@@ -143,7 +147,7 @@ class StockController extends Controller
                     foreach ($varData['branches'] as $branchId => $bData) {
                         if (!isset($bData['assign'])) continue; // Jika checkbox cabang tidak dicentang, lewati
 
-                        $stokCabang = $bData['stock'] ?: 0;
+                        $stokCabang = isset($bData['stock']) && is_numeric($bData['stock']) ? $bData['stock'] : 0;
                         $source = $bData['source'] ?? 'direct';
 
                         if ($stokCabang > 0) {
@@ -261,8 +265,8 @@ class StockController extends Controller
                     'produk_id'   => $targetProductId,
                     'nama_varian' => $varData['name'],
                     'sku'         => $varData['sku'] ?? null,
-                    'harga_beli'  => $varData['cost'] ?: 0,
-                    'harga_jual'  => $varData['price'] ?: 0,
+                    'harga_beli'  => isset($varData['cost']) && is_numeric($varData['cost']) ? $varData['cost'] : 0,
+                    'harga_jual'  => isset($varData['price']) && is_numeric($varData['price']) ? $varData['price'] : 0,
                     'satuan'      => $varData['unit'] ?? 'pcs',
                 ];
 
@@ -281,7 +285,7 @@ class StockController extends Controller
                 }
 
                 // Update Stok Pusat
-                $stokPusatBaru = $varData['stock_pusat'] ?: 0;
+                $stokPusatBaru = isset($varData['stock_pusat']) && is_numeric($varData['stock_pusat']) ? $varData['stock_pusat'] : 0;
                 $pusatRecord = BranchStock::firstOrCreate(['varian_id' => $variant->id, 'cabang_id' => 1], ['stok' => 0]);
                 $diffPusat = $stokPusatBaru - $pusatRecord->stok;
 
@@ -301,7 +305,7 @@ class StockController extends Controller
                 // Update Stok Cabang Lain
                 if (isset($varData['branches'])) {
                     foreach ($varData['branches'] as $branchId => $bData) {
-                        $stokCabangBaru = $bData['stock'] ?: 0;
+                        $stokCabangBaru = isset($bData['stock']) && is_numeric($bData['stock']) ? $bData['stock'] : 0;
                         $cabangRecord = BranchStock::firstOrCreate(['varian_id' => $variant->id, 'cabang_id' => $branchId], ['stok' => 0]);
                         $diffCabang = $stokCabangBaru - $cabangRecord->stok;
                         $source = $bData['source'] ?? 'direct';
@@ -390,6 +394,24 @@ class StockController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal menghapus produk: ' . $e->getMessage());
+        }
+    }
+    public function updateAjax(Request $request, $id)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255|unique:categories,nama_kategori,' . $id,
+            'nilai_poin'    => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $category = Category::findOrFail($id);
+            $category->update([
+                'nama_kategori' => $request->nama_kategori,
+                'nilai_poin'    => $request->nilai_poin ?? 0
+            ]);
+            return response()->json(['success' => true, 'category' => $category, 'message' => 'Kategori berhasil diperbarui!']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()], 500);
         }
     }
 }

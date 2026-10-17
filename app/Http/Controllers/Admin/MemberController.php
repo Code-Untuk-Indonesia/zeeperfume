@@ -69,6 +69,18 @@ class MemberController extends Controller
             ->with('success', 'Member berhasil ditambahkan.');
     }
 
+    public function show(int $member): View
+    {
+        $memberData = $this->findMember($member);
+
+        $transactions = DB::table('transactions')
+            ->where('member_id', $member)
+            ->orderByDesc('tanggal_waktu')
+            ->paginate(10);
+
+        return view('admin.member.show', compact('memberData', 'transactions'));
+    }
+
     public function edit(int $member): View
     {
         return view('admin.member.edit', ['member' => $this->findMember($member)]);
@@ -147,4 +159,31 @@ class MemberController extends Controller
 
         return $code;
     }
+    public function deductPoint(Request $request, int $member): RedirectResponse
+    {
+        $request->validate([
+            'jumlah_poin' => 'required|integer|min:1',
+            'keterangan'  => 'nullable|string|max:255',
+        ]);
+
+        $memberData = $this->findMember($member);
+
+        // Cek apakah poin cukup
+        if ($memberData->poin < $request->jumlah_poin) {
+            return back()->with('error', 'Gagal! Poin member tidak mencukupi (Sisa poin: ' . number_format($memberData->poin, 0, ',', '.') . ').');
+        }
+
+        // Kurangi poin
+        DB::table('members')
+            ->where('id', $member)
+            ->whereNull('deleted_at')
+            ->decrement('poin', $request->jumlah_poin);
+
+        // Jika Anda memiliki tabel 'point_histories', Anda bisa menambahkan record-nya di sini
+        // DB::table('point_histories')->insert(['member_id' => $member, 'poin_minus' => $request->jumlah_poin, 'keterangan' => $request->keterangan]);
+
+        return back()->with('success', "Berhasil mengurangi {$request->jumlah_poin} poin dari member {$memberData->nama} untuk penukaran reward.");
+    }
 }
+
+

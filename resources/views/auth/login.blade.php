@@ -6,109 +6,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
     <title>Masuk - ZEEPERFUME POS</title>
+
+    <!-- Google Fonts: DM Serif Display & Manrope disamakan dengan Landing Page -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --font-heading: 'DM Serif Display', serif;
+            --font-body: 'Manrope', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+        }
+
+        .font-luxury {
+            font-family: var(--font-heading);
+        }
+    </style>
 </head>
 
-<body class="min-h-dvh bg-[#F6F5F2] font-sans text-[#1C1D21] antialiased">
+<body class="min-h-dvh bg-[#FFFAF5] text-[#39291F] antialiased selection:bg-[#A66C2D] selection:text-white">
     <!--
-    THESIS: Login adalah gerbang kerja outlet, bukan halaman promosi atau kartu generik di tengah layar.
-    OWN-WORLD: Arang, putih hangat, dan amber dari dashboard dengan bidang tegas serta sudut 16px.
-    STORY: Pengguna mengenali ZEEPERFUME, memahami akun dikelola internal, lalu masuk dengan username dan password.
-    FIRST VIEWPORT: Konteks operasional berada di panel arang kiri dan form menjadi fokus tunggal pada bidang terang kanan.
-    FORM: Komposisi split-screen yang menyatu dengan shell dashboard; seed key ZEE-AUTH-01.
-    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    THESIS: Login adalah gerbang kerja outlet, diselaraskan dengan kemewahan visual Zeeperfume.
+    OWN-WORLD: Cokelat gelap eksklusif (Espresso), emas perunggu, dan krem hangat.
+    STORY: Pengguna mengenali ZEEPERFUME secara utuh, memahami akun dikelola internal.
     -->
     <div class="grid min-h-dvh lg:grid-cols-[minmax(0,0.92fr)_minmax(32rem,1.08fr)]">
-        <section class="relative hidden overflow-hidden bg-[#1C1D21] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14" aria-label="Tentang ZEEPERFUME POS">
-            <div class="absolute left-0 top-0 h-1.5 w-40 bg-[#CC9863]"></div>
 
-            <div class="flex items-center gap-3">
-                <span class="text-2xl font-extrabold tracking-[-0.03em] text-[#D9AA78]">ZEEPERFUME</span>
-                <span class="border-l border-white/20 pl-3 text-xs font-semibold text-[#D7D7D9]">Point of Sale</span>
+        <!-- PANEL KIRI (Desktop Khusus) dengan Background Sunset Gelap -->
+        <section class="relative hidden overflow-hidden bg-[#241A13] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14 bg-cover bg-center"
+                 aria-label="Tentang ZeePerfume POS"
+                 style="background-image: url('{{ asset('asset/Golden Coastal Sunset Lookout.png') }}');">
+
+            <!-- Overlay gelap untuk meredam gambar sunset agar teks tetap terbaca -->
+            <div class="absolute inset-0 bg-gradient-to-br from-[#39291F]/95 via-[#39291F]/90 to-[#A66C2D]/60 pointer-events-none"></div>
+
+            <!-- Aksen Garis Emas Atas -->
+            <div class="absolute left-0 top-0 h-1.5 w-40 bg-[#A66C2D]"></div>
+
+            <div class="relative z-10 flex items-center gap-3">
+                <span class="font-luxury text-2xl tracking-widest text-[#FFF8EB] uppercase">ZEEPERFUME</span>
+                <span class="border-l border-white/20 pl-3 text-xs font-semibold text-[#D9C19B] uppercase tracking-widest">Point of Sale</span>
             </div>
 
-            <div class="max-w-xl py-16">
-                <h1 class="max-w-[10ch] text-[clamp(3rem,5vw,5rem)] font-extrabold leading-[1.02] tracking-[-0.04em]">
-                    Kerja outlet, <span class="text-[#D9AA78]">lebih tertata.</span>
+            <div class="relative z-10 max-w-xl py-16">
+                <h1 class="font-luxury max-w-[10ch] text-[clamp(3.5rem,5vw,5rem)] leading-[1.05] tracking-tight text-white drop-shadow-md">
+                    Kerja outlet, <br><span class="text-[#D9C19B] italic">lebih tertata.</span>
                 </h1>
-                <p class="mt-7 max-w-lg text-base leading-7 text-[#D7D7D9]">
-                    Transaksi, stok, dan laporan ZEEPERFUME berada dalam satu ruang kerja untuk tim outlet.
+                <p class="mt-7 max-w-lg text-[15px] font-medium leading-relaxed text-[#FFF8EB]/80">
+                    Transaksi, stok, dan laporan ZEEPERFUME berada dalam satu ruang kerja eksklusif untuk tim internal.
                 </p>
             </div>
 
-            <div>
-                <div class="grid grid-cols-3 border-y border-white/15 py-5 text-sm font-semibold text-[#EEEEEF]">
+            <div class="relative z-10">
+                <div class="grid grid-cols-3 border-y border-[#D9C19B]/20 py-5 text-sm font-semibold text-white tracking-wide uppercase text-[11px]">
                     <span>Transaksi</span>
-                    <span class="border-l border-white/15 pl-5">Stok</span>
-                    <span class="border-l border-white/15 pl-5">Laporan</span>
+                    <span class="border-l border-[#D9C19B]/20 pl-5">Stok</span>
+                    <span class="border-l border-[#D9C19B]/20 pl-5">Laporan</span>
                 </div>
-                <p class="mt-5 text-xs text-[#B9B9BD]">Akses internal untuk tim ZEEPERFUME.</p>
+                <p class="mt-5 text-xs text-[#D9C19B]/70 font-medium">Akses internal untuk tim ZEEPERFUME.</p>
             </div>
         </section>
 
-        <main class="flex min-h-dvh items-center px-5 py-8 sm:px-10 lg:px-16 xl:px-24">
-            <div class="mx-auto w-full max-w-[29rem]">
-                <div class="mb-12 flex items-center justify-between lg:hidden">
-                    <span class="text-xl font-extrabold tracking-[-0.03em] text-[#8A5B2E]">ZEEPERFUME</span>
-                    <span class="text-xs font-semibold text-[#5F6065]">Point of Sale</span>
+        <!-- PANEL KANAN (Form Login) -->
+        <main class="relative flex min-h-dvh items-center px-5 py-8 sm:px-10 lg:px-16 xl:px-24 overflow-hidden">
+
+            <!-- Dekorasi Bias Cahaya Lembut (Warm Glow) -->
+            <div class="absolute -top-24 -right-24 w-72 h-72 bg-[#A66C2D] opacity-[0.08] blur-[80px] rounded-full pointer-events-none -z-10"></div>
+            <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-[#D8B985] opacity-[0.12] blur-[80px] rounded-full pointer-events-none -z-10"></div>
+
+            <div class="mx-auto w-full max-w-[29rem] relative z-10">
+                <!-- Header Mobile -->
+                <div class="mb-12 flex items-center justify-between lg:hidden border-b border-[#D9C19B]/30 pb-4">
+                    <span class="font-luxury text-2xl tracking-widest text-[#39291F] uppercase">ZEEPERFUME</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-[#A66C2D] bg-[#FFF8EB] px-3 py-1.5 rounded-full border border-[#D9C19B]/40">POS System</span>
                 </div>
 
-                <div class="mb-9">
-                    <h2 class="text-3xl font-extrabold tracking-[-0.035em] text-[#1C1D21] sm:text-4xl">Masuk ke ruang kerja</h2>
-                    <p class="mt-3 max-w-md text-sm leading-6 text-[#5F6065]">
+                <div class="mb-10 text-center lg:text-left">
+                    <h2 class="font-luxury text-4xl sm:text-[2.5rem] tracking-tight text-[#39291F]">Masuk ke ruang kerja</h2>
+                    <p class="mt-3 max-w-md mx-auto lg:mx-0 text-sm font-medium leading-relaxed text-[#554333]">
                         Gunakan username dan password yang diberikan oleh pengelola akun.
                     </p>
                 </div>
 
                 @if (session('status'))
-                    <div class="mb-6 rounded-xl bg-[#E8F3EC] px-4 py-3 text-sm font-medium text-[#245B39]" role="status">
+                    <div class="mb-6 rounded-xl bg-[#FFF8EB] border border-[#D9C19B]/50 px-4 py-3 text-sm font-medium text-[#845323] flex items-center gap-3 shadow-sm" role="status">
+                        <svg class="w-5 h-5 text-[#A66C2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         {{ session('status') }}
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="mb-6 rounded-xl bg-[#FBEAEA] px-4 py-3 text-sm font-medium leading-6 text-[#8A2525]" role="alert">
-                        {{ $errors->first() }}
+                    <div class="mb-6 rounded-xl bg-[#FDF5F5] border border-[#E5B5B5] px-4 py-3 text-sm font-medium leading-6 text-[#9B2C2C] flex items-start gap-3 shadow-sm" role="alert">
+                        <svg class="w-5 h-5 mt-0.5 text-[#9B2C2C] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
-                <form id="login-form" method="POST" action="{{ route('login.store') }}" class="space-y-5">
+                <form id="login-form" method="POST" action="{{ route('login.store') }}" class="space-y-6 bg-white p-6 sm:p-8 rounded-[2rem] shadow-xl shadow-[#39291F]/5 border border-[#D9C19B]/40">
                     @csrf
 
                     <div>
-                        <label for="username" class="mb-2 block text-sm font-bold text-[#2D2E32]">Username</label>
+                        <label for="username" class="mb-2.5 block text-[11px] font-bold uppercase tracking-widest text-[#39291F]">Username</label>
                         <input
                             id="username"
                             name="username"
                             type="text"
                             value="{{ old('username') }}"
                             required
+                            maxlength="100"
                             autofocus
                             autocomplete="username"
                             placeholder="Masukkan username"
-                            class="min-h-13 w-full rounded-2xl border border-[#8B8D91] bg-white px-4 py-3 text-base text-[#1C1D21] placeholder:text-[#686A70] transition focus:border-[#8A5B2E] focus:ring-3 focus:ring-[#CC9863]/30 focus:outline-none"
+                            class="min-h-13 md:h-14 w-full rounded-xl border border-[#D9C19B]/60 bg-[#FFFAF5] px-4 sm:px-5 text-sm font-medium text-[#39291F] placeholder:text-[#554333]/50 transition-all focus:border-[#A66C2D] focus:ring-1 focus:ring-[#A66C2D] focus:outline-none"
                         >
                     </div>
 
                     <div>
-                        <label for="password" class="mb-2 block text-sm font-bold text-[#2D2E32]">Password</label>
+                        <label for="password" class="mb-2.5 block text-[11px] font-bold uppercase tracking-widest text-[#39291F]">Password</label>
                         <div class="relative">
                             <input
                                 id="password"
                                 name="password"
                                 type="password"
                                 required
+                                maxlength="255"
                                 autocomplete="current-password"
                                 placeholder="Masukkan password"
-                                class="min-h-13 w-full rounded-2xl border border-[#8B8D91] bg-white py-3 pr-14 pl-4 text-base text-[#1C1D21] placeholder:text-[#686A70] transition focus:border-[#8A5B2E] focus:ring-3 focus:ring-[#CC9863]/30 focus:outline-none"
+                                class="min-h-13 md:h-14 w-full rounded-xl border border-[#D9C19B]/60 bg-[#FFFAF5] py-3 pr-14 pl-4 sm:pl-5 text-sm font-medium text-[#39291F] placeholder:text-[#554333]/50 transition-all focus:border-[#A66C2D] focus:ring-1 focus:ring-[#A66C2D] focus:outline-none"
                             >
                             <button
                                 id="password-toggle"
                                 type="button"
-                                class="absolute inset-y-0 right-1 flex min-h-11 min-w-11 items-center justify-center rounded-xl text-[#55575C] transition hover:bg-[#F0EEE9] hover:text-[#1C1D21] focus-visible:ring-3 focus-visible:ring-[#8A5B2E]/35 focus-visible:outline-none"
+                                class="absolute inset-y-0 right-1.5 my-auto h-11 w-11 flex items-center justify-center rounded-lg text-[#8A5B2D] transition-colors hover:bg-[#FFF8EB] hover:text-[#A66C2D] focus-visible:ring-2 focus-visible:ring-[#A66C2D]/50 focus-visible:outline-none"
                                 aria-label="Tampilkan password"
                                 aria-pressed="false"
                             >
@@ -123,13 +160,13 @@
                         </div>
                     </div>
 
-                    <label class="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-[#45464B]">
+                    <label class="flex min-h-11 cursor-pointer items-center gap-3 text-[13px] font-semibold text-[#554333]">
                         <input
                             name="remember"
                             type="checkbox"
                             value="1"
                             @checked(old('remember'))
-                            class="h-5 w-5 rounded border-[#6C6E73] text-[#8A5B2E] focus:ring-[#8A5B2E]"
+                            class="h-5 w-5 rounded border-[#D9C19B] text-[#A66C2D] focus:ring-[#A66C2D] focus:ring-offset-0 bg-[#FFFAF5] transition-colors cursor-pointer"
                         >
                         Ingat sesi saya di perangkat ini
                     </label>
@@ -137,15 +174,21 @@
                     <button
                         id="login-button"
                         type="submit"
-                        class="flex min-h-13 w-full items-center justify-center rounded-2xl bg-[#1C1D21] px-5 py-3.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(28,29,33,0.18)] transition hover:bg-[#323338] focus-visible:ring-3 focus-visible:ring-[#8A5B2E]/45 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:bg-[#595A5F]"
+                        class="group flex min-h-13 md:h-14 w-full items-center justify-center gap-3 rounded-xl bg-[#A66C2D] px-5 py-3.5 text-[12px] font-bold uppercase tracking-widest text-white shadow-lg shadow-[#68431F]/20 transition-all hover:bg-[#845323] focus-visible:ring-2 focus-visible:ring-[#A66C2D]/50 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:bg-[#D9C19B] transform active:scale-[0.98]"
                     >
                         <span id="login-button-text">Masuk ke sistem</span>
+                        <svg id="login-spinner" class="hidden w-4 h-4 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </button>
                 </form>
 
-                <p class="mt-8 border-t border-[#D8D6D0] pt-5 text-xs leading-5 text-[#5F6065]">
-                    Belum memiliki akun? Hubungi owner atau admin yang mengelola pengguna.
-                </p>
+                <div class="mt-8 text-center border-t border-[#D9C19B]/40 pt-6">
+                    <p class="text-[12px] font-medium leading-relaxed text-[#554333]">
+                        Belum memiliki akun? <br class="sm:hidden">Hubungi owner atau admin pengelola.
+                    </p>
+                </div>
             </div>
         </main>
     </div>
@@ -158,6 +201,7 @@
         const loginForm = document.getElementById('login-form');
         const loginButton = document.getElementById('login-button');
         const loginButtonText = document.getElementById('login-button-text');
+        const loginSpinner = document.getElementById('login-spinner');
 
         passwordToggle.addEventListener('click', () => {
             const passwordIsVisible = passwordInput.type === 'text';
@@ -167,12 +211,16 @@
             passwordToggle.setAttribute('aria-label', passwordIsVisible ? 'Tampilkan password' : 'Sembunyikan password');
             eyeOpen.classList.toggle('hidden', !passwordIsVisible);
             eyeClosed.classList.toggle('hidden', passwordIsVisible);
+
+            // Mengembalikan fokus ke input password setelah toggle diklik
             passwordInput.focus();
         });
 
         loginForm.addEventListener('submit', () => {
+            // Mencegah double submit (meningkatkan keamanan dari spam click / brute force ringan)
             loginButton.disabled = true;
             loginButtonText.textContent = 'Memeriksa akun...';
+            loginSpinner.classList.remove('hidden');
         });
     </script>
 </body>
